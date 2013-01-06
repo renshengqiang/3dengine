@@ -1,0 +1,11 @@
+bin*
+lib*
+*~
+*.o
+*.oo
+*.lo
+*.loo
+*.d
+*.dd
+include/GL*
+include/SDL*
