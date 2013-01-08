@@ -32,6 +32,7 @@ class DemoApp:public FrameListener, public EventListener
 		~DemoApp();
 		bool FrameQueued(long timeSinceLastFrame);
 		void ProcessEvents();
+		void CreateScene(void);
 		void Run();
 		void HandleKeyDown( SDL_keysym* keysym );
 		void HandleMouseMotion(SDL_MouseMotionEvent event);
@@ -46,7 +47,7 @@ DemoApp::DemoApp(bool ifUseShader)
 	m_ifUseShader = ifUseShader;
 	mp_sceneManager = new SceneManager();
 	mp_renderWindow = mp_sceneManager->CreateRenderWindow(800,600);
-	mp_camera = mp_sceneManager->CreateCamera(Vector3f(0.0f,0.0f,2.414213565f),Vector3f(0, 0, -1.0f));
+	mp_camera = mp_sceneManager->CreateCamera(Vector3f(0.0f,0.0f,0.0f),Vector3f(0, 0, -1.0f));
 	//初始化  水平方向180度， 竖直方向-90度,以配合SDL
 	//mp_camera = mp_sceneManager->CreateCamera(Vector3f(0.0f,0.0f,10.0f),Vector3f(-0.01f, 1.0f, 0.0f));
 	mp_sceneManager->AddFrameListener(this);
@@ -61,8 +62,23 @@ bool DemoApp::FrameQueued(long timeSinceLastFrame)
 	fps++;
 	return FrameListener::FrameQueued(timeSinceLastFrame);
 }
+void DemoApp::CreateScene(void)
+{
+	Mesh *mesh = new Mesh();
+	mesh->LoadMesh("phoenix_ugv.md2");
+	SceneNode *rootNode = mp_sceneManager->GetRootNode();
+	SceneNode *node = rootNode->CreateSceneNode();
+	node->Translate(0,0,-100, SceneNode::TS_LOCAL);
+	SceneNode *node2 = node->CreateSceneNode();
+	node2->Translate(Vector3f(100, 0, 0), SceneNode::TS_LOCAL);
+	node2->Rotate(Vector3f(0,1,0), -90, SceneNode::TS_LOCAL);
+
+	node->AttachMesh(mesh);
+	node2->AttachMesh(mesh);
+}
 void DemoApp::Run()
 {
+	CreateScene();
 	mp_sceneManager->StartRendering(m_ifUseShader);
 }
 /************************ handle sdl events **********************************/

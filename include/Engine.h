@@ -4,6 +4,9 @@
 #include <SceneManager.h>
 #include <RenderWindow.h>
 #include <Camera.h>
+#include <Mesh.h>
+#include <Render.h>
+#include <SceneNode.h>
 #include <FrameListener.h>
 #include <EventListener.h>
 

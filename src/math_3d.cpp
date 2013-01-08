@@ -161,6 +161,25 @@ void Matrix4f::InitPersProjTransform(float FOV, float ar, float zNear, float zFa
 	m[2][0] = 0.0f; 				  m[2][1] = 0.0f;			 m[2][2] = (zNear + zFar)/zRange ; m[2][3] = 2.0f * zFar*zNear/zRange;
 	m[3][0] = 0.0f; 				  m[3][1] = 0.0f;			 m[3][2] = -1.0f;		  m[3][3] = 0.0;
 }
+void Matrix4f::MakeTransform(const Vector3f& position, const Vector3f& scale, const Quaternion& orientation)
+{
+    // Ordering:实际效果的顺序，非代码顺序
+    //    1. Scale
+    //    2. Rotate
+    //    3. Translate
+
+    Matrix3f rot3x3;
+    orientation.ToRotationMatrix(rot3x3);
+
+    // Set up final matrix with scale, rotation and translation
+    m[0][0] = scale.x * rot3x3.m[0][0]; m[0][1] = scale.y * rot3x3.m[0][1]; m[0][2] = scale.z * rot3x3.m[0][2]; m[0][3] = position.x;
+    m[1][0] = scale.x * rot3x3.m[1][0]; m[1][1] = scale.y * rot3x3.m[1][1]; m[1][2] = scale.z * rot3x3.m[1][2]; m[1][3] = position.y;
+    m[2][0] = scale.x * rot3x3.m[2][0]; m[2][1] = scale.y * rot3x3.m[2][1]; m[2][2] = scale.z * rot3x3.m[2][2]; m[2][3] = position.z;
+
+    // No projection term
+    m[3][0] = 0; m[3][1] = 0; m[3][2] = 0; m[3][3] = 1;
+}
+
 Quaternion::Quaternion()
 {
 	x=0;y=0;z=0;w=1;
@@ -171,6 +190,15 @@ Quaternion::Quaternion(float _x, float _y, float _z, float _w)
     y = _y;
     z = _z;
     w = _w;
+}
+Quaternion::Quaternion(const Vector3f &axis, float angle)
+{
+	float fHalfAngle ( 0.5*ToRadian(angle));
+    float fSin = sinf(fHalfAngle);
+    w = cosf(fHalfAngle);
+    x = fSin*axis.x;
+    y = fSin*axis.y;
+    z = fSin*axis.z;
 }
 
 void Quaternion::Normalize()
@@ -188,6 +216,46 @@ Quaternion Quaternion::Conjugate()
 {
     Quaternion ret(-x, -y, -z, w);
     return ret;
+}
+Quaternion Quaternion::Inverse () const
+{
+  float fNorm = w*w+x*x+y*y+z*z;
+  if ( fNorm > 0.0 )
+  {
+	  float fInvNorm = 1.0f/fNorm;
+	  return Quaternion(w*fInvNorm,-x*fInvNorm,-y*fInvNorm,-z*fInvNorm);
+  }
+  else
+  {
+	  // return an invalid result to flag the error
+	  return Quaternion(0,0,0,0);
+  }
+}
+
+void Quaternion::ToRotationMatrix (Matrix3f& kRot) const
+{
+    float fTx  = x+x;
+    float fTy  = y+y;
+    float fTz  = z+z;
+    float fTwx = fTx*w;
+    float fTwy = fTy*w;
+    float fTwz = fTz*w;
+    float fTxx = fTx*x;
+    float fTxy = fTy*x;
+    float fTxz = fTz*x;
+    float fTyy = fTy*y;
+    float fTyz = fTz*y;
+    float fTzz = fTz*z;
+
+    kRot.m[0][0] = 1.0f-(fTyy+fTzz);
+    kRot.m[0][1] = fTxy-fTwz;
+    kRot.m[0][2] = fTxz+fTwy;
+    kRot.m[1][0] = fTxy+fTwz;
+    kRot.m[1][1] = 1.0f-(fTxx+fTzz);
+    kRot.m[1][2] = fTyz-fTwx;
+    kRot.m[2][0] = fTxz-fTwy;
+    kRot.m[2][1] = fTyz+fTwx;
+    kRot.m[2][2] = 1.0f-(fTxx+fTyy);
 }
 
 Quaternion operator*(const Quaternion& l, const Quaternion& r)
@@ -213,3 +281,17 @@ Quaternion operator*(const Quaternion& q, const Vector3f& v)
 
     return ret;
 }
+
+Vector3f operator*(const Vector3f& v, const Quaternion &q)
+{
+	// nVidia SDK implementation
+	Vector3f uv, uuv;
+	Vector3f qvec(q.x, q.y, q.z);
+	uv = qvec.Cross(v);
+	uuv = qvec.Cross(uv);
+	uv *= (2.0f * q.w);
+	uuv *= 2.0f;
+
+	return v + uv + uuv;
+}
+

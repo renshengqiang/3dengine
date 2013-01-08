@@ -3,6 +3,7 @@
 #include <Export.h>
 #include <RenderWindow.h>
 #include <Camera.h>
+#include <SceneNode.h>
 #include <FrameListener.h>
 #include <EventListener.h>
 
@@ -20,14 +21,14 @@ class ENGINE_EXPORT SceneManager{
 		void StartRendering(bool use_shader);
 		void QuitFromRendering(void);
 		bool RenderOneFrame(void);
-	//private:
-		bool _DrawObject();
+		SceneNode *GetRootNode(void);
 	private:
 		enum ManagerType m_managerType;
 		Camera *mp_cameraInUse;
 		RenderWindow *mp_renderWindow;
 		FrameListener *mp_frameListener;
 		EventListener *mp_eventListener;
+		SceneNode	*mp_rootNode;
 		bool m_ifUseShader;
 };
 

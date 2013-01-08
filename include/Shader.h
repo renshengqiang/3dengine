@@ -4,8 +4,7 @@
 
 extern GLuint g_vertexPostionLocation;
 extern GLuint g_vertexTexCoordLocation;
-extern GLuint g_PVMatrixLocation;
-extern GLuint g_MMatrixLocation;
+extern GLuint g_PVMMatrixLocation;
 extern GLuint g_samplerLocation;
 bool CreateShaders();	
 #endif

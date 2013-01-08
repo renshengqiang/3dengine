@@ -93,7 +93,7 @@ void Camera::Pitch(float angle)
 	m_viewMatrixChanged = true;
 	return;
 }
-void Camera::SetProjectionViewMatrix()
+void Camera::Render(SceneNode *rootNode, bool ifUseShader)
 {
 	if(m_projectionMatrixChanged){
 		m_perspectiveProjectionMatrix.InitPersProjTransform(m_FOV,m_aspectRadio,m_zNear,m_zFar);
@@ -104,23 +104,56 @@ void Camera::SetProjectionViewMatrix()
 		Update();
 		m_viewMatrix.InitCameraTransform(m_positionVector,m_targetVector,m_upVector);
 		m_viewMatrixChanged = false;
-		SetModelViewMatrix(&m_viewMatrix);
 	}
-	return ;
+	if(ifUseShader)
+		RenderNodeUseShader(rootNode);
+	else
+		RenderNode(rootNode);
+	return;
 }
-void Camera::SetShaderProjectionViewMatrix()
+void Camera::RenderNode(SceneNode *rootNode)
 {
-	if(m_projectionMatrixChanged){
-		m_perspectiveProjectionMatrix.InitPersProjTransform(m_FOV,m_aspectRadio,m_zNear,m_zFar);
-		m_projectionMatrixChanged = false;
+	if(rootNode!=NULL){
+		int n = rootNode->NumChildren();
+		Matrix4f modelViewMatrix;
+		for(int i=0;i<n;++i){
+			SceneNode *node = rootNode->GetChild(i);
+			Mesh *mesh = node->GetMesh();
+			node->_Update(false,false);
+			if(mesh != NULL){
+				const Matrix4f &modelMatrix = node->_GetFullTransform();
+				modelViewMatrix = m_viewMatrix * modelMatrix;
+				//set matrix
+				SetModelViewMatrix(&modelViewMatrix);
+				//render mesh
+				mesh->Render();
+			}
+			RenderNode(node);//µÝ¹éäÖÈ¾×Ónode
+		}
 	}
-	if(m_viewMatrixChanged){
-		Update();
-		m_viewMatrix.InitCameraTransform(m_positionVector,m_targetVector,m_upVector);
-		m_viewMatrixChanged = false;
-	}
+	return;	
+}
+void Camera::RenderNodeUseShader(SceneNode *rootNode)
+{
 	Matrix4f perspectViewMatrix;
 	perspectViewMatrix = m_perspectiveProjectionMatrix * m_viewMatrix;
-	SetTranslateMatrix(g_PVMatrixLocation,&perspectViewMatrix);
-	return;
+	if(rootNode!=NULL){
+		int n = rootNode->NumChildren();
+		Matrix4f perspectViewModelMatrix;
+		for(int i=0;i<n;++i){
+			SceneNode *node = rootNode->GetChild(i);
+			Mesh *mesh = node->GetMesh();
+			node->_Update(false, false);
+			if(mesh!=NULL){
+				const Matrix4f &modelMatrix = node->_GetFullTransform();
+				perspectViewModelMatrix = perspectViewMatrix * modelMatrix;
+				//set matrix
+				SetTranslateMatrix(g_PVMMatrixLocation,&perspectViewModelMatrix);
+				//render mesh
+				mesh->RenderUseShader();
+			}
+			RenderNodeUseShader(node);
+		}
+	}
+	return ;
 }

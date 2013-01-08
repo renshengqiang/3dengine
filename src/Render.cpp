@@ -193,8 +193,6 @@ PIXEL_OBJ *CreatePixelObject2(GLuint object, GLenum textureUnit, GLenum textureT
  */
 void DrawObject(int type, const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, const PIXEL_OBJ *pixelObj, struct context *contx)
 {	
-	static int s_rotateAngle = 1;
-
 	if(pixelObj){
 		glEnable(pixelObj->textureTarget);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -218,7 +216,6 @@ void DrawObject(int type, const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexObj->object);
 
 	//Rendering action
-	glRotatef(s_rotateAngle,0.0f, 1.0f, 0.0f);
 	glDrawElements(GL_TRIANGLES, indexObj->n,indexObj->dataType,0);
 	
 	if(pixelObj){
@@ -238,11 +235,6 @@ void DrawObject(int type, const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj
 }
 void DrawOjectUseShader(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, const PIXEL_OBJ *pixelObj)
 {
-	static GLfloat s_rotateAngle = 0;
-	Matrix4f modelMatrix;
-	
-	modelMatrix.InitIdentity();
-	modelMatrix.InitRotateTransform(0,s_rotateAngle++,0);
 	glEnableVertexAttribArray(g_vertexPostionLocation);
 	glEnableVertexAttribArray(g_vertexTexCoordLocation);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexObj->object);
@@ -250,7 +242,6 @@ void DrawOjectUseShader(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, 
 		vertexObj->dataType, GL_FALSE, vertexObj->span, (const GLvoid *)vertexObj->coordOffset);
 	glVertexAttribPointer(g_vertexTexCoordLocation, vertexObj->textureCoordSize, 
 		vertexObj->dataType, GL_FALSE, vertexObj->span,(const GLvoid *)vertexObj->textureOffset);
-	glUniformMatrix4fv(g_MMatrixLocation, 1, GL_TRUE, &(modelMatrix.m[0][0]));
 	glUniform1i(g_samplerLocation, 0);
 	glActiveTexture(pixelObj->textureUnit);
     glBindTexture(pixelObj->textureTarget, pixelObj->object);

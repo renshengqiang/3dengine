@@ -40,17 +40,13 @@ void Mesh::MeshEntry::Init(const std::vector<Vertex>& Vertices,
 	vertexObject = CreateVertexObject(COORD_3|TEXTURE_2,Vertices.size(),sizeof(Vertex),(float *)&Vertices[0]);
 	indexObject = CreateIndexObject(Indices.size(),(unsigned int *)&Indices[0]);
 }
-
 Mesh::Mesh()
 {
 }
-
 Mesh::~Mesh()
 {
     Clear();
 }
-
-
 void Mesh::Clear()
 {
     for (unsigned int i = 0 ; i < m_Textures.size() ; i++) {
@@ -186,6 +182,7 @@ void Mesh::Render()
 			GL_TEXTURE0,GL_TEXTURE_2D);
 
 		DrawObject(0,m_Entries[i].indexObject,m_Entries[i].vertexObject,pixelObject,NULL);
+		free(pixelObject);
 	}
 }
 void Mesh::RenderUseShader()
@@ -196,5 +193,6 @@ void Mesh::RenderUseShader()
 			GL_TEXTURE0,GL_TEXTURE_2D);
 
 		DrawOjectUseShader(m_Entries[i].indexObject,m_Entries[i].vertexObject,pixelObject);
+		free(pixelObject);
 	}
 }

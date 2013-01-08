@@ -1,15 +1,13 @@
 #ifndef _CAMERA_H
 #define _CAMERA_H
 #include <math_3d.h>
+#include <SceneNode.h>
 #include <Export.h>
 
 class ENGINE_EXPORT Camera{
 	public:
 		Camera(Vector3f pos=Vector3f(0,0,0),Vector3f target=Vector3f(0,0,-1), Vector3f up=Vector3f(0,1,0));
-		void Update();
-		void Translate(Vector3f movement);
-		void SetProjectionViewMatrix();
-		void SetShaderProjectionViewMatrix();
+		void Update();		
 		/*
 		void SetPos(Vector3f pos);
 		void SetPos(float x, float y, float z);
@@ -21,6 +19,13 @@ class ENGINE_EXPORT Camera{
 		void SetAspetcRadio(float aspectRadio);
 		void Yaw(float angle);/*水平方向旋转*/
 		void Pitch(float angle);/*竖直方向旋转*/
+		void Translate(Vector3f movement);
+
+		//////////////////////////////////////////////////////
+		void Render(SceneNode *rootNode, bool ifUseShader=false);
+		void RenderNode(SceneNode *rootNode);
+		void RenderNodeUseShader(SceneNode *rootNode);
+		
 	private:
 		//相机位置和方向相关变量 gluLookAt函数的参数都在下面
 		Vector3f m_positionVector;

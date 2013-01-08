@@ -91,27 +91,21 @@ struct Vector3f
 
         return *this;
     }
+	Vector3f& operator*=(const Vector3f &r)
+	{
+		x*=r.x;
+		y*=r.y;
+		z*=r.z;
+		return *this;
+	}
 
     Vector3f Cross(const Vector3f& v) const;
 
     Vector3f& Normalize();
 
     void Rotate(float Angle, const Vector3f& Axis);
+};
 
-    void Print() const
-    {
-        printf("(%.02f, %.02f, %.02f", x, y, z);
-    }
-};
-struct Vector4f{
-	float x,y,z,w;
-	Vector4f(float _x, float _y, float _z, float _w){
-		x = _x;
-		y = _y;
-		z = _z;
-		w = _w;
-	}
-};
 inline Vector3f operator+(const Vector3f& l, const Vector3f& r)
 {
     Vector3f Ret(l.x + r.x,
@@ -138,18 +132,54 @@ inline Vector3f operator*(const Vector3f& l, float f)
 
     return Ret;
 }
-
-
-class Matrix4f
+inline Vector3f operator*(const Vector3f &l, const Vector3f &r)
 {
-public:
+	Vector3f ret;
+	ret.x = l.x * r.x;
+	ret.y = l.y * r.y;
+	ret.z = l.z * r.z;
+	return ret;
+}
+inline Vector3f operator/(const Vector3f &l, const Vector3f &r)
+{
+	Vector3f ret;
+	ret.x = l.x/r.x;
+	ret.y = l.y/r.y;
+	ret.z = l.z/r.z;
+	return ret;
+}
+
+struct Matrix3f;
+struct Quaternion
+{
+	    float x, y, z, w;
+		Quaternion();
+	    Quaternion(float _x, float _y, float _z, float _w);
+		Quaternion(const Vector3f &axis, float angle);
+
+	    void Normalize();
+		void ToRotationMatrix (Matrix3f& kRot) const;
+		Quaternion Inverse () const;
+	    Quaternion Conjugate();  
+ };
+
+Quaternion operator*(const Quaternion& l, const Quaternion& r);
+
+Quaternion operator*(const Quaternion& q, const Vector3f& v);
+
+Vector3f operator*(const Vector3f& v, const Quaternion &q);/*其实应该是将四元数放在前面的，但是为了和上面的函数进行区分，调换了参数的顺序*/
+
+struct Matrix3f
+{
+	float m[3][3];
+};
+struct Matrix4f
+{
     float m[4][4];
 
     Matrix4f()
     {        
     }
-
-
     inline void InitIdentity()
     {
         m[0][0] = 1.0f; m[0][1] = 0.0f; m[0][2] = 0.0f; m[0][3] = 0.0f;
@@ -181,23 +211,8 @@ public:
 	void InitCameraTransform(const Vector3f& Pos, const Vector3f& Target, const Vector3f& Up);
     void InitPersProjTransform(float FOV, float Width, float Height, float zNear, float zFar);
 	void InitPersProjTransform(float FOV, float ar, float zNear, float zFar);
+	void MakeTransform(const Vector3f& position, const Vector3f& scale, const Quaternion& orientation);
 };
-
-
-struct Quaternion
-{
-    float x, y, z, w;
-	Quaternion();
-    Quaternion(float _x, float _y, float _z, float _w);
-
-    void Normalize();
-
-    Quaternion Conjugate();  
- };
-
-Quaternion operator*(const Quaternion& l, const Quaternion& r);
-
-Quaternion operator*(const Quaternion& q, const Vector3f& v);
 
 #endif	/* MATH_3D_H */
 

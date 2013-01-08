@@ -5,8 +5,7 @@
 
 GLuint g_vertexPostionLocation;
 GLuint g_vertexTexCoordLocation;
-GLuint g_PVMatrixLocation;
-GLuint g_MMatrixLocation;
+GLuint g_PVMMatrixLocation;
 GLuint g_samplerLocation;
 static const char *pVS = "											\n\
 #version 130														\n\
@@ -20,7 +19,7 @@ uniform mat4 MMatrix;												\n\
 out vec2 texCoord;													\n\
 void main()															\n\
 {																	\n\
-	gl_Position = PVMatrix*MMatrix*vec4(vertexPosition, 1.0f);		\n\
+	gl_Position = PVMatrix*vec4(vertexPosition, 1.0f);				\n\
 	texCoord=vertexTexCoord;										\n\
 }";
 static const char *pFS = "									\n\
@@ -100,13 +99,11 @@ bool CreateShaders()
 
 	g_vertexPostionLocation = glGetAttribLocation(shader_handler, "vertexPosition");
 	g_vertexTexCoordLocation = glGetAttribLocation(shader_handler, "vertexTexCoord");
-	g_PVMatrixLocation = glGetUniformLocation(shader_handler, "PVMatrix");
-	g_MMatrixLocation = glGetUniformLocation(shader_handler, "MMatrix");
+	g_PVMMatrixLocation = glGetUniformLocation(shader_handler, "PVMatrix");
 	g_samplerLocation = glGetUniformLocation(shader_handler, "sampler");
 	if( g_vertexPostionLocation == INVALID_HANDLER || 
 		g_vertexTexCoordLocation == INVALID_HANDLER ||
-		g_PVMatrixLocation == INVALID_HANDLER||
-		g_MMatrixLocation == INVALID_HANDLER||
+		g_PVMMatrixLocation == INVALID_HANDLER||
 		g_samplerLocation == INVALID_HANDLER) return false;
 	//printf("Position:%d\n", glGetAttribLocation(shader_handler, "Position"));
 	return true;
