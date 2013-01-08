@@ -137,7 +137,7 @@ void DemoApp::HandleMouseMotion(SDL_MouseMotionEvent event)
 /******************* main function ***************************/
 int main()
 {
-	DemoApp *app = new DemoApp(false);
+	DemoApp *app = new DemoApp(true);
 	pthread_create(&fpsThreadId, NULL, FpsThread, NULL);
 	app->Run();
 	return 0;

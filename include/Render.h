@@ -59,8 +59,9 @@ struct context {
 	float alpha;
 	int pixel2_obj;
 };
-bool InitRender();
-void ClearBuffer();
+bool InitGlew(void);
+bool InitRenderState(void);
+void ClearBuffer(void);
 void DrawObject(int type,const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj, struct context *contx);
 void DrawOjectUseShader(const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj);
 void SetModelViewMatrix(const Matrix4f *modelviewMatrix);

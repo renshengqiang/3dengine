@@ -30,7 +30,9 @@ RenderWindow* SceneManager::CreateRenderWindow(int w, int h)
 		fprintf(stderr, "SceneManager::CreateWindow : create a render window for OpenGL FAIL!");
 		exit(1);
 	}
-	InitRendering();
+	//±ØÐëÔÚ
+	if(InitGlew()==false)
+		mp_renderWindow->Quit(-1);
 	return mp_renderWindow;
 }
 void SceneManager::AddFrameListener(FrameListener * frameListener)
@@ -52,8 +54,8 @@ SceneNode * SceneManager::GetRootNode(void)
 void SceneManager::StartRendering(bool m_ifUseShader)
 {
 	this->m_ifUseShader = m_ifUseShader;
-	//if(InitRendering()==false && mp_renderWindow)
-		//mp_renderWindow->Quit(-1);
+	if(InitRendering()==false && mp_renderWindow)
+		mp_renderWindow->Quit(-1);
 	// rendering loop
 	while( 1 ) {
 		if(mp_eventListener) mp_eventListener->ProcessEvents(); 
@@ -62,12 +64,14 @@ void SceneManager::StartRendering(bool m_ifUseShader)
 }
 bool SceneManager::InitRendering(void)
 {
-	if(InitRender() == false)
-		return false;
 	//create and use shader
-	if(m_ifUseShader)
-		if(CreateShaders() == false && mp_renderWindow)
+	if(m_ifUseShader){
+		if(CreateShaders() == false && mp_renderWindow){
 			mp_renderWindow->Quit(-1);
+			return false;
+		}	
+	}
+	InitRenderState();
 	return true;
 }
 void SceneManager::QuitFromRendering(void)

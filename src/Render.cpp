@@ -268,20 +268,24 @@ void SetTranslateMatrix(const GLuint matrixLocation,const Matrix4f * transMatrix
 	glUniformMatrix4fv(matrixLocation, 1, GL_TRUE, &(transMatrix->m[0][0]));
 	return;
 }
-bool InitRender()
+bool InitGlew(void)
 {
 	//init glew
 	GLenum res = glewInit();
 	if(res != GLEW_OK){
-		fprintf(stderr, "SceneManager::InitRendering: glew init failure\n");
+		fprintf(stderr, "InitGlew: glew init failure\n");
 		return false;
 	}
+	return true;
+}
+bool InitRenderState(void)
+{	
 	//init state
 	glClearColor(0,0,0,0);
 	glEnable(GL_DEPTH_TEST);	
 	return true;
 }
-void ClearBuffer()
+void ClearBuffer(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
