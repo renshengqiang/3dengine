@@ -43,6 +43,10 @@ void Mesh::MeshEntry::Init(const std::vector<Vertex>& Vertices,
 Mesh::Mesh()
 {
 }
+Mesh::Mesh(const std::string &fileName)
+{
+	LoadMesh(fileName);
+}
 Mesh::~Mesh()
 {
     Clear();

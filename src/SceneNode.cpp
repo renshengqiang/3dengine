@@ -11,6 +11,9 @@ SceneNode::SceneNode():
 	m_orientation(0,0,0,1),
 	m_position(0,0,0),
 	m_scale(1,1,1),
+	m_initialPosition(0,0,0),
+	m_initialOrientation(0,0,0,1),
+	m_initialScale(1,1,1),
 	m_derivedOrientation(0,0,0,1),
 	m_derivedPosition(0,0,0),
 	m_derivedScale(1,1,1)
@@ -324,6 +327,20 @@ void SceneNode::Scale(float x, float y, float z)
 {
 	Scale(Vector3f(x, y, z));
 	return;
+}
+void SceneNode::SetInitialState(void)
+{
+	m_initialPosition = m_position;
+	m_initialOrientation = m_orientation;
+	m_initialScale = m_scale;
+}
+void SceneNode::ResetToInitialState(void)
+{
+	m_position = m_initialPosition;
+	m_orientation = m_initialOrientation;
+	m_scale = m_initialScale;
+
+	needUpdate();
 }
 
 ////////////////////////////////////////////////////////////////

@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <assert.h>
 
 #define ToRadian(x) ((x) * M_PI / 180.0f)
 #define ToDegree(x) ((x) * 180.0f / M_PI)
@@ -148,6 +149,10 @@ inline Vector3f operator/(const Vector3f &l, const Vector3f &r)
 	ret.z = l.z/r.z;
 	return ret;
 }
+inline bool operator==(const Vector3f &l, const Vector3f &r)
+{
+	return l.x==r.x && l.y==r.y && l.z==r.z;
+}
 
 struct Matrix3f;
 struct Quaternion
@@ -159,14 +164,18 @@ struct Quaternion
 
 	    void Normalize();
 		void ToRotationMatrix (Matrix3f& kRot) const;
+		float Dot (const Quaternion& rkQ) const;
+		static Quaternion nlerp(float fT, const Quaternion& rkP,const Quaternion& rkQ, bool shortestPath);
 		Quaternion Inverse () const;
 	    Quaternion Conjugate();  
+		Quaternion operator-() const;
  };
 
 Quaternion operator*(const Quaternion& l, const Quaternion& r);
-
+Quaternion operator*(const Quaternion& q, float t);
 Quaternion operator*(const Quaternion& q, const Vector3f& v);
-
+Quaternion operator+(const Quaternion& l, const Quaternion& r);
+Quaternion operator-(const Quaternion& l, const Quaternion& r);
 Vector3f operator*(const Vector3f& v, const Quaternion &q);/*其实应该是将四元数放在前面的，但是为了和上面的函数进行区分，调换了参数的顺序*/
 
 struct Matrix3f
@@ -212,6 +221,8 @@ struct Matrix4f
     void InitPersProjTransform(float FOV, float Width, float Height, float zNear, float zFar);
 	void InitPersProjTransform(float FOV, float ar, float zNear, float zFar);
 	void MakeTransform(const Vector3f& position, const Vector3f& scale, const Quaternion& orientation);
+	float Determinant() const;
+	Matrix4f& Inverse();
 };
 
 #endif	/* MATH_3D_H */

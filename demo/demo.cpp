@@ -41,6 +41,7 @@ class DemoApp:public FrameListener, public EventListener
 		SceneManager *mp_sceneManager;
 		Camera	*mp_camera;
 		RenderWindow *mp_renderWindow;
+		AnimationState *mp_animationState;
 };
 DemoApp::DemoApp(bool ifUseShader)
 {
@@ -48,8 +49,6 @@ DemoApp::DemoApp(bool ifUseShader)
 	mp_sceneManager = new SceneManager();
 	mp_renderWindow = mp_sceneManager->CreateRenderWindow(800,600);
 	mp_camera = mp_sceneManager->CreateCamera(Vector3f(0.0f,0.0f,0.0f),Vector3f(0, 0, -1.0f));
-	//初始化  水平方向180度， 竖直方向-90度,以配合SDL
-	//mp_camera = mp_sceneManager->CreateCamera(Vector3f(0.0f,0.0f,10.0f),Vector3f(-0.01f, 1.0f, 0.0f));
 	mp_sceneManager->AddFrameListener(this);
 	mp_sceneManager->AddEventListener(this);
 }
@@ -60,21 +59,38 @@ DemoApp::~DemoApp()
 bool DemoApp::FrameQueued(long timeSinceLastFrame)
 {
 	fps++;
+	//printf("elapsed time: %f\n", timeSinceLastFrame/(float)1000);
+	if(mp_animationState) mp_animationState->AddTime(timeSinceLastFrame/(float)1000);
 	return FrameListener::FrameQueued(timeSinceLastFrame);
 }
 void DemoApp::CreateScene(void)
 {
-	Mesh *mesh = new Mesh();
-	mesh->LoadMesh("phoenix_ugv.md2");
+	Mesh *mesh1 = new Mesh("./models/phoenix_ugv.md2");
+	Mesh *mesh2 = new Mesh("./models/boblampclean.md5mesh");
 	SceneNode *rootNode = mp_sceneManager->GetRootNode();
-	SceneNode *node = rootNode->CreateSceneNode();
-	node->Translate(0,0,-100, SceneNode::TS_LOCAL);
-	SceneNode *node2 = node->CreateSceneNode();
-	node2->Translate(Vector3f(100, 0, 0), SceneNode::TS_LOCAL);
-	node2->Rotate(Vector3f(0,1,0), -90, SceneNode::TS_LOCAL);
+	SceneNode *node1 = rootNode->CreateSceneNode();
+	node1->Translate(0,0,-500, SceneNode::TS_LOCAL);
+	SceneNode *node2 = rootNode->CreateSceneNode();
+	node2->Translate(Vector3f(100, 0, -500), SceneNode::TS_LOCAL);
+	node2->Rotate(Vector3f(1,0,0), -90, SceneNode::TS_LOCAL);
+	node1->AttachMesh(mesh1);
+	node2->AttachMesh(mesh2);
 
-	node->AttachMesh(mesh);
-	node2->AttachMesh(mesh);
+	Animation *animation = mp_sceneManager->CreateAnimation("transAnim",9);
+	NodeAnimationTrack *track = animation->CreateNodeTrack(0, node1);
+	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(3);
+	keyFrame->SetTranslate(Vector3f(100, 0,0));
+	keyFrame = track->CreateNodeKeyFrame(9);
+	keyFrame->SetTranslate(Vector3f(0,0,0));
+	keyFrame = track->CreateNodeKeyFrame(6);
+	keyFrame->SetTranslate(Vector3f(100, 0, 100));
+	keyFrame->SetRotation(Quaternion(Vector3f(0,1,0),90));
+	keyFrame->SetScale(Vector3f(2,2,2));
+
+	node1->SetInitialState();
+	mp_animationState= mp_sceneManager->CreateAnimationState("transAnim");
+	mp_animationState->SetEnabled(true);
+	mp_animationState->SetLoop(true);
 }
 void DemoApp::Run()
 {

@@ -48,16 +48,27 @@ class ENGINE_EXPORT SceneNode{
 		const Vector3f &GetScale(void);
 		void SetScale(const Vector3f &v);
 		void SetScale(float x, float y, float z);
-		void Translate(const Vector3f &d, TransformSpace relativeTo);
-		void Translate(float x, float y, float z, TransformSpace relativeTo);
-		void Rotate(const Quaternion &q, TransformSpace relativeTo);
-		void Rotate(const Vector3f &axis, float angle, TransformSpace relativeTo);
-		void Roll(float angle, TransformSpace relativeTo);
-		void Pitch(float angle, TransformSpace relativeTo);
-		void Yaw(float angle, TransformSpace relativeTo);
+		void Translate(const Vector3f &d, TransformSpace relativeTo=TS_PARENT);
+		void Translate(float x, float y, float z, TransformSpace relativeTo=TS_PARENT);
+		void Rotate(const Quaternion &q, TransformSpace relativeTo=TS_PARENT);
+		void Rotate(const Vector3f &axis, float angle, TransformSpace relativeTo=TS_PARENT);
+		void Roll(float angle, TransformSpace relativeTo=TS_PARENT);
+		void Pitch(float angle, TransformSpace relativeTo=TS_PARENT);
+		void Yaw(float angle, TransformSpace relativeTo=TS_PARENT);
 		void Scale(const Vector3f &v);
 		void Scale(float x, float y, float z);
-		
+		 /** Sets the current transform of this node to be the 'initial state' ie that
+            position / orientation / scale to be used as a basis for delta values used
+            in keyframe animation.
+        @remarks
+            You never need to call this method unless you plan to animate this node. If you do
+            plan to animate it, call this method once you've loaded the node with it's base state,
+            ie the state on which all keyframes are based.
+        @par
+            If you never call this method, the initial state is the identity transform, ie do nothing.
+        */
+		void SetInitialState(void);
+		void ResetToInitialState(void);
 		/////////////////////////////////////////////////////////////////////////
 		void AttachMesh(Mesh *mesh);
 		void DetachMesh(Mesh *mesh);
@@ -80,6 +91,12 @@ class ENGINE_EXPORT SceneNode{
         Vector3f m_position;
         /// Stores the scaling factor applied to this node
         Vector3f m_scale;	
+        // The position to use as a base for keyframe animation
+        Vector3f m_initialPosition;
+        // The orientation to use as a base for keyframe animation
+        Quaternion m_initialOrientation;
+        // The scale to use as a base for keyframe animation
+        Vector3f m_initialScale;
 
 		Matrix4f m_cachedTransform;
 		/** Cached combined orientation.

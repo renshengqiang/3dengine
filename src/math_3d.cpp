@@ -179,6 +179,60 @@ void Matrix4f::MakeTransform(const Vector3f& position, const Vector3f& scale, co
     // No projection term
     m[3][0] = 0; m[3][1] = 0; m[3][2] = 0; m[3][3] = 1;
 }
+float Matrix4f::Determinant() const
+{
+	return m[0][0]*m[1][1]*m[2][2]*m[3][3] - m[0][0]*m[1][1]*m[2][3]*m[3][2] + m[0][0]*m[1][2]*m[2][3]*m[3][1] - m[0][0]*m[1][2]*m[2][1]*m[3][3] 
+		+ m[0][0]*m[1][3]*m[2][1]*m[3][2] - m[0][0]*m[1][3]*m[2][2]*m[3][1] - m[0][1]*m[1][2]*m[2][3]*m[3][0] + m[0][1]*m[1][2]*m[2][0]*m[3][3] 
+		- m[0][1]*m[1][3]*m[2][0]*m[3][2] + m[0][1]*m[1][3]*m[2][2]*m[3][0] - m[0][1]*m[1][0]*m[2][2]*m[3][3] + m[0][1]*m[1][0]*m[2][3]*m[3][2] 
+		+ m[0][2]*m[1][3]*m[2][0]*m[3][1] - m[0][2]*m[1][3]*m[2][1]*m[3][0] + m[0][2]*m[1][0]*m[2][1]*m[3][3] - m[0][2]*m[1][0]*m[2][3]*m[3][1] 
+		+ m[0][2]*m[1][1]*m[2][3]*m[3][0] - m[0][2]*m[1][1]*m[2][0]*m[3][3] - m[0][3]*m[1][0]*m[2][1]*m[3][2] + m[0][3]*m[1][0]*m[2][2]*m[3][1]
+		- m[0][3]*m[1][1]*m[2][2]*m[3][0] + m[0][3]*m[1][1]*m[2][0]*m[3][2] - m[0][3]*m[1][2]*m[2][0]*m[3][1] + m[0][3]*m[1][2]*m[2][1]*m[3][0];
+}
+
+
+Matrix4f& Matrix4f::Inverse()
+{
+	// Compute the reciprocal determinant
+	float det = Determinant();
+	if(det == 0.0f) 
+	{
+		// Matrix not invertible. Setting all elements to nan is not really
+		// correct in a mathematical sense but it is easy to debug for the
+		// programmer.
+		/*const float nan = std::numeric_limits<float>::quiet_NaN();
+		*this = Matrix4f(
+			nan,nan,nan,nan,
+			nan,nan,nan,nan,
+			nan,nan,nan,nan,
+			nan,nan,nan,nan);*/
+        assert(0);
+		return *this;
+	}
+
+	float invdet = 1.0f / det;
+
+	Matrix4f res;
+	res.m[0][0] = invdet  * (m[1][1] * (m[2][2] * m[3][3] - m[2][3] * m[3][2]) + m[1][2] * (m[2][3] * m[3][1] - m[2][1] * m[3][3]) + m[1][3] * (m[2][1] * m[3][2] - m[2][2] * m[3][1]));
+	res.m[0][1] = -invdet * (m[0][1] * (m[2][2] * m[3][3] - m[2][3] * m[3][2]) + m[0][2] * (m[2][3] * m[3][1] - m[2][1] * m[3][3]) + m[0][3] * (m[2][1] * m[3][2] - m[2][2] * m[3][1]));
+	res.m[0][2] = invdet  * (m[0][1] * (m[1][2] * m[3][3] - m[1][3] * m[3][2]) + m[0][2] * (m[1][3] * m[3][1] - m[1][1] * m[3][3]) + m[0][3] * (m[1][1] * m[3][2] - m[1][2] * m[3][1]));
+	res.m[0][3] = -invdet * (m[0][1] * (m[1][2] * m[2][3] - m[1][3] * m[2][2]) + m[0][2] * (m[1][3] * m[2][1] - m[1][1] * m[2][3]) + m[0][3] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]));
+	res.m[1][0] = -invdet * (m[1][0] * (m[2][2] * m[3][3] - m[2][3] * m[3][2]) + m[1][2] * (m[2][3] * m[3][0] - m[2][0] * m[3][3]) + m[1][3] * (m[2][0] * m[3][2] - m[2][2] * m[3][0]));
+	res.m[1][1] = invdet  * (m[0][0] * (m[2][2] * m[3][3] - m[2][3] * m[3][2]) + m[0][2] * (m[2][3] * m[3][0] - m[2][0] * m[3][3]) + m[0][3] * (m[2][0] * m[3][2] - m[2][2] * m[3][0]));
+	res.m[1][2] = -invdet * (m[0][0] * (m[1][2] * m[3][3] - m[1][3] * m[3][2]) + m[0][2] * (m[1][3] * m[3][0] - m[1][0] * m[3][3]) + m[0][3] * (m[1][0] * m[3][2] - m[1][2] * m[3][0]));
+	res.m[1][3] = invdet  * (m[0][0] * (m[1][2] * m[2][3] - m[1][3] * m[2][2]) + m[0][2] * (m[1][3] * m[2][0] - m[1][0] * m[2][3]) + m[0][3] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]));
+	res.m[2][0] = invdet  * (m[1][0] * (m[2][1] * m[3][3] - m[2][3] * m[3][1]) + m[1][1] * (m[2][3] * m[3][0] - m[2][0] * m[3][3]) + m[1][3] * (m[2][0] * m[3][1] - m[2][1] * m[3][0]));
+	res.m[2][1] = -invdet * (m[0][0] * (m[2][1] * m[3][3] - m[2][3] * m[3][1]) + m[0][1] * (m[2][3] * m[3][0] - m[2][0] * m[3][3]) + m[0][3] * (m[2][0] * m[3][1] - m[2][1] * m[3][0]));
+	res.m[2][2] = invdet  * (m[0][0] * (m[1][1] * m[3][3] - m[1][3] * m[3][1]) + m[0][1] * (m[1][3] * m[3][0] - m[1][0] * m[3][3]) + m[0][3] * (m[1][0] * m[3][1] - m[1][1] * m[3][0]));
+	res.m[2][3] = -invdet * (m[0][0] * (m[1][1] * m[2][3] - m[1][3] * m[2][1]) + m[0][1] * (m[1][3] * m[2][0] - m[1][0] * m[2][3]) + m[0][3] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]));
+	res.m[3][0] = -invdet * (m[1][0] * (m[2][1] * m[3][2] - m[2][2] * m[3][1]) + m[1][1] * (m[2][2] * m[3][0] - m[2][0] * m[3][2]) + m[1][2] * (m[2][0] * m[3][1] - m[2][1] * m[3][0]));
+	res.m[3][1] = invdet  * (m[0][0] * (m[2][1] * m[3][2] - m[2][2] * m[3][1]) + m[0][1] * (m[2][2] * m[3][0] - m[2][0] * m[3][2]) + m[0][2] * (m[2][0] * m[3][1] - m[2][1] * m[3][0]));
+	res.m[3][2] = -invdet * (m[0][0] * (m[1][1] * m[3][2] - m[1][2] * m[3][1]) + m[0][1] * (m[1][2] * m[3][0] - m[1][0] * m[3][2]) + m[0][2] * (m[1][0] * m[3][1] - m[1][1] * m[3][0]));
+	res.m[3][3] = invdet  * (m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) + m[0][1] * (m[1][2] * m[2][0] - m[1][0] * m[2][2]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])); 
+	*this = res;
+
+	return *this;
+}
+
 
 Quaternion::Quaternion()
 {
@@ -231,7 +285,27 @@ Quaternion Quaternion::Inverse () const
 	  return Quaternion(0,0,0,0);
   }
 }
+float Quaternion::Dot (const Quaternion& rkQ) const
+{
+   return w*rkQ.w+x*rkQ.x+y*rkQ.y+z*rkQ.z;
+}
 
+Quaternion Quaternion::nlerp(float fT, const Quaternion& rkP,
+    const Quaternion& rkQ, bool shortestPath)
+{
+	Quaternion result;
+    float fCos = rkP.Dot(rkQ);
+	if (fCos < 0.0f && shortestPath)
+	{
+		result = rkP + ((-rkQ) - rkP)*fT;
+	}
+	else
+	{
+		result = rkP +(rkQ - rkP)*fT;
+	}
+    result.Normalize();
+    return result;
+}
 void Quaternion::ToRotationMatrix (Matrix3f& kRot) const
 {
     float fTx  = x+x;
@@ -257,6 +331,10 @@ void Quaternion::ToRotationMatrix (Matrix3f& kRot) const
     kRot.m[2][1] = fTyz+fTwx;
     kRot.m[2][2] = 1.0f-(fTxx+fTyy);
 }
+Quaternion Quaternion::operator-() const
+{
+	return Quaternion(-x,-y,-z,-w);
+}
 
 Quaternion operator*(const Quaternion& l, const Quaternion& r)
 {
@@ -268,6 +346,10 @@ Quaternion operator*(const Quaternion& l, const Quaternion& r)
     Quaternion ret(x, y, z, w);
 
     return ret;
+}
+Quaternion operator*(const Quaternion& q, float t)
+{
+	return Quaternion(q.x*t, q.y*t, q.z*t, q.w*t);
 }
 
 Quaternion operator*(const Quaternion& q, const Vector3f& v)
@@ -281,7 +363,14 @@ Quaternion operator*(const Quaternion& q, const Vector3f& v)
 
     return ret;
 }
-
+Quaternion operator+(const Quaternion& l, const Quaternion& r)
+{
+	return Quaternion(l.x+r.x,l.y+r.y,l.z+r.z,l.w+r.w);
+}
+Quaternion operator-(const Quaternion& l, const Quaternion& r)
+{
+	return Quaternion(l.x-r.x,l.y-r.y,l.z-r.z, l.w-r.w);
+}
 Vector3f operator*(const Vector3f& v, const Quaternion &q)
 {
 	// nVidia SDK implementation

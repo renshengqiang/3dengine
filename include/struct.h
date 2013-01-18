@@ -2,6 +2,26 @@
 #define _ENGINE_STRUCT_H
 #include <stdio.h>
 #include "base.h"
+/*==================================================*/
+#define GdMemMove(dst, src, n) memmove(dst, src, n)
+/*void GdMemMove(DUINT8 *dst, const DUINT8 *src, DINT n)
+{
+	if(((dst+n) <= src) || ((src+n) <= dst)) {
+		memcpy(dst, src, n);
+		return;
+	}
+
+	if (src < dst) {
+		dst += n;
+		src += n;
+		while (n--)
+			*--dst = *--src;
+	}else{
+		while (n--)
+			*dst++ = *src++;
+	}
+}*/
+/*==================================================*/
 
 /****************** gerneral double linked list structure *************/
 typedef struct gd_list {
@@ -90,6 +110,33 @@ static inline void gd_list_add_list_tail(GD_LIST *src_head, GD_LIST *dst_head)
 
 #define gd_list_for_each_prev_safe(pos, n, head)		\
 	for(pos=(head)->prev,n=(pos)->prev; pos!=(head); pos=n, n=(pos)->prev)
+		
+/*************************************************************************/
+/*        							array								 */
+/*************************************************************************/
+/*就是一个可变长的数组，切记不能放gd_list, gd_btree, gd_queue 等不能realloc的成员*/
+typedef struct gd_array {
+	DINT max_num;
+	DINT length;
+	DINT data_size;
+	void *array;/*(length*data_size),(max_num*data_size)*/
+} GD_ARRAY;
 
+#define GD_ARRAY_LENGTH(a) ((a).length)
+#define GD_ARRAY_HEAD(a) ((a).array)
+#ifdef __cplusplus
+extern "C" {
+#endif
+void GdArrayInit(GD_ARRAY *parray, DINT size);
+void GdArrayReset(GD_ARRAY *parray);
+void *GdArrayGet(GD_ARRAY *parray, DINT i);
+void *GdArrayAdd(GD_ARRAY *parray, DINT i, DINT n); /*i=-1表示在尾部增加*/
+void GdArrayDelete(GD_ARRAY *parray, DINT i, DINT n); /*i=-1表示在尾部减少*/
+void GdArrayClear(GD_ARRAY *parray, DINT i, DINT n);
+/*直接把array的大小设置为n，并且内部不多分配额外空间*/
+void *GdArraySet(GD_ARRAY *parray, DINT n);
+#ifdef __cplusplus
+}
 #endif
 
+#endif/*_ENGINE_STRUCT_H*/

@@ -9,5 +9,9 @@
 #include <SceneNode.h>
 #include <FrameListener.h>
 #include <EventListener.h>
+#include <AnimationState.h>
+#include <Animation.h>
+#include <AnimationTrack.h>
+#include <KeyFrame.h>
 
 #endif

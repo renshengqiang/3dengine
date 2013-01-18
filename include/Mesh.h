@@ -37,6 +37,7 @@ class ENGINE_EXPORT Mesh
 {
 public:
     Mesh();
+	Mesh(const std::string& Filename);
 
     ~Mesh();
 

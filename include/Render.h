@@ -16,6 +16,8 @@ void DestroyIndexObject(INDEX_OBJ *indexObject);
 #define NORMAL_SHIFT	20
 #define TEXTURE_SHIFT	16
 #define TEXTURE2_SHIFT	12
+#define BONE_SHIFT	0
+
 
 #define COORD_3 (3<<COORD_SHIFT)
 #define COORD_4 (4<<COORD_SHIFT)
@@ -42,7 +44,19 @@ void DestroyIndexObject(INDEX_OBJ *indexObject);
 #define TEXTURE2_I(n) ((n&0x0f)<<TEXTURE2_SHIFT)
 
 typedef struct VertexObj VERTEX_OBJ;
+/*
+从模型中读出数据，并构建我们自己的数据结构
+int element_size(int elements);
+int push_element(const float *first, int element, float *p)
 
+pos[3], text[2], bone[2];
+
+size = element_size(COORD_3|TEXTURE_2|BONE_2)
+p = malloc(span*n)
+	push_element(p,COORD_3, pos);
+	push_element(p,TEXTURE_2, text);
+	push_element_bone(p,BONE_2, id, bone_weight);
+*/
 VERTEX_OBJ* CreateVertexObject(int elements,  int n,int span, const float *p);
 VERTEX_OBJ* CreateVertexObject2(int elements,  int n,int span, const double *p);
 void DestroyVertexObject(VERTEX_OBJ *vertexObject);
