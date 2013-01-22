@@ -20,11 +20,8 @@ class ENGINE_EXPORT SceneManager{
 			Animation *animation;
 			GD_LIST siblingList;
 		};
-		struct AnimationStateListNode{
-			AnimationState *animationState;
-			GD_LIST siblingList;
-		};
 		SceneManager(enum ManagerType=MANAGER_GENERAL);
+		~SceneManager();
 		Camera* CreateCamera(Vector3f pos= Vector3f(0,0,0), Vector3f target=Vector3f(0,0,-1), Vector3f up=Vector3f(0,1,0));
 		RenderWindow* CreateRenderWindow(int w=800, int h=600);
 		void AddFrameListener(FrameListener *frameListener);
@@ -120,7 +117,7 @@ class ENGINE_EXPORT SceneManager{
 		SceneNode	*mp_rootNode;
 		bool m_ifUseShader;
 		GD_LIST m_animationListHead;
-		GD_LIST m_animationStateListHead;
+		AnimationStateSet m_animationStateSet;
 };
 
 #endif

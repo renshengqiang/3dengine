@@ -16,7 +16,11 @@ SceneManager::SceneManager(enum ManagerType type):
 	//所有node都是在该node下面进行创建
 	mp_rootNode = new SceneNode();
 	gd_list_init_head(&m_animationListHead);
-	gd_list_init_head(&m_animationStateListHead);
+}
+SceneManager::~SceneManager()
+{
+	DestroyAllAnimationStates();
+	DestroyAllAnimations();
 }
 Camera* SceneManager::CreateCamera(Vector3f pos, Vector3f target, Vector3f up)
 {
@@ -77,7 +81,6 @@ Animation *SceneManager::GetAnimation(const std::string &name) const
 	}
 	return NULL;
 }
-
 Animation *SceneManager::CreateAnimation(const  std::string & name,float length)
 {
 	if(HasAnimation(name)){
@@ -122,26 +125,11 @@ void SceneManager::DestroyAllAnimations(void)
 }
 bool SceneManager::HasAnimationState(const std::string &name) const
 {
-	GD_LIST *pos;
-	struct AnimationStateListNode *listNode;
-
-	gd_list_for_each(pos,&m_animationStateListHead){
-		listNode = (struct AnimationStateListNode *)GD_ENTRY(pos,struct AnimationStateListNode,siblingList);
-		if(name == listNode->animationState->GetName())
-			return true;
-	}
-	return false;	
+	return m_animationStateSet.HasAnimationState(name);
 }
 AnimationState *SceneManager::GetAnimationState(const  std::string name)
 {
-	GD_LIST *pos;
-	struct AnimationStateListNode *listNode;
-
-	gd_list_for_each(pos,&m_animationStateListHead){
-		listNode = (struct AnimationStateListNode *)GD_ENTRY(pos,struct AnimationStateListNode,siblingList);
-		if(name == listNode->animationState->GetName()) return listNode->animationState;
-	}
-	return NULL;
+	return m_animationStateSet.GetAnimationState(name);
 }
 AnimationState *SceneManager::CreateAnimationState(const  std::string & name)
 {
@@ -154,66 +142,35 @@ AnimationState *SceneManager::CreateAnimationState(const  std::string & name)
 		fprintf(stderr, "SceneManager::CreateAnimationState : Error Create Animaion State, Animation named %s does not exist\n", name.c_str());
 		return NULL;
 	}
-	AnimationState *animationState = new AnimationState(name, animation->GetLength());
-	struct AnimationStateListNode *listNode = (struct AnimationStateListNode *)malloc(sizeof(struct AnimationStateListNode));
-	listNode->animationState=animationState;
-	gd_list_add(&(listNode->siblingList),&m_animationStateListHead);
-	return animationState;	
+
+	return m_animationStateSet.CreateAnimationState(name,animation->GetLength());
 }
 void SceneManager::DestroyAnimationState(const  std::string & name)
 {
-	GD_LIST *pos;
-	struct AnimationStateListNode *listNode;
-
-	gd_list_for_each(pos,&m_animationStateListHead){
-		listNode = (struct AnimationStateListNode *)GD_ENTRY(pos,struct AnimationStateListNode,siblingList);
-		if(name == listNode->animationState->GetName()){
-			gd_list_del(pos);
-			delete listNode->animationState;
-			free(listNode);
-			return;
-		}
-	}
-	fprintf(stderr, "SceneManager::DestroyAnimationState : Error Destroy AnimationState, AnimationState named %s already exists\n", name.c_str());
-	return;	
+	m_animationStateSet.RemoveAnimationState(name);
+	return;
 }
 void SceneManager::DestroyAllAnimationStates(void)
 {
-	GD_LIST *pos, *temp;
-	struct AnimationStateListNode *listNode;
-
-	gd_list_for_each_safe(pos,temp,&m_animationStateListHead){
-		listNode = (struct AnimationStateListNode*)GD_ENTRY(pos,struct AnimationStateListNode,siblingList);
-		gd_list_del(pos);
-		delete listNode->animationState;
-		free(listNode);
-	}
-	return;	
+	m_animationStateSet.RemoveAllAnimationStates();
+	return;
 }
 void SceneManager::_ApplySceneAnimations(void)
 {
-	GD_LIST *pos;
-	struct AnimationStateListNode *animationStateListNode;
-
-	//reset animated node to initial state
-	gd_list_for_each(pos,&m_animationStateListHead){
-		animationStateListNode = (struct AnimationStateListNode*)GD_ENTRY(pos, struct AnimationStateListNode, siblingList);
-		if(animationStateListNode->animationState->GetEnabled()){
-			Animation *animation = GetAnimation(animationStateListNode->animationState->GetName());
-			for(int i=0;i<animation->GetNumNodeTracks();++i){
-				NodeAnimationTrack *track = animation->GetNodeTrack(i);
-				SceneNode *node = track->GetAssociatedNode();
-				node->ResetToInitialState();
-			}//for
-		}//if
-	}//gd_list_for_each
-	//apply animation to each node
-	gd_list_for_each(pos, &m_animationStateListHead){
-		animationStateListNode = (struct AnimationStateListNode*)GD_ENTRY(pos, struct AnimationStateListNode, siblingList);
-		if(animationStateListNode->animationState->GetEnabled()){
-			Animation *animation = GetAnimation(animationStateListNode->animationState->GetName());
-			animation->Apply(animationStateListNode->animationState->GetTimePosition());
+	int n = m_animationStateSet.GetEnabledAnimationStateNum();
+	AnimationState *animationState;
+	Animation *animation;
+	for(int i=0; i<n; ++i){
+		animationState = m_animationStateSet.GetEnabledAnimationState(i);
+		animation = GetAnimation(animationState->GetName());
+		//reset
+		for(int j=0; j<animation->GetNumNodeTracks();++j){
+			NodeAnimationTrack *track = animation->GetNodeTrack(i);
+			SceneNode *node = track->GetAssociatedNode();
+			node->ResetToInitialState();
 		}
+		//use animation
+		animation->Apply(animationState->GetTimePosition());
 	}
 	return;
 }

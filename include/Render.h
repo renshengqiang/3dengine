@@ -52,10 +52,11 @@ int push_element(const float *first, int element, float *p)
 pos[3], text[2], bone[2];
 
 size = element_size(COORD_3|TEXTURE_2|BONE_2)
-p = malloc(span*n)
+p = malloc(size*n)
 	push_element(p,COORD_3, pos);
 	push_element(p,TEXTURE_2, text);
 	push_element_bone(p,BONE_2, id, bone_weight);
+	p+=size
 */
 VERTEX_OBJ* CreateVertexObject(int elements,  int n,int span, const float *p);
 VERTEX_OBJ* CreateVertexObject2(int elements,  int n,int span, const double *p);
