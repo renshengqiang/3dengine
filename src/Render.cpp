@@ -3,6 +3,7 @@
 #include <Shader.h>
 #include <math_3d.h>
 #include <util.h>
+#include <stdio.h>
 
 typedef GLenum DataType;
 struct IndexObj {
@@ -37,7 +38,42 @@ struct PixelObj{
 	GLenum textureUnit;
 	GLuint object;	
 };
-
+void _GetGLErrorInfo()
+{
+	int errorId = glGetError();
+	switch (errorId)
+	{
+		case GL_NO_ERROR:
+			return;
+		case GL_INVALID_ENUM:
+			printf ("GL Invalid Enum\n");
+			return;
+		case GL_INVALID_VALUE:
+			printf ("GL Invalid Value\n");
+			return;
+		case GL_INVALID_OPERATION:
+			printf ("GL Invalid Operation\n");
+			return;
+		case GL_OUT_OF_MEMORY:
+			printf ("GL Out Of Memory\n");
+			return;
+		case GL_INVALID_FRAMEBUFFER_OPERATION:
+			printf ("GL Invalid FrameBuffer Operation\n");
+			return;
+		case  GL_STACK_OVERFLOW:
+			printf ("GL Stack Overflow\n");
+			return;
+		case GL_STACK_UNDERFLOW:
+			printf ("GL Stack Underflow\n");
+			return;
+		case GL_TABLE_TOO_LARGE:
+			printf ("GL Table Too Large\n");
+			return;
+		default:
+			printf("GL Undefined Error\n");
+			return;
+	};
+}
 INDEX_OBJ* CreateIndexObject(int n, const unsigned int *p)
 {
 	struct IndexObj *obj = (struct IndexObj*)malloc(sizeof(struct IndexObj));	
@@ -69,7 +105,16 @@ void DestroyIndexObject(INDEX_OBJ *indexObject)
 		glDeleteBuffers(1, &(indexObject->object));
 	}
 }
-
+void UpdateVertexObject(VERTEX_OBJ *obj,const float *p)
+{
+	if(obj){
+		glBindBuffer(GL_ARRAY_BUFFER, obj->object);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, obj->n * obj->span, p);
+		//glBufferData(GL_ARRAY_BUFFER, size, p, GL_DYNAMIC_DRAW);
+		_GetGLErrorInfo();
+	}
+	return;
+}
 VERTEX_OBJ* CreateVertexObject(int elements, int n, int span, const float *p)
 {
 	int dataOffset = 0;
@@ -77,7 +122,8 @@ VERTEX_OBJ* CreateVertexObject(int elements, int n, int span, const float *p)
 	if(obj!=NULL){
 		glGenBuffers(1, &(obj->object));
 		glBindBuffer(GL_ARRAY_BUFFER, obj->object);
-		glBufferData(GL_ARRAY_BUFFER, n*span, p, GL_STATIC_DRAW);
+		//glBufferData(GL_ARRAY_BUFFER, n*span, p, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, n*span, p, GL_DYNAMIC_DRAW);
 		obj->span = span;
 		obj->n = n;
 		obj->dataType = GL_FLOAT;

@@ -58,6 +58,7 @@ p = malloc(size*n)
 	push_element_bone(p,BONE_2, id, bone_weight);
 	p+=size
 */
+void UpdateVertexObject(VERTEX_OBJ *obj,const float *p);
 VERTEX_OBJ* CreateVertexObject(int elements,  int n,int span, const float *p);
 VERTEX_OBJ* CreateVertexObject2(int elements,  int n,int span, const double *p);
 void DestroyVertexObject(VERTEX_OBJ *vertexObject);

@@ -58,6 +58,89 @@ void Vector3f::Rotate(float Angle, const Vector3f& Axe)
     z = W.z;
 }
 
+Matrix4f::Matrix4f(const aiMatrix4x4& AssimpMatrix)
+{
+	m[0][0] = AssimpMatrix.a1; m[0][1] = AssimpMatrix.a2; m[0][2] = AssimpMatrix.a3; m[0][3] = AssimpMatrix.a4;
+	m[1][0] = AssimpMatrix.b1; m[1][1] = AssimpMatrix.b2; m[1][2] = AssimpMatrix.b3; m[1][3] = AssimpMatrix.b4;
+	m[2][0] = AssimpMatrix.c1; m[2][1] = AssimpMatrix.c2; m[2][2] = AssimpMatrix.c3; m[2][3] = AssimpMatrix.c4;
+	m[3][0] = AssimpMatrix.d1; m[3][1] = AssimpMatrix.d2; m[3][2] = AssimpMatrix.d3; m[3][3] = AssimpMatrix.d4;
+}
+
+Matrix4f::Matrix4f(const aiMatrix3x3& AssimpMatrix)
+{
+	m[0][0] = AssimpMatrix.a1; m[0][1] = AssimpMatrix.a2; m[0][2] = AssimpMatrix.a3; m[0][3] = 0.0f;
+	m[1][0] = AssimpMatrix.b1; m[1][1] = AssimpMatrix.b2; m[1][2] = AssimpMatrix.b3; m[1][3] = 0.0f;
+	m[2][0] = AssimpMatrix.c1; m[2][1] = AssimpMatrix.c2; m[2][2] = AssimpMatrix.c3; m[2][3] = 0.0f;
+	m[3][0] = 0.0f			 ; m[3][1] = 0.0f			; m[3][2] = 0.0f		   ; m[3][3] = 1.0f;
+}
+Matrix4f::Matrix4f(float a00, float a01, float a02, float a03,
+		 float a10, float a11, float a12, float a13,
+		 float a20, float a21, float a22, float a23,
+		 float a30, float a31, float a32, float a33)
+{
+	m[0][0] = a00; m[0][1] = a01; m[0][2] = a02; m[0][3] = a03;
+	m[1][0] = a10; m[1][1] = a11; m[1][2] = a12; m[1][3] = a13;
+	m[2][0] = a20; m[2][1] = a21; m[2][2] = a22; m[2][3] = a23;
+	m[3][0] = a30; m[3][1] = a31; m[3][2] = a32; m[3][3] = a33; 	   
+}
+void Matrix4f::InitIdentity()
+{
+	m[0][0] = 1.0f; m[0][1] = 0.0f; m[0][2] = 0.0f; m[0][3] = 0.0f;
+	m[1][0] = 0.0f; m[1][1] = 1.0f; m[1][2] = 0.0f; m[1][3] = 0.0f;
+	m[2][0] = 0.0f; m[2][1] = 0.0f; m[2][2] = 1.0f; m[2][3] = 0.0f;
+	m[3][0] = 0.0f; m[3][1] = 0.0f; m[3][2] = 0.0f; m[3][3] = 1.0f;
+}
+void Matrix4f::InitZero()
+{
+	m[0][0] = 0.0f; m[0][1] = 0.0f; m[0][2] = 0.0f; m[0][3] = 0.0f;
+	m[1][0] = 0.0f; m[1][1] = 0.0f; m[1][2] = 0.0f; m[1][3] = 0.0f;
+	m[2][0] = 0.0f; m[2][1] = 0.0f; m[2][2] = 0.0f; m[2][3] = 0.0f;
+	m[3][0] = 0.0f; m[3][1] = 0.0f; m[3][2] = 0.0f; m[3][3] = 0.0f;	
+}
+Matrix4f Matrix4f::Transpose() const
+{
+	Matrix4f n;
+	
+	for (unsigned int i = 0 ; i < 4 ; i++) {
+		for (unsigned int j = 0 ; j < 4 ; j++) {
+			n.m[i][j] = m[j][i];
+		}
+	}
+	
+	return n;
+}
+Matrix4f Matrix4f::operator*(const Matrix4f& Right) const
+{
+	Matrix4f Ret;
+
+	for (unsigned int i = 0 ; i < 4 ; i++) {
+		for (unsigned int j = 0 ; j < 4 ; j++) {
+			Ret.m[i][j] = m[i][0] * Right.m[0][j] +
+						  m[i][1] * Right.m[1][j] +
+						  m[i][2] * Right.m[2][j] +
+						  m[i][3] * Right.m[3][j];
+		}
+	}
+
+	return Ret;
+}
+Matrix4f Matrix4f::operator*(float weight) const
+{
+	Matrix4f Ret;
+
+	for(int i=0;i<4;++i){
+		for(int j=0;j<4;++j)
+			Ret.m[i][j] = m[i][j] * weight;
+	}
+	return Ret;
+}
+Matrix4f &Matrix4f::operator+=(const Matrix4f &Right)
+{
+	for(int i=0;i<4;++i)
+		for(int j=0;j<4;++j)
+			m[i][j] += Right.m[i][j];
+	return *this;
+}
 
 void Matrix4f::InitScaleTransform(float ScaleX, float ScaleY, float ScaleZ)
 {
@@ -383,4 +466,20 @@ Vector3f operator*(const Vector3f& v, const Quaternion &q)
 
 	return v + uv + uuv;
 }
+/*
+	Vector transformation using '*'
+	@remarks
+	transforms the given 3-D vector by the matrix, projection the result back into w=1
+	@note
+	This meas that the initial w=1.0, and then all the three elements of the resulting 3-D vector are diveded by the resulting w
+*/
+Vector3f operator*(const Matrix4f &M,const Vector3f &V)
+{
+	Vector3f ret;
+	float fInvW = 1.0f /(M.m[3][0] * V.x + M.m[3][1] * V.y + M.m[3][2] * V.z + M.m[3][3]);
 
+	ret.x = (M.m[0][0]*V.x + M.m[0][1]*V.y + M.m[0][2]*V.z + M.m[0][3])*fInvW;
+	ret.y = (M.m[1][0]*V.x + M.m[1][1]*V.y + M.m[1][2]*V.z + M.m[1][3])*fInvW;
+	ret.z = (M.m[2][0]*V.x + M.m[2][1]*V.y + M.m[2][2]*V.z + M.m[2][3])*fInvW;
+	return ret;
+}

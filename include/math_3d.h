@@ -18,7 +18,9 @@
 
 #ifndef MATH_3D_H
 #define	MATH_3D_H
-
+#include <vector3.h>
+#include <matrix3x3.h>
+#include <matrix4x4.h>
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -186,33 +188,20 @@ struct Matrix4f
 {
     float m[4][4];
 
-    Matrix4f()
-    {        
-    }
-    inline void InitIdentity()
-    {
-        m[0][0] = 1.0f; m[0][1] = 0.0f; m[0][2] = 0.0f; m[0][3] = 0.0f;
-        m[1][0] = 0.0f; m[1][1] = 1.0f; m[1][2] = 0.0f; m[1][3] = 0.0f;
-        m[2][0] = 0.0f; m[2][1] = 0.0f; m[2][2] = 1.0f; m[2][3] = 0.0f;
-        m[3][0] = 0.0f; m[3][1] = 0.0f; m[3][2] = 0.0f; m[3][3] = 1.0f;
-    }
-
-    inline Matrix4f operator*(const Matrix4f& Right) const
-    {
-        Matrix4f Ret;
-
-        for (unsigned int i = 0 ; i < 4 ; i++) {
-            for (unsigned int j = 0 ; j < 4 ; j++) {
-                Ret.m[i][j] = m[i][0] * Right.m[0][j] +
-                              m[i][1] * Right.m[1][j] +
-                              m[i][2] * Right.m[2][j] +
-                              m[i][3] * Right.m[3][j];
-            }
-        }
-
-        return Ret;
-    }
-
+    inline Matrix4f(){};
+	Matrix4f(const aiMatrix4x4& AssimpMatrix);
+    
+    Matrix4f(const aiMatrix3x3& AssimpMatrix);
+	Matrix4f(float a00, float a01, float a02, float a03,
+             float a10, float a11, float a12, float a13,
+             float a20, float a21, float a22, float a23,
+             float a30, float a31, float a32, float a33);
+    void InitIdentity();
+	void InitZero();
+	Matrix4f Transpose() const;
+    Matrix4f operator*(const Matrix4f& Right) const;
+	Matrix4f operator*(float weight) const;
+	Matrix4f &operator+=(const Matrix4f &Right);
     void InitScaleTransform(float ScaleX, float ScaleY, float ScaleZ);
     void InitRotateTransform(float RotateX, float RotateY, float RotateZ);
     void InitTranslationTransform(float x, float y, float z);
@@ -221,9 +210,9 @@ struct Matrix4f
     void InitPersProjTransform(float FOV, float Width, float Height, float zNear, float zFar);
 	void InitPersProjTransform(float FOV, float ar, float zNear, float zFar);
 	void MakeTransform(const Vector3f& position, const Vector3f& scale, const Quaternion& orientation);
-	float Determinant() const;
-	Matrix4f& Inverse();
+	float Determinant() const; //计算对应行列式的值
+	Matrix4f& Inverse();//计算逆矩阵
 };
-
+Vector3f operator*(const Matrix4f &matrix,const Vector3f &vector);
 #endif	/* MATH_3D_H */
 

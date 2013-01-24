@@ -56,17 +56,25 @@ DemoApp::~DemoApp()
 {
 	delete mp_sceneManager;
 }
+Mesh *mesh2=0;
 bool DemoApp::FrameQueued(long timeSinceLastFrame)
-{
+{	
+	static float time = 0;
+	time+=timeSinceLastFrame/(float)1000;
 	fps++;
-	//printf("elapsed time: %f\n", timeSinceLastFrame/(float)1000);
 	if(mp_animationState) mp_animationState->AddTime(timeSinceLastFrame/(float)1000);
+	if(mesh2){
+		//if(time<2)
+		mesh2->BoneTransform(time);
+		//if(time<2)
+		mesh2->UpdateMeshEntry();
+	}
 	return FrameListener::FrameQueued(timeSinceLastFrame);
 }
 void DemoApp::CreateScene(void)
 {
 	Mesh *mesh1 = new Mesh("./models/phoenix_ugv.md2");
-	Mesh *mesh2 = new Mesh("./models/boblampclean.md5mesh");
+	mesh2 = new Mesh("./models/boblampclean.md5mesh");
 	SceneNode *rootNode = mp_sceneManager->GetRootNode();
 	SceneNode *node1 = rootNode->CreateSceneNode();
 	node1->Translate(0,0,-500, SceneNode::TS_LOCAL);
@@ -91,6 +99,7 @@ void DemoApp::CreateScene(void)
 	mp_animationState= mp_sceneManager->CreateAnimationState("transAnim");
 	mp_animationState->SetEnabled(true);
 	mp_animationState->SetLoop(true);
+
 }
 void DemoApp::Run()
 {
@@ -153,7 +162,7 @@ void DemoApp::HandleMouseMotion(SDL_MouseMotionEvent event)
 /******************* main function ***************************/
 int main()
 {
-	DemoApp *app = new DemoApp(true);
+	DemoApp *app = new DemoApp(false);
 	pthread_create(&fpsThreadId, NULL, FpsThread, NULL);
 	app->Run();
 	return 0;
