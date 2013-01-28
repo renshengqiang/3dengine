@@ -214,6 +214,7 @@ bool Mesh::InitMaterials(const aiScene* pScene, const std::string& Filename)
 
     return Ret;
 }
+#include <Timer.h>
 void Mesh::Render()
 {
 	for(unsigned int i=0; i < m_Entries.size(); ++i){
@@ -221,8 +222,9 @@ void Mesh::Render()
 		PIXEL_OBJ *pixelObject = CreatePixelObject2(m_Textures[MaterialIndex]->GetTextureObj(),
 			GL_TEXTURE0,GL_TEXTURE_2D);
 		struct MeshEntry &meshEntry = m_Entries[i];
-		UpdateVertexObject(meshEntry.vertexObject,(float*)&meshEntry.finalVertexVector[0]);
 		DrawObject(0,meshEntry.indexObject,meshEntry.vertexObject,pixelObject,NULL);
+		UpdateMeshEntry(meshEntry);
+		UpdateVertexObject(meshEntry.vertexObject,(float*)&meshEntry.finalVertexVector[0]);
 		free(pixelObject);
 	}
 }
@@ -232,7 +234,9 @@ void Mesh::RenderUseShader()
 		const unsigned int MaterialIndex = m_Entries[i].MaterialIndex;
 		PIXEL_OBJ *pixelObject = CreatePixelObject2(m_Textures[MaterialIndex]->GetTextureObj(),
 			GL_TEXTURE0,GL_TEXTURE_2D);
-		
+		struct MeshEntry &meshEntry = m_Entries[i];
+		UpdateMeshEntry(meshEntry);
+		UpdateVertexObject(meshEntry.vertexObject,(float*)&meshEntry.finalVertexVector[0]);
 		DrawOjectUseShader(m_Entries[i].indexObject,m_Entries[i].vertexObject,pixelObject);
 		free(pixelObject);
 	}
@@ -240,37 +244,34 @@ void Mesh::RenderUseShader()
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// skeleton animation /////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-void Mesh::UpdateMeshEntry(void)
+void Mesh::UpdateMeshEntry(struct MeshEntry &meshEntry)
 {
-	for(unsigned i=0; i<m_Entries.size();++i){
-		struct MeshEntry &meshEntry = m_Entries[i];
-		for(unsigned j=0; j<meshEntry.vertexVector.size();++j){
-			struct Vertex &vertex = meshEntry.vertexVector[j];
-			struct Vertex &finalVertex = meshEntry.finalVertexVector[j];
-			struct VertexBoneAttachInfo &bonesInfo = meshEntry.vertexBoneAttachInfoVector[j];
-			Matrix4f finalMatrix;
-			if(bonesInfo.GetVectorSize()>0){
-				finalMatrix.InitZero();
-				for(unsigned k=0; k<bonesInfo.GetVectorSize();++k){
-					const struct VertexBoneAttachWeight &boneWeight = bonesInfo.GetBoneWeight(k);
-					finalMatrix += (m_boneInfo[boneWeight.m_boneId].m_finalTransformation * boneWeight.weight);
-					//finalMatrix.InitIdentity();
-				}//for k
-			}//if
-			else
-				finalMatrix.InitIdentity();
-			finalVertex.m_pos = finalMatrix * vertex.m_pos;
-		}//for j
-	}//for i
+	Matrix4f finalMatrix;
+	for(unsigned i=0; i<meshEntry.vertexVector.size();++i){
+		struct Vertex &vertex = meshEntry.vertexVector[i];
+		struct Vertex &finalVertex = meshEntry.finalVertexVector[i];
+		struct VertexBoneAttachInfo &bonesInfo = meshEntry.vertexBoneAttachInfoVector[i];
+		if(bonesInfo.vertexBoneAttachWeightVector.size()>0){
+			finalMatrix.InitZero();
+			for(unsigned j=0; j<bonesInfo.vertexBoneAttachWeightVector.size();++j){
+				const struct VertexBoneAttachWeight &boneWeight = bonesInfo.vertexBoneAttachWeightVector[j];
+				finalMatrix += (m_boneInfo[boneWeight.m_boneId].m_finalTransformation * boneWeight.weight);
+			}
+		}
+		else
+			finalMatrix.InitIdentity();
+		finalVertex.m_pos = finalMatrix * vertex.m_pos;
+	}
+	return;
 }
 void Mesh::BoneTransform(float timeInSeconds)
 {
 	Matrix4f identity;
-	identity.InitIdentity();
-
 	float ticksPerSecond = (float)(mp_scene->mAnimations[0]->mTicksPerSecond!=0 ? mp_scene->mAnimations[0]->mTicksPerSecond : 24.0f);
 	float timeInTicks = ticksPerSecond * timeInSeconds;
 	float animationTime = fmodf(timeInTicks, (float)mp_scene->mAnimations[0]->mDuration);
+	identity.InitIdentity();
+
 	ReadNodeHeirarchy(animationTime,mp_scene->mRootNode,identity);
 	return;
 }
@@ -300,7 +301,7 @@ void Mesh::ReadNodeHeirarchy(float animationTime,const aiNode * pNode,const Matr
 		translationM.InitTranslationTransform(translation.x, translation.y, translation.z);
 
 		//combine the above transformations
-		nodeTransformation = translationM * rotationM * scalingM;		
+		nodeTransformation = translationM * rotationM * scalingM;	
 	}
 
 	Matrix4f globalTranformation = parentTransform * nodeTransformation;
@@ -332,7 +333,7 @@ void Mesh::CalcInterpolatedPosition(aiVector3D & out,float animationTime,const a
 	}
 	unsigned positionIndex = FindPosition(animationTime,pNodeAnim);
 	unsigned nextPositionIndex = positionIndex + 1;
-	float deltaTime = (float)(pNodeAnim->mPositionKeys[nextPositionIndex].mTime = pNodeAnim->mPositionKeys[positionIndex].mTime);
+	float deltaTime = (float)(pNodeAnim->mPositionKeys[nextPositionIndex].mTime - pNodeAnim->mPositionKeys[positionIndex].mTime);
 	float factor = (animationTime - (float)pNodeAnim->mPositionKeys[positionIndex].mTime)/deltaTime;
 	const aiVector3D &start = pNodeAnim->mPositionKeys[positionIndex].mValue;
 	const aiVector3D &end = pNodeAnim->mPositionKeys[nextPositionIndex].mValue;

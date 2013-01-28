@@ -34,14 +34,6 @@ struct VertexBoneAttachInfo{
 		vertexBoneAttachWeightVector.push_back(attachWeight);
 		return;
 	}
-	unsigned GetVectorSize(void)
-	{
-		return vertexBoneAttachWeightVector.size();
-	}
-	const struct VertexBoneAttachWeight &GetBoneWeight(unsigned index)
-	{	
-		return vertexBoneAttachWeightVector[index];
-	}
 };
 struct Vertex
 {
@@ -70,7 +62,6 @@ public:
 
     struct MeshEntry {
         MeshEntry();
-
         ~MeshEntry();
 
         void Init(const std::vector<Vertex>& Vertices,
@@ -113,7 +104,6 @@ public:
     void RenderUseShader();
 	void Render();
 	void BoneTransform(float timeInSeconds);
-	void UpdateMeshEntry(void);
 
 private:
     bool InitFromScene(const aiScene* pScene, const std::string& Filename);
@@ -130,7 +120,9 @@ private:
 	void CalcInterpolatedPosition(aiVector3D &out, float animationTime, const aiNodeAnim *pNodeAnim);
 	void CalcInterpolatedRotation(aiQuaternion &out, float animationTime, const aiNodeAnim *pNodeAnim);
 	void CalcInterpolatedScaling(aiVector3D &out, float animationTime, const aiNodeAnim *pNodeAnim);
-	
+	void UpdateMeshEntry(struct MeshEntry &meshEntry);
+
+private:
 	const aiScene *mp_scene;
 	Assimp::Importer m_importer;
 	//submesh

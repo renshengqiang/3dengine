@@ -20,6 +20,7 @@ void* FpsThread(void*)
         //sleep
         select(1, NULL, NULL, NULL, &tv);
         printf("fps: %d\n", fps);
+		fflush(stdout);
         fps = 0;
     }
 	return NULL;
@@ -41,7 +42,8 @@ class DemoApp:public FrameListener, public EventListener
 		SceneManager *mp_sceneManager;
 		Camera	*mp_camera;
 		RenderWindow *mp_renderWindow;
-		AnimationState *mp_animationState;
+		AnimationState *mp_animationState1,*mp_animationState2;
+		Mesh *mesh1,*mesh2;
 };
 DemoApp::DemoApp(bool ifUseShader)
 {
@@ -51,29 +53,34 @@ DemoApp::DemoApp(bool ifUseShader)
 	mp_camera = mp_sceneManager->CreateCamera(Vector3f(0.0f,0.0f,0.0f),Vector3f(0, 0, -1.0f));
 	mp_sceneManager->AddFrameListener(this);
 	mp_sceneManager->AddEventListener(this);
+	mesh1=NULL;
+	mesh2=NULL;
+	mp_animationState1 = NULL;
+	mp_animationState2 = NULL;
 }
 DemoApp::~DemoApp()
 {
 	delete mp_sceneManager;
 }
-Mesh *mesh2=0;
 bool DemoApp::FrameQueued(long timeSinceLastFrame)
 {	
 	static float time = 0;
 	time+=timeSinceLastFrame/(float)1000;
 	fps++;
-	if(mp_animationState) mp_animationState->AddTime(timeSinceLastFrame/(float)1000);
+	if(mp_animationState1){
+		mp_animationState1->AddTime(timeSinceLastFrame/(float)1000);
+	}
+	if(mp_animationState2){
+		mp_animationState2->AddTime(timeSinceLastFrame/(float)1000);
+	}
 	if(mesh2){
-		//if(time<2)
 		mesh2->BoneTransform(time);
-		//if(time<2)
-		mesh2->UpdateMeshEntry();
 	}
 	return FrameListener::FrameQueued(timeSinceLastFrame);
 }
 void DemoApp::CreateScene(void)
 {
-	Mesh *mesh1 = new Mesh("./models/phoenix_ugv.md2");
+	mesh1 = new Mesh("./models/phoenix_ugv.md2");
 	mesh2 = new Mesh("./models/boblampclean.md5mesh");
 	SceneNode *rootNode = mp_sceneManager->GetRootNode();
 	SceneNode *node1 = rootNode->CreateSceneNode();
@@ -82,24 +89,43 @@ void DemoApp::CreateScene(void)
 	node2->Translate(Vector3f(100, 0, -500), SceneNode::TS_LOCAL);
 	node2->Rotate(Vector3f(1,0,0), -90, SceneNode::TS_LOCAL);
 	node1->AttachMesh(mesh1);
-	node2->AttachMesh(mesh2);
+	node2->AttachMesh(mesh2);	
 
-	Animation *animation = mp_sceneManager->CreateAnimation("transAnim",9);
+	//create on scenenode animation
+	Animation *animation = mp_sceneManager->CreateAnimation("transAnim1",9);
 	NodeAnimationTrack *track = animation->CreateNodeTrack(0, node1);
 	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(3);
-	keyFrame->SetTranslate(Vector3f(100, 0,0));
+	keyFrame->SetTranslate(Vector3f(-100, 0,0));
 	keyFrame = track->CreateNodeKeyFrame(9);
 	keyFrame->SetTranslate(Vector3f(0,0,0));
 	keyFrame = track->CreateNodeKeyFrame(6);
-	keyFrame->SetTranslate(Vector3f(100, 0, 100));
-	keyFrame->SetRotation(Quaternion(Vector3f(0,1,0),90));
+	keyFrame->SetTranslate(Vector3f(-100, 0, -100));
+	keyFrame->SetRotation(Quaternion(Vector3f(0,1,0),-90));
 	keyFrame->SetScale(Vector3f(2,2,2));
 
 	node1->SetInitialState();
-	mp_animationState= mp_sceneManager->CreateAnimationState("transAnim");
-	mp_animationState->SetEnabled(true);
-	mp_animationState->SetLoop(true);
+	mp_animationState1= mp_sceneManager->CreateAnimationState("transAnim1");
+	mp_animationState1->SetEnabled(true);
+	mp_animationState1->SetLoop(true);
+	
+	//another scenenode animation
+	animation = mp_sceneManager->CreateAnimation("transAnim2",5.792);
+	track = animation->CreateNodeTrack(0, node2);
+	keyFrame = track->CreateNodeKeyFrame(1.448);
+	keyFrame->SetTranslate(Vector3f(0, 0, 250));
+	keyFrame = track->CreateNodeKeyFrame(2.896);
+	keyFrame->SetTranslate(Vector3f(0, 0, 250));
+	keyFrame->SetRotation(Quaternion(Vector3f(0,1,0),45));
+	keyFrame = track->CreateNodeKeyFrame(4.344);
+	keyFrame->SetTranslate(Vector3f(0, 0, 250));
+	keyFrame->SetRotation(Quaternion(Vector3f(0,1,0),-45));
+	keyFrame = track->CreateNodeKeyFrame(5.792);
 
+	node2->SetInitialState();
+	mp_animationState2= mp_sceneManager->CreateAnimationState("transAnim2");
+	mp_animationState2->SetEnabled(true);
+	mp_animationState2->SetLoop(true);
+	
 }
 void DemoApp::Run()
 {
@@ -162,7 +188,7 @@ void DemoApp::HandleMouseMotion(SDL_MouseMotionEvent event)
 /******************* main function ***************************/
 int main()
 {
-	DemoApp *app = new DemoApp(false);
+	DemoApp *app = new DemoApp(true);
 	pthread_create(&fpsThreadId, NULL, FpsThread, NULL);
 	app->Run();
 	return 0;
