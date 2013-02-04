@@ -1,37 +1,54 @@
 #include <Shader.h>
+#include <util.h>
 #include <string.h>
 #include <stdio.h>
-#define INVALID_HANDLER 0xffffffff
 
 GLuint g_vertexPostionLocation;
 GLuint g_vertexTexCoordLocation;
+GLuint g_vertexBoneIdLocation;
+GLuint g_vertexBoneWeightLocation;
+GLuint g_hasBonesLocation;
 GLuint g_PVMMatrixLocation;
 GLuint g_samplerLocation;
+GLuint g_boneTransformLocation[MAX_BONE_NUM];
+
 static const char *pVS = "											\n\
 #version 130														\n\
-																	\n\
+const int MAX_BONE_NUM = 100;										\n\
+																\n\
 in vec3 vertexPosition;												\n\
 in vec2 vertexTexCoord;												\n\
-																	\n\
-uniform mat4 PVMatrix;												\n\
-uniform mat4 MMatrix;												\n\
-																	\n\
+in ivec4 boneIds;													\n\
+in vec4  weights;													\n\
+uniform  bool hasBones;												\n\
+																\n\
+uniform mat4 PVMMatrix;												\n\
+uniform mat4 boneTransform[MAX_BONE_NUM];							\n\
+																\n\
 out vec2 texCoord;													\n\
-void main()															\n\
-{																	\n\
-	gl_Position = PVMatrix*vec4(vertexPosition, 1.0f);				\n\
-	texCoord=vertexTexCoord;										\n\
+void main()														\n\
+{																\n\
+	mat4 boneTrans = mat4(1.0);										\n\
+	if(hasBones){													\n\
+		boneTrans = boneTransform[boneIds[0]] * weights[0];			\n\
+		boneTrans += boneTransform[boneIds[1]] * weights[1];			\n\
+		boneTrans += boneTransform[boneIds[2]] * weights[2];			\n\
+		boneTrans += boneTransform[boneIds[3]] * weights[3];			\n\
+	}															\n\
+																\n\
+	gl_Position = PVMMatrix*boneTrans*vec4(vertexPosition, 1.0f);			\n\
+	texCoord = vertexTexCoord;										\n\
 }";
-static const char *pFS = "									\n\
-#version 130												\n\
-															\n\
-in vec2 texCoord;											\n\
-uniform sampler2D sampler;									\n\
-															\n\
-out vec4 FragColor;											\n\
-void main()													\n\
-{															\n\
-	FragColor = texture2D(sampler, texCoord.st);			\n\
+static const char *pFS = "											\n\
+#version 130														\n\
+																\n\
+in vec2 texCoord;													\n\
+uniform sampler2D sampler;											\n\
+																\n\
+out vec4 FragColor;													\n\
+void main()														\n\
+{																\n\
+	FragColor = texture2D(sampler, texCoord.st);						\n\
 }";
 const char* _shader_type_2_string(int type)
 {
@@ -99,12 +116,26 @@ bool CreateShaders()
 
 	g_vertexPostionLocation = glGetAttribLocation(shader_handler, "vertexPosition");
 	g_vertexTexCoordLocation = glGetAttribLocation(shader_handler, "vertexTexCoord");
-	g_PVMMatrixLocation = glGetUniformLocation(shader_handler, "PVMatrix");
+	g_vertexBoneIdLocation = glGetAttribLocation(shader_handler, "boneIds");
+	g_vertexBoneWeightLocation = glGetAttribLocation(shader_handler, "weights");
+	g_hasBonesLocation = glGetUniformLocation(shader_handler, "hasBones");
+	g_PVMMatrixLocation = glGetUniformLocation(shader_handler, "PVMMatrix");
 	g_samplerLocation = glGetUniformLocation(shader_handler, "sampler");
 	if( g_vertexPostionLocation == INVALID_HANDLER || 
 		g_vertexTexCoordLocation == INVALID_HANDLER ||
+		g_vertexBoneIdLocation == INVALID_OBJECT_VALUE ||
+		g_vertexBoneWeightLocation == INVALID_OBJECT_VALUE ||
+		g_hasBonesLocation == INVALID_HANDLER ||
 		g_PVMMatrixLocation == INVALID_HANDLER||
-		g_samplerLocation == INVALID_HANDLER) return false;
+		g_samplerLocation == INVALID_HANDLER) {
+		return false;
+	}
+	for(unsigned int i=0; i < MAX_BONE_NUM; ++i){
+		char name[128];
+		memset(name, 0, sizeof(name));
+		snprintf(name, sizeof(name), "boneTransform[%d]", i);
+		g_boneTransformLocation[i] = glGetUniformLocation(shader_handler, name);
+	}
 	//printf("Position:%d\n", glGetAttribLocation(shader_handler, "Position"));
 	return true;
 }

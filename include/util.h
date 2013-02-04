@@ -32,6 +32,9 @@
 #define SNPRINTF snprintf
 #endif
 #define INVALID_OBJECT_VALUE 0xffffffff
+#define INVALID_MATERIAL 0xffffffff
+#define INVALID_HANDLER 0xffffffff
+
 
 #define SAFE_DELETE(p) if (p) { delete p; p = NULL; }
 

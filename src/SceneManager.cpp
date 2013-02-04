@@ -196,6 +196,7 @@ bool SceneManager::InitRendering(void)
 	//create and use shader
 	if(m_ifUseShader){
 		if(CreateShaders() == false && mp_renderWindow){
+			fprintf(stderr, "SceneManager::InitRendering : create shader error\n");
 			mp_renderWindow->Quit(-1);
 			return false;
 		}	

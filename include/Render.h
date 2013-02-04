@@ -10,58 +10,67 @@ INDEX_OBJ* CreateIndexObject2(int n, const unsigned short *p);
 void DestroyIndexObject(INDEX_OBJ *indexObject);
 
 /*-------------------------------------------------------*/
-//注意:vertex中的所有数据都是浮点类型的，所以不必记录数据类型
-#define COORD_SHIFT		28
-#define COLOR_SHIFT		24
-#define NORMAL_SHIFT	20
-#define TEXTURE_SHIFT	16
-#define TEXTURE2_SHIFT	12
-#define BONE_SHIFT	0
+//下面的掩码表示不同的数据在elements这个数中的位置，用户创建VETTEX_OBJ
+#define COORD_SHIFT		0
+#define COLOR_SHIFT		3
+#define COLOR2_SHIFT		6
+#define NORMAL_SHIFT		9
+#define TEXTURE_SHIFT		12
+#define TEXTURE2_SHIFT	15
+//bone weight的组合放在最后一个位置[id1,id2,id3,id4,weight1,weight2,weight3,weight4]
+#define BONE_SHIFT		30
 
 
 #define COORD_3 (3<<COORD_SHIFT)
 #define COORD_4 (4<<COORD_SHIFT)
-#define COORD_MASK (0x0f<<COORD_SHIFT)
-#define COORD_I(n) ((n&0x0f)<<COORD_SHIFT)
+#define COORD_MASK (0x07<<COORD_SHIFT)
+#define COORD_I(n) ((n&0x07)<<COORD_SHIFT)
 
 #define COLOR_3	(3<<COLOR_SHIFT)
 #define COLOR_4	(4<<COLOR_SHIFT)
-#define COLOR_MASK (0x0f<<COLOR_SHIFT)
-#define COLOR_I(n) ((n&0x0F)<<COLOR_SHIFT)
+#define COLOR_MASK (0x07<<COLOR_SHIFT)
+#define COLOR_I(n) ((n&0x07)<<COLOR_SHIFT)
+
+#define COLOR2_3  (3<<COLOR2_SHIFT)
+#define COLOR2_4  (4<<COLOR2_SHIFT)
+#define COLOR2_MASK (0x07<<COLOR2_SHIFT)
+#define COLOR2_I(n)((n&0x07)<<COLOR_SHIFT)
 
 #define NORMAL_3 (3<<NORMAL_SHIFT)
-#define NORMAL_MASK (0x0f<<NORMAL_SHIFT)
-#define NORMAL_I(n) ((n&0x0f)<<NORMAL_SHIFT)
+#define NORMAL_MASK (0x07<<NORMAL_SHIFT)
+#define NORMAL_I(n) ((n&0x07)<<NORMAL_SHIFT)
 
 #define TEXTURE_2 (3<<TEXTURE_SHIFT)
 #define TEXTURE_3 (4<<TEXTURE_SHIFT)
-#define TEXTURE_MASK (0x0f<<TEXTURE_SHIFT)
-#define TEXTURE_I(n) ((n&0x0f)<<TEXTURE_SHIFT)
+#define TEXTURE_MASK (0x07<<TEXTURE_SHIFT)
+#define TEXTURE_I(n) ((n&0x07)<<TEXTURE_SHIFT)
 
 #define TEXTURE2_2 (3<<TEXTURE2_SHIFT)
 #define TEXTURE2_3 (4<<TEXTURE2_SHIFT)
-#define TEXTURE2_MASK (0x0f<<TEXTURE2_SHIFT)
-#define TEXTURE2_I(n) ((n&0x0f)<<TEXTURE2_SHIFT)
+#define TEXTURE2_MASK (0x07<<TEXTURE2_SHIFT)
+#define TEXTURE2_I(n) ((n&0x07)<<TEXTURE2_SHIFT)
+
+#define BONE_4  (1<<BONE_SHIFT)
+#define BONE_MASK (0x03<<BONE_SHIFT)
+#define BONE_I(n) ((n&0x03)<<BONE_SHIFT)
 
 typedef struct VertexObj VERTEX_OBJ;
-/*
-从模型中读出数据，并构建我们自己的数据结构
-int element_size(int elements);
-int push_element(const float *first, int element, float *p)
 
-pos[3], text[2], bone[2];
+VERTEX_OBJ *CreateVertexObject(int element, int n, const float *p);
+void UpdateVertexObject(VERTEX_OBJ *obj, const float *p);
 
-size = element_size(COORD_3|TEXTURE_2|BONE_2)
-p = malloc(size*n)
-	push_element(p,COORD_3, pos);
-	push_element(p,TEXTURE_2, text);
-	push_element_bone(p,BONE_2, id, bone_weight);
-	p+=size
-*/
-void UpdateVertexObject(VERTEX_OBJ *obj,const float *p);
-VERTEX_OBJ* CreateVertexObject(int elements,  int n,int span, const float *p);
-VERTEX_OBJ* CreateVertexObject2(int elements,  int n,int span, const double *p);
+VERTEX_OBJ *CreateVertexObject(int elements,  int n);
+void VertexObjectPushElement(VERTEX_OBJ *vobj, int element, float *p);
+void VertexObjectPushElementAll(VERTEX_OBJ *vobj, int element, float *p);
+void VertexObjectEnd(VERTEX_OBJ *vobj);
+
 void DestroyVertexObject(VERTEX_OBJ *vertexObject);
+
+void VertexObjectReplace(VERTEX_OBJ * vobj,const float * p);
+void VertexObjectReplace(VERTEX_OBJ *obj, VERTEX_OBJ *obj2);
+void VertexObjectReset(VERTEX_OBJ *obj);
+
+VERTEX_OBJ* CreateVertexObject2(int elements,  int n,int span, const double *p);
 
 /*-------------------------------------------------------*/
 typedef struct PixelObj PIXEL_OBJ;
@@ -84,5 +93,7 @@ void SetModelViewMatrix(const Matrix4f *modelviewMatrix);
 void SetProjectMatrix(const Matrix4f *projectMatrix);
 //for shader use
 void SetTranslateMatrix(const GLuint matrixLocation, const Matrix4f *transMatrix);
+void SetIntValue(const GLuint location, GLint value);
+
 #endif
 

@@ -1,139 +1,156 @@
-/*
-
-	Copyright 2011 Etay Meiri
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#include <assert.h>
-
-#include "Mesh.h"
+#include <Mesh.h>
 #include <Shader.h>
+#include <assert.h>
 #include <stdio.h>
-Mesh::MeshEntry::MeshEntry()
+//--------------------------------------------------------------------------------------
+MeshEntry::MeshEntry()
 {
 	vertexObject = NULL;
 	indexObject = NULL;
-    MaterialIndex = INVALID_MATERIAL;
+	MaterialIndex = INVALID_MATERIAL;
 };
-
-Mesh::MeshEntry::~MeshEntry()
+//--------------------------------------------------------------------------------------
+MeshEntry::~MeshEntry()
 {
 	DestroyVertexObject(vertexObject);
 	DestroyIndexObject(indexObject);
 }
-
-void Mesh::MeshEntry::Init(const std::vector<Vertex>& Vertices,
-                          const std::vector<unsigned int>& Indices)
+//--------------------------------------------------------------------------------------
+void MeshEntry::Init(const std::vector<unsigned int>& indices)
 {
-	vertexObject = CreateVertexObject(COORD_3|TEXTURE_2,Vertices.size(),sizeof(Vertex),(float *)&Vertices[0]);
-	indexObject = CreateIndexObject(Indices.size(),(unsigned int *)&Indices[0]);
+	//vertexObject = CreateVertexObject(COORD_3|TEXTURE_2|NORMAL_3, Vertices.size(), (float *)&Vertices[0]);
+	vertexObject = CreateVertexObject(COORD_3|TEXTURE_2|BONE_4,coordVec.size());
+	/*
+	for(size_t i=0;i<vertexVector.size();++i){
+		VertexObjectPushElement(vertexObject, COORD_3, (float *)&vertexVector[i].m_pos);
+		VertexObjectPushElement(vertexObject, TEXTURE_2, (float *)&vertexVector[i].m_tex);
+		//VertexObjectPushElement(vertexObject, NORMAL_3, (float *)&vertexVector[i].m_normal);
+	}
+	*/
+	VertexObjectPushElementAll(vertexObject, COORD_3, (float*)&coordVec[0]);
+	VertexObjectPushElementAll(vertexObject, TEXTURE_2, (float*)&textureCoordVec[0]);
+	VertexObjectPushElementAll(vertexObject, BONE_4, (float *)&attachedBoneVec[0]);
+	VertexObjectEnd(vertexObject);
+	
+	indexObject = CreateIndexObject(indices.size(),(unsigned int *)&indices[0]);
 }
+//--------------------------------------------------------------------------------------
+void MeshEntry::AddCoord(const Vector3f &coord)
+{
+	struct AttachedBone attachedBone;
+	coordVec.push_back(coord);
+	finalCoordVec.push_back(Vector3f());
+	attachedBoneVec.push_back(attachedBone);
+	boneNumVec.push_back(0);
+	return;
+}
+//--------------------------------------------------------------------------------------
+void MeshEntry::AddTextureCoord(const Vector2f &textureCoord)
+{
+	textureCoordVec.push_back(textureCoord);
+	return;
+}
+//--------------------------------------------------------------------------------------
+void MeshEntry::AddBoneData(int index, unsigned short boneId, float weight)
+{
+	int n = boneNumVec[index];
+
+	attachedBoneVec[index].boneId[n] = boneId;
+	attachedBoneVec[index].weight[n] = weight;
+	return;
+}
+///////////////////////////////////////////////////////////////////////////////////
+//--------------------------------------------------------------------------------------
 Mesh::Mesh()
 {
 	m_numBones = 0;
 }
+//--------------------------------------------------------------------------------------
 Mesh::Mesh(const std::string &fileName):
 	mp_scene(NULL)
 {
 	m_numBones = 0;
 	LoadMesh(fileName);
 }
+//--------------------------------------------------------------------------------------
 Mesh::~Mesh()
 {
-    Clear();
+	Clear();
 }
+//--------------------------------------------------------------------------------------
 void Mesh::Clear()
 {
-    for (unsigned int i = 0 ; i < m_Textures.size() ; i++) {
-        SAFE_DELETE(m_Textures[i]);
-    }
+	for (unsigned int i = 0 ; i < m_Textures.size() ; i++) {
+		SAFE_DELETE(m_Textures[i]);
+	}
 }
-
-
+//--------------------------------------------------------------------------------------
 bool Mesh::LoadMesh(const std::string& Filename)
 {
-    // Release the previously loaded mesh (if it exists)
-    Clear();
-    
-    bool Ret = false;
-    mp_scene = m_importer.ReadFile(Filename.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs);
-    
-    if (mp_scene) {
+	// Release the previously loaded mesh (if it exists)
+	Clear();
+
+	bool Ret = false;
+	mp_scene = m_importer.ReadFile(Filename.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs);
+
+	if (mp_scene) {
 		m_globalInverseTransform = mp_scene->mRootNode->mTransformation;
 		m_globalInverseTransform.Inverse();
-        Ret = InitFromScene(mp_scene, Filename);
+		Ret = InitFromScene(mp_scene, Filename);
 
 		printf("Mesh %s has %d animation(s)\n", Filename.c_str(), mp_scene->mNumAnimations);
 		for(unsigned int i=0;i<mp_scene->mNumAnimations;++i){
 		const aiAnimation *pAnimation = mp_scene->mAnimations[i];
 		printf("Animation name : %s duration %f ticksPerSecond %f\n",pAnimation->mName.data, pAnimation->mDuration, pAnimation->mTicksPerSecond);
 		}
-    }
-    else {
-        printf("Error parsing '%s': '%s'\n", Filename.c_str(), m_importer.GetErrorString());
-    }
+	}
+	else {
+		printf("Error parsing '%s': '%s'\n", Filename.c_str(), m_importer.GetErrorString());
+	}
 
-    return Ret;
+	return Ret;
 }
-
+//--------------------------------------------------------------------------------------
 bool Mesh::InitFromScene(const aiScene* pScene, const std::string& Filename)
 {  
-    m_Entries.resize(pScene->mNumMeshes);
-    m_Textures.resize(pScene->mNumMaterials);
+	m_Entries.resize(pScene->mNumMeshes);
+	m_Textures.resize(pScene->mNumMaterials);
 
-    // Initialize the meshes in the scene one by one
-    for (unsigned int i = 0 ; i < m_Entries.size() ; ++i) {
-        const aiMesh* paiMesh = pScene->mMeshes[i];
-        InitMesh(i, paiMesh);
-    }
-    return InitMaterials(pScene, Filename);
+	// Initialize the meshes in the scene one by one
+	for (unsigned int i = 0 ; i < m_Entries.size() ; ++i) {
+		const aiMesh* paiMesh = pScene->mMeshes[i];
+		InitMesh(i, paiMesh);
+	}
+	return InitMaterials(pScene, Filename);
 }
+//--------------------------------------------------------------------------------------
 void Mesh::InitMesh(unsigned int Index, const aiMesh* paiMesh)
 {
-    m_Entries[Index].MaterialIndex = paiMesh->mMaterialIndex;
-    
-    std::vector<struct Vertex> &Vertices = m_Entries[Index].vertexVector;
-	std::vector<struct Vertex> &finalVertices = m_Entries[Index].finalVertexVector;
-	std::vector<struct VertexBoneAttachInfo> &VertexBoneAttachInfo = m_Entries[Index].vertexBoneAttachInfoVector;
-    std::vector<unsigned int> Indices;
+	m_Entries[Index].MaterialIndex = paiMesh->mMaterialIndex;	
+	std::vector<unsigned int> indices;
 
-    const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
+	const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
 
-    for (unsigned int i = 0 ; i < paiMesh->mNumVertices ; i++) {
-        const aiVector3D* pPos      = &(paiMesh->mVertices[i]);
-        const aiVector3D* pNormal   = &(paiMesh->mNormals[i]);
-        const aiVector3D* pTexCoord = paiMesh->HasTextureCoords(0) ? &(paiMesh->mTextureCoords[0][i]) : &Zero3D;
+	for (unsigned int i = 0 ; i < paiMesh->mNumVertices ; i++) {
+		const aiVector3D* pPos      = &(paiMesh->mVertices[i]);
+		//const aiVector3D* pNormal   = &(paiMesh->mNormals[i]);
+		const aiVector3D* pTexCoord = paiMesh->HasTextureCoords(0) ? &(paiMesh->mTextureCoords[0][i]) : &Zero3D;
 
-        Vertex v(Vector3f(pPos->x, pPos->y, pPos->z),
-                 Vector2f(pTexCoord->x, pTexCoord->y),
-                 Vector3f(pNormal->x, pNormal->y, pNormal->z));
-		struct VertexBoneAttachInfo vertexBone;
-        Vertices.push_back(v);
-		finalVertices.push_back(v);
-		VertexBoneAttachInfo.push_back(vertexBone);
-    }
+		m_Entries[Index].AddCoord(Vector3f(pPos->x, pPos->y, pPos->z));
+		m_Entries[Index].AddTextureCoord(Vector2f(pTexCoord->x, pTexCoord->y));
+	}
 	LoadBones(paiMesh,m_Entries[Index]);
-    for (unsigned int i = 0 ; i < paiMesh->mNumFaces ; i++) {
-        const aiFace& Face = paiMesh->mFaces[i];
-        assert(Face.mNumIndices == 3);
-        Indices.push_back(Face.mIndices[0]);
-        Indices.push_back(Face.mIndices[1]);
-        Indices.push_back(Face.mIndices[2]);
-    }
-    m_Entries[Index].Init(Vertices, Indices);
+	for (unsigned int i = 0 ; i < paiMesh->mNumFaces ; i++) {
+		const aiFace& Face = paiMesh->mFaces[i];
+		assert(Face.mNumIndices == 3);
+		indices.push_back(Face.mIndices[0]);
+		indices.push_back(Face.mIndices[1]);
+		indices.push_back(Face.mIndices[2]);
+	}
+	m_Entries[Index].Init(indices);
+
 }
+//--------------------------------------------------------------------------------------
 void Mesh::LoadBones(const aiMesh* pMesh, struct MeshEntry &meshEntry)
 {
 	for(unsigned int i=0;i< pMesh->mNumBones;++i){
@@ -163,55 +180,54 @@ void Mesh::LoadBones(const aiMesh* pMesh, struct MeshEntry &meshEntry)
 
 bool Mesh::InitMaterials(const aiScene* pScene, const std::string& Filename)
 {
-    // Extract the directory part from the file name
-    std::string::size_type SlashIndex = Filename.find_last_of("/");
-    std::string Dir;
+	// Extract the directory part from the file name
+	std::string::size_type SlashIndex = Filename.find_last_of("/");
+	std::string Dir;
 
-    if (SlashIndex == std::string::npos) {
-        Dir = ".";
-    }
-    else if (SlashIndex == 0) {
-        Dir = "/";
-    }
-    else {
-        Dir = Filename.substr(0, SlashIndex);
-    }
+	if (SlashIndex == std::string::npos) {
+	    Dir = ".";
+	}
+	else if (SlashIndex == 0) {
+	    Dir = "/";
+	}
+	else {
+	    Dir = Filename.substr(0, SlashIndex);
+	}
 
-    bool Ret = true;
+	bool Ret = true;
 
-    // Initialize the materials
-    for (unsigned int i = 0 ; i < pScene->mNumMaterials ; i++) {
-        const aiMaterial* pMaterial = pScene->mMaterials[i];
+	// Initialize the materials
+	for (unsigned int i = 0 ; i < pScene->mNumMaterials ; i++) {
+	    const aiMaterial* pMaterial = pScene->mMaterials[i];
 
-        m_Textures[i] = NULL;
+	    m_Textures[i] = NULL;
 
-        if (pMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
-            aiString Path;
+	    if (pMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+	        aiString Path;
 
-            if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
-                std::string FullPath = Dir + "/" + Path.data;
-                m_Textures[i] = new Texture(GL_TEXTURE_2D, FullPath.c_str());
+	        if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+	            std::string FullPath = Dir + "/" + Path.data;
+	            m_Textures[i] = new Texture(GL_TEXTURE_2D, FullPath.c_str());
 
-                if (!m_Textures[i]->Load()) {
-                    printf("Error loading texture '%s'\n", FullPath.c_str());
-                    delete m_Textures[i];
-                    m_Textures[i] = NULL;
-                    Ret = false;
-                }
-                else {
-                    printf("Loaded texture '%s'\n", FullPath.c_str());
-                }
-            }
-        }
+	            if (!m_Textures[i]->Load()) {
+	                printf("Error loading texture '%s'\n", FullPath.c_str());
+	                delete m_Textures[i];
+	                m_Textures[i] = NULL;
+	                Ret = false;
+	            }
+	            else {
+	                printf("Loaded texture '%s'\n", FullPath.c_str());
+	            }
+	        }
+	    }
 
-        // Load a white texture in case the model does not include its own texture
-        if (!m_Textures[i]) {
-            m_Textures[i] = new Texture(GL_TEXTURE_2D, "./white.png");
+	    // Load a white texture in case the model does not include its own texture
+	    if (!m_Textures[i]) {
+	        m_Textures[i] = new Texture(GL_TEXTURE_2D, "./white.png");
 
-            Ret = m_Textures[i]->Load();
-        }
-    }
-
+	        Ret = m_Textures[i]->Load();
+	    }
+	}
     return Ret;
 }
 #include <Timer.h>
@@ -223,8 +239,8 @@ void Mesh::Render()
 			GL_TEXTURE0,GL_TEXTURE_2D);
 		struct MeshEntry &meshEntry = m_Entries[i];
 		DrawObject(0,meshEntry.indexObject,meshEntry.vertexObject,pixelObject,NULL);
-		UpdateMeshEntry(meshEntry);
-		UpdateVertexObject(meshEntry.vertexObject,(float*)&meshEntry.finalVertexVector[0]);
+		//UpdateMeshEntry(meshEntry);
+		//UpdateVertexObject(meshEntry.vertexObject,(float*)&meshEntry.finalVertexVector[0]);
 		free(pixelObject);
 	}
 }
@@ -234,36 +250,44 @@ void Mesh::RenderUseShader()
 		const unsigned int MaterialIndex = m_Entries[i].MaterialIndex;
 		PIXEL_OBJ *pixelObject = CreatePixelObject2(m_Textures[MaterialIndex]->GetTextureObj(),
 			GL_TEXTURE0,GL_TEXTURE_2D);
-		struct MeshEntry &meshEntry = m_Entries[i];
-		UpdateMeshEntry(meshEntry);
-		UpdateVertexObject(meshEntry.vertexObject,(float*)&meshEntry.finalVertexVector[0]);
+		
+		for(size_t j=0; j<m_boneInfo.size();++j){
+			SetTranslateMatrix(g_boneTransformLocation[j],&(m_boneInfo[j].m_finalTransformation));
+		}
+		if(m_numBones>0) SetIntValue(g_hasBonesLocation,1);
+		else SetIntValue(g_hasBonesLocation,0);
+		
 		DrawOjectUseShader(m_Entries[i].indexObject,m_Entries[i].vertexObject,pixelObject);
 		free(pixelObject);
 	}
 }
-//////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// skeleton animation /////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+	@remarks: for software animation use(skeleton animation & vertex animation)
+*/
 void Mesh::UpdateMeshEntry(struct MeshEntry &meshEntry)
 {
 	Matrix4f finalMatrix;
-	for(unsigned i=0; i<meshEntry.vertexVector.size();++i){
-		struct Vertex &vertex = meshEntry.vertexVector[i];
-		struct Vertex &finalVertex = meshEntry.finalVertexVector[i];
-		struct VertexBoneAttachInfo &bonesInfo = meshEntry.vertexBoneAttachInfoVector[i];
-		if(bonesInfo.vertexBoneAttachWeightVector.size()>0){
+	for(unsigned i=0; i<meshEntry.coordVec.size();++i){
+		struct Vector3f &coord = meshEntry.coordVec[i];
+		struct Vector3f &finalCoord = meshEntry.finalCoordVec[i];
+
+		if(meshEntry.boneNumVec[i] > 0){
 			finalMatrix.InitZero();
-			for(unsigned j=0; j<bonesInfo.vertexBoneAttachWeightVector.size();++j){
-				const struct VertexBoneAttachWeight &boneWeight = bonesInfo.vertexBoneAttachWeightVector[j];
-				finalMatrix += (m_boneInfo[boneWeight.m_boneId].m_finalTransformation * boneWeight.weight);
+			for(unsigned j=0; j<4;++j){
+				struct AttachedBone &bone = meshEntry.attachedBoneVec[i];
+				finalMatrix += (m_boneInfo[bone.boneId[j]].m_finalTransformation * bone.weight[j]);
 			}
 		}
 		else
 			finalMatrix.InitIdentity();
-		finalVertex.m_pos = finalMatrix * vertex.m_pos;
+		finalCoord = finalMatrix * coord;
 	}
 	return;
 }
+/*
+	@remarks:calculate the bones' transform matrix, result saved in 'm_boneInfo'
+*/
 void Mesh::BoneTransform(float timeInSeconds)
 {
 	Matrix4f identity;

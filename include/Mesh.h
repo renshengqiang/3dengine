@@ -18,99 +18,68 @@
 #include <string.h>
 #include <string>
 
-struct VertexBoneAttachWeight{
-	unsigned short m_boneId;
-	float weight;
-};
-struct VertexBoneAttachInfo{
-	std::vector<struct VertexBoneAttachWeight> vertexBoneAttachWeightVector;
-
-	void AddBoneAttachInfo(unsigned short boneId, float weight)
-	{
-		struct VertexBoneAttachWeight attachWeight;
-		attachWeight.m_boneId = boneId;
-		attachWeight.weight = weight;
-
-		vertexBoneAttachWeightVector.push_back(attachWeight);
-		return;
+#define MAX_BONE_ATTACHED 4
+struct AttachedBone{
+	int boneId[MAX_BONE_ATTACHED];
+	float weight[MAX_BONE_ATTACHED];
+	AttachedBone(){
+		for(int i=0; i<MAX_BONE_ATTACHED;++i){
+			boneId[i]=0;
+			weight[i]=0;
+		}
 	}
 };
-struct Vertex
+struct BoneInfo{
+	Matrix4f m_boneOffset;
+	Matrix4f m_finalTransformation;
+	BoneInfo()
+	{
+		m_boneOffset.InitIdentity();
+		m_finalTransformation.InitIdentity();
+	}
+};
+struct MeshEntry 
 {
-    Vector3f m_pos;
-    Vector2f m_tex;
-    Vector3f m_normal;
-    Vertex() {}
+	MeshEntry();
+	~MeshEntry();
 
-    Vertex(const Vector3f& pos, const Vector2f& tex, const Vector3f& normal)
-    {
-        m_pos    = pos;
-        m_tex    = tex;
-        m_normal = normal;
-    }
-    Vertex(const Vector3f& pos, const Vector2f& tex)
-    {
-        m_pos = pos;
-        m_tex = tex;
-    }
+	void Init(const std::vector<unsigned int>& Indices);
+	void AddBoneData(int index, unsigned short boneId, float weight);
+	void AddCoord(const Vector3f &coord);
+	void AddTextureCoord(const Vector2f &textureCoord);
+
+	std::vector<Vector3f> coordVec;
+	std::vector<Vector3f> finalCoordVec;/*for software animation use*/
+	std::vector<Vector2f> textureCoordVec;
+	std::vector<struct AttachedBone> attachedBoneVec;
+	std::vector<int> boneNumVec;//该数组和上面数组对应，用于插入骨骼到正确位置
+
+	VERTEX_OBJ *vertexObject;
+	INDEX_OBJ *indexObject;
+	unsigned int MaterialIndex;
 };
 
 class ENGINE_EXPORT Mesh
 {
 public:
-	#define INVALID_MATERIAL 0xFFFFFFFF
-
-    struct MeshEntry {
-        MeshEntry();
-        ~MeshEntry();
-
-        void Init(const std::vector<Vertex>& Vertices,
-                  const std::vector<unsigned int>& Indices);
-		inline void AddBoneData(int index, unsigned short boneId, float weight)
-		{
-			struct VertexBoneAttachInfo &boneAttachInfo = vertexBoneAttachInfoVector[index];
-			boneAttachInfo.AddBoneAttachInfo(boneId,weight);
-			return;
-		}
-		//下面两个数组中对应下标顶点保持对应一致
-		std::vector<struct Vertex> vertexVector;
-		std::vector<struct Vertex> finalVertexVector;
-		std::vector<struct VertexBoneAttachInfo> vertexBoneAttachInfoVector;
-		VERTEX_OBJ *vertexObject;
-		INDEX_OBJ *indexObject;
-        unsigned int MaterialIndex;
-    };
-	
-	struct BoneInfo{
-		Matrix4f m_boneOffset;
-		Matrix4f m_finalTransformation;
-		BoneInfo()
-		{
-			m_boneOffset.InitIdentity();
-			m_finalTransformation.InitIdentity();
-		}
-	};
-	struct SkeletonAnimation{
-		AnimationStateSet animationStateSet;
-		
-	};
-    Mesh();
+	Mesh();
 	Mesh(const std::string& Filename);
 
-    ~Mesh();
+	~Mesh();
 
-    bool LoadMesh(const std::string& Filename);
+	bool LoadMesh(const std::string& Filename);
 
-    void RenderUseShader();
+	void RenderUseShader();
 	void Render();
+	
 	void BoneTransform(float timeInSeconds);
 
 private:
-    bool InitFromScene(const aiScene* pScene, const std::string& Filename);
-    void InitMesh(unsigned int Index, const aiMesh* paiMesh);
-    bool InitMaterials(const aiScene* pScene, const std::string& Filename);
+	bool InitFromScene(const aiScene* pScene, const std::string& Filename);
+	void InitMesh(unsigned int Index, const aiMesh* paiMesh);
+	bool InitMaterials(const aiScene* pScene, const std::string& Filename);
 	void LoadBones(const aiMesh* pMesh, struct MeshEntry &meshEntry);
-    void Clear();
+	void Clear();
 	//about skeleton animation 
 	const aiNodeAnim *FindNodeAnim(const aiAnimation *pAnimation, const std::string nodeName);
 	void ReadNodeHeirarchy(float animationTime, const aiNode *pNode, const Matrix4f &parentTransform);
@@ -126,9 +95,9 @@ private:
 	const aiScene *mp_scene;
 	Assimp::Importer m_importer;
 	//submesh
-    std::vector<MeshEntry> m_Entries;
+	std::vector<MeshEntry> m_Entries;
 	//texture
-    std::vector<Texture*> m_Textures;
+	std::vector<Texture*> m_Textures;
 	//bone info
 	unsigned m_numBones;
 	std::map<std::string, unsigned> m_boneMapping;
