@@ -232,7 +232,7 @@ int  _ResolveElement(struct ElementInfo *elementInfo, int elementMask)
 	elementInfo->boneOffset = dataOffset*sizeof(float);
 	if((elementMask&BONE_MASK) == BONE_4){
 		elementInfo->boneSize  = 1;
-		stride = (dataOffset+4) * sizeof(float) + 4*sizeof(int);//boneid是int类型的
+		stride = (dataOffset+4) * sizeof(float) + 4*sizeof(float);//boneid是float类型的
 	}else{
 		elementInfo->boneSize  = 0;
 		stride = dataOffset*sizeof(float);
@@ -263,38 +263,6 @@ VERTEX_OBJ* CreateVertexObject(int elements,  int n)
 			free(obj);
 			return NULL;
 		}
-		return obj;
-	}
-	else{
-		fprintf(stderr, "CreateVertexObject : memory allocation error\n");
-		return NULL;
-	}
-}
-//----------------------------------------------------------------------------
-/**
-	@remarks: create a VertexObject with given ordered data
-	@param:
-		elements: elements in vertex
-		n: number of vertices
-		p: vertices data ordered by elements
-*/
-VERTEX_OBJ* CreateVertexObject(int elements, int n, const float *p)
-{
-	int stride;
-	struct VertexObj *obj = (struct VertexObj *)malloc(sizeof(struct VertexObj));
-	
-	if(obj!=NULL){
-		obj->numVertex = n;
-		obj->dataType = GL_FLOAT;
-		stride = _ResolveElement(&(obj->elementInfo), elements);
-		obj->stride = stride;
-		obj->meshData.meshData = NULL;
-		obj->meshData.pushedNum = -1;
-		obj->replaceObject = INVALID_OBJECT_VALUE;
-		glGenBuffers(1, &(obj->object));
-		glBindBuffer(GL_ARRAY_BUFFER, obj->object);
-		//glBufferData(GL_ARRAY_BUFFER, n*size,  p, GL_STATIC_DRAW);
-		glBufferData(GL_ARRAY_BUFFER, n*stride,  p, GL_DYNAMIC_DRAW);
 		return obj;
 	}
 	else{
@@ -367,7 +335,7 @@ void _GetElementSizeOffset(VERTEX_OBJ *vobj, int element, int *offset, int *size
 			break;
 		case BONE_4:
 			*offset = vobj->elementInfo.boneOffset;
-			*size = 4*(sizeof(int) + sizeof(float));
+			*size = 4*(sizeof(float) + sizeof(float));
 			break;
 	}
 	return;
@@ -422,27 +390,9 @@ void VertexObjectEnd(VERTEX_OBJ *vobj)
 	return;
 }
 //-----------------------------------------------------------------------------
-/**
-	@remarks: 
-	This is for software skinning animation purpose,
-	by the way of altering  the vertex buffer object
-*/
-void UpdateVertexObject(VERTEX_OBJ *obj,const float *p)
-{
-	if(obj){
-		glBindBuffer(GL_ARRAY_BUFFER, obj->object);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, obj->numVertex * obj->stride, p);
-		//glBufferData(GL_ARRAY_BUFFER, size, p, GL_DYNAMIC_DRAW);
-		_GetGLErrorInfo();
-	}else{
-		fprintf(stderr, "UpdateVertexObject : Not a valid VERTEX_OBJ\n");
-	}
-	return;
-}
-//-----------------------------------------------------------------------------
 /*
 	@remarks:
-		replace the vertex coord&normal with a new buffer object
+		replace the vertex coord & normal with a new buffer object
 */
 void VertexObjectReplace(VERTEX_OBJ *vobj, const float *p)
 {
@@ -575,8 +525,9 @@ void DrawOjectUseShader(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, 
 		vertexObj->dataType, GL_FALSE, vertexObj->stride, (const GLvoid *)vertexObj->elementInfo.coordOffset);
 	glVertexAttribPointer(g_vertexTexCoordLocation, vertexObj->elementInfo.textureCoordNum, 
 		vertexObj->dataType, GL_FALSE, vertexObj->stride, (const GLvoid *)vertexObj->elementInfo.textureCoordOffset);
-	glVertexAttribIPointer(g_vertexBoneIdLocation, 4, GL_INT, vertexObj->stride, (const GLvoid *)vertexObj->elementInfo.boneOffset);
-	glVertexAttribPointer(g_vertexBoneWeightLocation, 4, GL_FLOAT, GL_FALSE, vertexObj->stride, (const GLvoid *)(vertexObj->elementInfo.boneOffset + 4*sizeof(int)));
+	//glVertexAttribIPointer(g_vertexBoneIdLocation, 4, GL_INT, vertexObj->stride, (const GLvoid *)vertexObj->elementInfo.boneOffset);
+	glVertexAttribPointer(g_vertexBoneIdLocation, 4, GL_FLOAT, GL_FALSE, vertexObj->stride, (const GLvoid *)(vertexObj->elementInfo.boneOffset));
+	glVertexAttribPointer(g_vertexBoneWeightLocation, 4, GL_FLOAT, GL_FALSE, vertexObj->stride, (const GLvoid *)(vertexObj->elementInfo.boneOffset + 4*sizeof(float)));
 
 	glUniform1i(g_samplerLocation, 0);
 	glActiveTexture(pixelObj->textureUnit);

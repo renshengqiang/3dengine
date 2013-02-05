@@ -56,9 +56,6 @@ void DestroyIndexObject(INDEX_OBJ *indexObject);
 
 typedef struct VertexObj VERTEX_OBJ;
 
-VERTEX_OBJ *CreateVertexObject(int element, int n, const float *p);
-void UpdateVertexObject(VERTEX_OBJ *obj, const float *p);
-
 VERTEX_OBJ *CreateVertexObject(int elements,  int n);
 void VertexObjectPushElement(VERTEX_OBJ *vobj, int element, float *p);
 void VertexObjectPushElementAll(VERTEX_OBJ *vobj, int element, float *p);

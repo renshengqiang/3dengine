@@ -13,42 +13,41 @@ GLuint g_samplerLocation;
 GLuint g_boneTransformLocation[MAX_BONE_NUM];
 
 static const char *pVS = "											\n\
-#version 130														\n\
+#version 120														\n\
 const int MAX_BONE_NUM = 100;										\n\
 																\n\
-in vec3 vertexPosition;												\n\
-in vec2 vertexTexCoord;												\n\
-in ivec4 boneIds;													\n\
-in vec4  weights;													\n\
+attribute vec3 vertexPosition;											\n\
+attribute vec2 vertexTexCoord;										\n\
+attribute vec4 boneIds;												\n\
+attribute vec4  weights;												\n\
 uniform  bool hasBones;												\n\
 																\n\
 uniform mat4 PVMMatrix;												\n\
 uniform mat4 boneTransform[MAX_BONE_NUM];							\n\
 																\n\
-out vec2 texCoord;													\n\
+varying vec2 texCoord;												\n\
 void main()														\n\
 {																\n\
 	mat4 boneTrans = mat4(1.0);										\n\
 	if(hasBones){													\n\
-		boneTrans = boneTransform[boneIds[0]] * weights[0];			\n\
-		boneTrans += boneTransform[boneIds[1]] * weights[1];			\n\
-		boneTrans += boneTransform[boneIds[2]] * weights[2];			\n\
-		boneTrans += boneTransform[boneIds[3]] * weights[3];			\n\
+		boneTrans = boneTransform[int(boneIds[0])] * weights[0];		\n\
+		boneTrans += boneTransform[int(boneIds[1])] * weights[1];		\n\
+		boneTrans += boneTransform[int(boneIds[2])] * weights[2];		\n\
+		boneTrans += boneTransform[int(boneIds[3])] * weights[3];		\n\
 	}															\n\
 																\n\
 	gl_Position = PVMMatrix*boneTrans*vec4(vertexPosition, 1.0f);			\n\
 	texCoord = vertexTexCoord;										\n\
 }";
 static const char *pFS = "											\n\
-#version 130														\n\
+#version 120														\n\
 																\n\
-in vec2 texCoord;													\n\
+varying vec2 texCoord;												\n\
 uniform sampler2D sampler;											\n\
 																\n\
-out vec4 FragColor;													\n\
 void main()														\n\
 {																\n\
-	FragColor = texture2D(sampler, texCoord.st);						\n\
+	gl_FragColor = texture2D(sampler, texCoord.st);						\n\
 }";
 const char* _shader_type_2_string(int type)
 {

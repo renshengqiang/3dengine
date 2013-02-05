@@ -20,7 +20,7 @@
 
 #define MAX_BONE_ATTACHED 4
 struct AttachedBone{
-	int boneId[MAX_BONE_ATTACHED];
+	float boneId[MAX_BONE_ATTACHED];
 	float weight[MAX_BONE_ATTACHED];
 	AttachedBone(){
 		for(int i=0; i<MAX_BONE_ATTACHED;++i){
