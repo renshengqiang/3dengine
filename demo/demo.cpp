@@ -1,4 +1,4 @@
-#include <Engine.h>
+#include "Engine.h"
 #include <SDL/SDL.h>
 #include <pthread.h>
 
@@ -83,15 +83,15 @@ void DemoApp::CreateScene(void)
 	mesh1 = new Mesh("./models/phoenix_ugv.md2");
 	mesh2 = new Mesh("./models/boblampclean.md5mesh");
 	SceneNode *rootNode = mp_sceneManager->GetRootNode();
-	SceneNode *node1 = rootNode->CreateSceneNode();
+	SceneNode *node1 = rootNode->CreateChildSceneNode("childnode1");
 	node1->Translate(0,0,-500, SceneNode::TS_LOCAL);
-	SceneNode *node2 = rootNode->CreateSceneNode();
+	SceneNode *node2 = rootNode->CreateChildSceneNode("childnode2");
 	node2->Translate(Vector3f(100, 0, -500), SceneNode::TS_LOCAL);
 	node2->Rotate(Vector3f(1,0,0), -90, SceneNode::TS_LOCAL);
 	node1->AttachMesh(mesh1);
 	node2->AttachMesh(mesh2);	
 
-	//create on scenenode animation
+	//create one scenenode animation
 	Animation *animation = mp_sceneManager->CreateAnimation("transAnim1",9);
 	NodeAnimationTrack *track = animation->CreateNodeTrack(0, node1);
 	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(3);

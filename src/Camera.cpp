@@ -117,7 +117,7 @@ void Camera::RenderNode(SceneNode *rootNode)
 		int n = rootNode->NumChildren();
 		Matrix4f modelViewMatrix;
 		for(int i=0;i<n;++i){
-			SceneNode *node = rootNode->GetChild(i);
+			SceneNode *node = (SceneNode *)rootNode->GetChild(i);
 			Mesh *mesh = node->GetMesh();
 			node->_Update(false,false);
 			if(mesh != NULL){
@@ -141,7 +141,7 @@ void Camera::RenderNodeUseShader(SceneNode *rootNode)
 		int n = rootNode->NumChildren();
 		Matrix4f perspectViewModelMatrix;
 		for(int i=0;i<n;++i){
-			SceneNode *node = rootNode->GetChild(i);
+			SceneNode *node = (SceneNode *)rootNode->GetChild(i);
 			Mesh *mesh = node->GetMesh();
 			node->_Update(false, false);
 			if(mesh!=NULL){

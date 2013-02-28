@@ -9,3 +9,4 @@ lib*
 *.dd
 include/GL*
 include/SDL*
+temp_file/*

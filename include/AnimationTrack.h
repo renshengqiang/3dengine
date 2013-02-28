@@ -1,9 +1,9 @@
 #ifndef _ANIMATION_TRACK_H
 #define _ANIMATION_TRACK_H
-#include <Export.h>
-#include <KeyFrame.h>
-#include <SceneNode.h>
-#include <struct.h>
+#include "Export.h"
+#include "KeyFrame.h"
+#include "SceneNode.h"
+#include "struct.h"
 
 /*
 	Animation类的作用:
@@ -49,9 +49,6 @@ class ENGINE_EXPORT AnimationTrack{
 
 		virtual KeyFrame *_CreateKeyFrameImpl(float timePos) = 0;
 };
-
-
-
 /*
 	NodeAnimationTrack类的作用:对属于NodeAnimation的属性(位移，旋转，缩放)进行封装和管理
 */

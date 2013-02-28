@@ -1,7 +1,7 @@
 #ifndef _ANIMATION_STATE_H
 #define _ANIMATION_STATE_H
-#include <Export.h>
-#include <struct.h>
+#include "Export.h"
+#include "struct.h"
 #include <string>
 /*
 	AnimationState类的作用:对动画的状态进行管理

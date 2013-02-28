@@ -1,5 +1,5 @@
-#include <KeyFrame.h>
-#include <AnimationTrack.h>
+#include "KeyFrame.h"
+#include "AnimationTrack.h"
 
 KeyFrame::KeyFrame(const AnimationTrack * parent,float time)
 {

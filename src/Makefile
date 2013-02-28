@@ -10,10 +10,12 @@ COMPILE_FILES:= util/Array.c\
 				SceneManager.cpp \
 				RenderWindow.cpp \
 				Camera.cpp \
+				Node.cpp \
 				SceneNode.cpp \
 				Shader.cpp \
 				Texture.cpp \
 				Render.cpp \
+				SubMesh.cpp \
 				Mesh.cpp \
 				AnimationState.cpp \
 				Animation.cpp \

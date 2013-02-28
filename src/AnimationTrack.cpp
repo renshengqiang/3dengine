@@ -1,5 +1,5 @@
-#include <AnimationTrack.h>
-#include <Animation.h>
+#include "AnimationTrack.h"
+#include "Animation.h"
 #include <stdlib.h>
 
 AnimationTrack::AnimationTrack(Animation * parent)

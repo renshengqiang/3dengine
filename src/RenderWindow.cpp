@@ -1,8 +1,6 @@
-#include <RenderWindow.h>
+#include "RenderWindow.h"
 #include <SDL/SDL.h>
-#include <Render.h>
-#include <stdio.h>
-#include <stdlib.h>
+
 RenderWindow::RenderWindow(int windowWidth,int windowHeight)
 {
 	/* Information about the current video settings. */    

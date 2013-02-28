@@ -1,71 +1,9 @@
-#include <Mesh.h>
-#include <Shader.h>
+#include "Mesh.h"
+#include "Render.h"
+#include "Shader.h"
+#include "util.h"
 #include <assert.h>
-#include <stdio.h>
-//--------------------------------------------------------------------------------------
-MeshEntry::MeshEntry()
-{
-	vertexObject = NULL;
-	indexObject = NULL;
-	MaterialIndex = INVALID_MATERIAL;
-};
-//--------------------------------------------------------------------------------------
-MeshEntry::~MeshEntry()
-{
-	DestroyVertexObject(vertexObject);
-	DestroyIndexObject(indexObject);
-}
-//--------------------------------------------------------------------------------------
-void MeshEntry::Init(const std::vector<unsigned int>& indices)
-{
-	//vertexObject = CreateVertexObject(COORD_3|TEXTURE_2|NORMAL_3, Vertices.size(), (float *)&Vertices[0]);
-	vertexObject = CreateVertexObject(COORD_3|TEXTURE_2|BONE_4,coordVec.size());
-	/*
-	for(size_t i=0;i<vertexVector.size();++i){
-		VertexObjectPushElement(vertexObject, COORD_3, (float *)&vertexVector[i].m_pos);
-		VertexObjectPushElement(vertexObject, TEXTURE_2, (float *)&vertexVector[i].m_tex);
-		//VertexObjectPushElement(vertexObject, NORMAL_3, (float *)&vertexVector[i].m_normal);
-	}
-	*/
-	VertexObjectPushElementAll(vertexObject, COORD_3, (float*)&coordVec[0]);
-	VertexObjectPushElementAll(vertexObject, TEXTURE_2, (float*)&textureCoordVec[0]);
-	VertexObjectPushElementAll(vertexObject, BONE_4, (float *)&attachedBoneVec[0]);
-	VertexObjectEnd(vertexObject);
-	
-	indexObject = CreateIndexObject(indices.size(),(unsigned int *)&indices[0]);
-}
-//--------------------------------------------------------------------------------------
-void MeshEntry::AddCoord(const Vector3f &coord)
-{
-	struct AttachedBone attachedBone;
-	coordVec.push_back(coord);
-	finalCoordVec.push_back(Vector3f());
-	attachedBoneVec.push_back(attachedBone);
-	boneNumVec.push_back(0);
-	return;
-}
-//--------------------------------------------------------------------------------------
-void MeshEntry::AddTextureCoord(const Vector2f &textureCoord)
-{
-	textureCoordVec.push_back(textureCoord);
-	return;
-}
-//--------------------------------------------------------------------------------------
-void MeshEntry::AddBoneData(int index, unsigned short boneId, float weight)
-{
-	int n = boneNumVec[index];
 
-	attachedBoneVec[index].boneId[n] = boneId;
-	attachedBoneVec[index].weight[n] = weight;
-	return;
-}
-///////////////////////////////////////////////////////////////////////////////////
-//--------------------------------------------------------------------------------------
-Mesh::Mesh()
-{
-	m_numBones = 0;
-}
-//--------------------------------------------------------------------------------------
 Mesh::Mesh(const std::string &fileName):
 	mp_scene(NULL)
 {
@@ -80,8 +18,11 @@ Mesh::~Mesh()
 //--------------------------------------------------------------------------------------
 void Mesh::Clear()
 {
-	for (unsigned int i = 0 ; i < m_Textures.size() ; i++) {
-		SAFE_DELETE(m_Textures[i]);
+	for (unsigned int i = 0 ; i < m_textures.size() ; i++) {
+		SAFE_DELETE(m_textures[i]);
+	}
+	for(unsigned int i = 0; i < m_subMeshes.size(); ++i){
+		SAFE_DELETE(m_subMeshes[i]);
 	}
 }
 //--------------------------------------------------------------------------------------
@@ -100,8 +41,8 @@ bool Mesh::LoadMesh(const std::string& Filename)
 
 		printf("Mesh %s has %d animation(s)\n", Filename.c_str(), mp_scene->mNumAnimations);
 		for(unsigned int i=0;i<mp_scene->mNumAnimations;++i){
-		const aiAnimation *pAnimation = mp_scene->mAnimations[i];
-		printf("Animation name : %s duration %f ticksPerSecond %f\n",pAnimation->mName.data, pAnimation->mDuration, pAnimation->mTicksPerSecond);
+			const aiAnimation *pAnimation = mp_scene->mAnimations[i];
+			printf("Animation name : %s duration %f ticksPerSecond %f\n",pAnimation->mName.data, pAnimation->mDuration, pAnimation->mTicksPerSecond);
 		}
 	}
 	else {
@@ -112,46 +53,48 @@ bool Mesh::LoadMesh(const std::string& Filename)
 }
 //--------------------------------------------------------------------------------------
 bool Mesh::InitFromScene(const aiScene* pScene, const std::string& Filename)
-{  
-	m_Entries.resize(pScene->mNumMeshes);
-	m_Textures.resize(pScene->mNumMaterials);
+{  	
+	m_subMeshes.resize(pScene->mNumMeshes);
+	m_textures.resize(pScene->mNumMaterials);
 
+	//Initlialize the materials
+	if(InitMaterials(pScene, Filename) == false)
+		return false;
 	// Initialize the meshes in the scene one by one
-	for (unsigned int i = 0 ; i < m_Entries.size() ; ++i) {
+	for (unsigned int i = 0 ; i < m_subMeshes.size() ; ++i) {
 		const aiMesh* paiMesh = pScene->mMeshes[i];
+		m_subMeshes[i] = new SubMesh();
 		InitMesh(i, paiMesh);
 	}
-	return InitMaterials(pScene, Filename);
+	return true;
 }
 //--------------------------------------------------------------------------------------
 void Mesh::InitMesh(unsigned int Index, const aiMesh* paiMesh)
 {
-	m_Entries[Index].MaterialIndex = paiMesh->mMaterialIndex;	
-	std::vector<unsigned int> indices;
-
 	const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
 
 	for (unsigned int i = 0 ; i < paiMesh->mNumVertices ; i++) {
-		const aiVector3D* pPos      = &(paiMesh->mVertices[i]);
-		//const aiVector3D* pNormal   = &(paiMesh->mNormals[i]);
-		const aiVector3D* pTexCoord = paiMesh->HasTextureCoords(0) ? &(paiMesh->mTextureCoords[0][i]) : &Zero3D;
+		const aiVector3D *pPos      = &(paiMesh->mVertices[i]);
+		//const aiVector3D *pNormal   = &(paiMesh->mNormals[i]);
+		const aiVector3D *pTexCoord = paiMesh->HasTextureCoords(0) ? &(paiMesh->mTextureCoords[0][i]) : &Zero3D;
 
-		m_Entries[Index].AddCoord(Vector3f(pPos->x, pPos->y, pPos->z));
-		m_Entries[Index].AddTextureCoord(Vector2f(pTexCoord->x, pTexCoord->y));
+		m_subMeshes[Index]->AddCoord(Vector3f(pPos->x, pPos->y, pPos->z));
+		m_subMeshes[Index]->AddTextureCoord(Vector2f(pTexCoord->x, pTexCoord->y));
 	}
-	LoadBones(paiMesh,m_Entries[Index]);
+	LoadBones(paiMesh, m_subMeshes[Index]);
 	for (unsigned int i = 0 ; i < paiMesh->mNumFaces ; i++) {
 		const aiFace& Face = paiMesh->mFaces[i];
 		assert(Face.mNumIndices == 3);
-		indices.push_back(Face.mIndices[0]);
-		indices.push_back(Face.mIndices[1]);
-		indices.push_back(Face.mIndices[2]);
+		m_subMeshes[Index]->AddIndex(Face.mIndices[0]);
+		m_subMeshes[Index]->AddIndex(Face.mIndices[1]);
+		m_subMeshes[Index]->AddIndex(Face.mIndices[2]);
 	}
-	m_Entries[Index].Init(indices);
+	m_subMeshes[Index]->AddTexture(m_textures[paiMesh->mMaterialIndex]->GetTextureObj());
+	m_subMeshes[Index]->Finalize();
 
 }
 //--------------------------------------------------------------------------------------
-void Mesh::LoadBones(const aiMesh* pMesh, struct MeshEntry &meshEntry)
+void Mesh::LoadBones(const aiMesh* pMesh, SubMesh *subMesh)
 {
 	for(unsigned int i=0;i< pMesh->mNumBones;++i){
 		unsigned int boneIndex = 0;
@@ -173,11 +116,11 @@ void Mesh::LoadBones(const aiMesh* pMesh, struct MeshEntry &meshEntry)
 			unsigned short vertexId = pMesh->mBones[i]->mWeights[j].mVertexId;
 			float weight = pMesh->mBones[i]->mWeights[j].mWeight;
 
-			meshEntry.AddBoneData(vertexId,boneIndex,weight);
+			subMesh->AddBoneData(vertexId,boneIndex,weight);
 		}//for(unsigned int j
 	}//for(unsigned int i
 }
-
+//--------------------------------------------------------------------------------------
 bool Mesh::InitMaterials(const aiScene* pScene, const std::string& Filename)
 {
 	// Extract the directory part from the file name
@@ -200,19 +143,19 @@ bool Mesh::InitMaterials(const aiScene* pScene, const std::string& Filename)
 	for (unsigned int i = 0 ; i < pScene->mNumMaterials ; i++) {
 	    const aiMaterial* pMaterial = pScene->mMaterials[i];
 
-	    m_Textures[i] = NULL;
+	    m_textures[i] = NULL;
 
 	    if (pMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
 	        aiString Path;
 
 	        if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 	            std::string FullPath = Dir + "/" + Path.data;
-	            m_Textures[i] = new Texture(GL_TEXTURE_2D, FullPath.c_str());
+	            m_textures[i] = new Texture(GL_TEXTURE_2D, FullPath.c_str());
 
-	            if (!m_Textures[i]->Load()) {
+	            if (!m_textures[i]->Load()) {
 	                printf("Error loading texture '%s'\n", FullPath.c_str());
-	                delete m_Textures[i];
-	                m_Textures[i] = NULL;
+	                delete m_textures[i];
+	                m_textures[i] = NULL;
 	                Ret = false;
 	            }
 	            else {
@@ -222,66 +165,54 @@ bool Mesh::InitMaterials(const aiScene* pScene, const std::string& Filename)
 	    }
 
 	    // Load a white texture in case the model does not include its own texture
-	    if (!m_Textures[i]) {
-	        m_Textures[i] = new Texture(GL_TEXTURE_2D, "./white.png");
+	    if (!m_textures[i]) {
+	        m_textures[i] = new Texture(GL_TEXTURE_2D, "./white.png");
 
-	        Ret = m_Textures[i]->Load();
+	        Ret = m_textures[i]->Load();
 	    }
 	}
     return Ret;
 }
-#include <Timer.h>
+//--------------------------------------------------------------------------------------
 void Mesh::Render()
 {
-	for(unsigned int i=0; i < m_Entries.size(); ++i){
-		const unsigned int MaterialIndex = m_Entries[i].MaterialIndex;
-		PIXEL_OBJ *pixelObject = CreatePixelObject2(m_Textures[MaterialIndex]->GetTextureObj(),
-			GL_TEXTURE0,GL_TEXTURE_2D);
-		struct MeshEntry &meshEntry = m_Entries[i];
-		DrawObject(0,meshEntry.indexObject,meshEntry.vertexObject,pixelObject,NULL);
+	for(unsigned int i=0; i < m_subMeshes.size(); ++i){
 		//UpdateMeshEntry(meshEntry);
 		//UpdateVertexObject(meshEntry.vertexObject,(float*)&meshEntry.finalVertexVector[0]);
-		free(pixelObject);
+		m_subMeshes[i]->Render();
 	}
 }
+//--------------------------------------------------------------------------------------
 void Mesh::RenderUseShader()
 {
-	for(unsigned int i=0;i < m_Entries.size();++i){
-		const unsigned int MaterialIndex = m_Entries[i].MaterialIndex;
-		PIXEL_OBJ *pixelObject = CreatePixelObject2(m_Textures[MaterialIndex]->GetTextureObj(),
-			GL_TEXTURE0,GL_TEXTURE_2D);
-		
+	for(unsigned int i=0;i < m_subMeshes.size();++i){
 		for(size_t j=0; j<m_boneInfo.size();++j){
 			SetTranslateMatrix(g_boneTransformLocation[j],&(m_boneInfo[j].m_finalTransformation));
 		}
 		if(m_numBones>0) SetIntValue(g_hasBonesLocation,1);
 		else SetIntValue(g_hasBonesLocation,0);
 		
-		DrawOjectUseShader(m_Entries[i].indexObject,m_Entries[i].vertexObject,pixelObject);
-		free(pixelObject);
+		m_subMeshes[i]->RenderUseShader();
 	}
 }
 ///////////////////////////////////// skeleton animation /////////////////////////////////////////////
 /*
 	@remarks: for software animation use(skeleton animation & vertex animation)
 */
-void Mesh::UpdateMeshEntry(struct MeshEntry &meshEntry)
+void Mesh::UpdateSubMesh(SubMesh &subMesh)
 {
 	Matrix4f finalMatrix;
-	for(unsigned i=0; i<meshEntry.coordVec.size();++i){
-		struct Vector3f &coord = meshEntry.coordVec[i];
-		struct Vector3f &finalCoord = meshEntry.finalCoordVec[i];
-
-		if(meshEntry.boneNumVec[i] > 0){
+	for(unsigned i=0; i<subMesh.GetVertexNum();++i){
+		if(subMesh.GetVertexAttachedBoneNum(i)> 0){
 			finalMatrix.InitZero();
 			for(unsigned j=0; j<4;++j){
-				struct AttachedBone &bone = meshEntry.attachedBoneVec[i];
-				finalMatrix += (m_boneInfo[bone.boneId[j]].m_finalTransformation * bone.weight[j]);
+				struct AttachedBone *pBone = subMesh.GetVertexAttachedBones(i);
+				finalMatrix += (m_boneInfo[pBone->boneId[j]].m_finalTransformation * pBone->weight[j]);
 			}
 		}
 		else
 			finalMatrix.InitIdentity();
-		finalCoord = finalMatrix * coord;
+		subMesh.CoordTransform(i,finalMatrix);
 	}
 	return;
 }
@@ -299,6 +230,7 @@ void Mesh::BoneTransform(float timeInSeconds)
 	ReadNodeHeirarchy(animationTime,mp_scene->mRootNode,identity);
 	return;
 }
+//--------------------------------------------------------------------------------------
 void Mesh::ReadNodeHeirarchy(float animationTime,const aiNode * pNode,const Matrix4f & parentTransform)
 {
 	std::string nodeName(pNode->mName.data);
@@ -338,6 +270,7 @@ void Mesh::ReadNodeHeirarchy(float animationTime,const aiNode * pNode,const Matr
 		ReadNodeHeirarchy(animationTime,pNode->mChildren[i],globalTranformation);
 	}
 }
+//--------------------------------------------------------------------------------------
 const aiNodeAnim *Mesh::FindNodeAnim(const aiAnimation * pAnimation,const std::string nodeName)
 {
 	for(unsigned i=0; i < pAnimation->mNumChannels; ++i){
@@ -348,6 +281,7 @@ const aiNodeAnim *Mesh::FindNodeAnim(const aiAnimation * pAnimation,const std::s
 	}
 	return NULL;
 }
+//--------------------------------------------------------------------------------------
 void Mesh::CalcInterpolatedPosition(aiVector3D & out,float animationTime,const aiNodeAnim * pNodeAnim)
 {
 	// we need at least two values to interpolate...
@@ -365,6 +299,7 @@ void Mesh::CalcInterpolatedPosition(aiVector3D & out,float animationTime,const a
 	out = start + factor * delta;
 	return;
 }
+//--------------------------------------------------------------------------------------
 void Mesh::CalcInterpolatedRotation(aiQuaternion& out, float animationTime, const aiNodeAnim* pNodeAnim)
 {
     if (pNodeAnim->mNumRotationKeys == 1) {
@@ -383,6 +318,7 @@ void Mesh::CalcInterpolatedRotation(aiQuaternion& out, float animationTime, cons
     out = out.Normalize();
 	return;
 }
+//--------------------------------------------------------------------------------------
 void Mesh::CalcInterpolatedScaling(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim)
 {
     if (pNodeAnim->mNumScalingKeys == 1) {
@@ -400,6 +336,7 @@ void Mesh::CalcInterpolatedScaling(aiVector3D& out, float animationTime, const a
     out = start + factor * delta;
 	return;
 }
+//--------------------------------------------------------------------------------------
 unsigned Mesh::FindPosition(float animationTime,const aiNodeAnim * pNodeAnim)
 {
 	for(unsigned i=0; i<pNodeAnim->mNumPositionKeys - 1; ++i){
@@ -409,6 +346,7 @@ unsigned Mesh::FindPosition(float animationTime,const aiNodeAnim * pNodeAnim)
 	}
 	return 0;
 }
+//--------------------------------------------------------------------------------------
 unsigned Mesh::FindRotation(float animationTime, const aiNodeAnim* pNodeAnim)
 {
     for (unsigned i = 0 ; i < pNodeAnim->mNumRotationKeys - 1 ; ++i) {
@@ -418,6 +356,7 @@ unsigned Mesh::FindRotation(float animationTime, const aiNodeAnim* pNodeAnim)
     }
     return 0;
 }
+//--------------------------------------------------------------------------------------
 unsigned Mesh::FindScaling(float animationTime, const aiNodeAnim* pNodeAnim)
 {
     for (unsigned i = 0 ; i < pNodeAnim->mNumScalingKeys - 1 ; ++i) {

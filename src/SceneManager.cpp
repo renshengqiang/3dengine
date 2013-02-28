@@ -1,8 +1,8 @@
-#include <SceneManager.h>
-#include <Render.h>
-#include <Shader.h>
-#include <Mesh.h>
-#include <Timer.h>
+#include "SceneManager.h"
+#include "Render.h"
+#include "Shader.h"
+#include "Mesh.h"
+#include "Timer.h"
 #include <stdlib.h>
 
 SceneManager::SceneManager(enum ManagerType type):
@@ -14,7 +14,7 @@ SceneManager::SceneManager(enum ManagerType type):
 	mp_rootNode(0)
 {
 	//所有node都是在该node下面进行创建
-	mp_rootNode = new SceneNode();
+	mp_rootNode = new SceneNode("rootNode");
 	gd_list_init_head(&m_animationListHead);
 }
 SceneManager::~SceneManager()

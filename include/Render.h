@@ -1,7 +1,7 @@
 #ifndef _RENDER_H
 #define _RENDER_H
+#include "math_3d.h"
 #include <GL/glew.h>
-#include <math_3d.h>
 
 typedef struct IndexObj INDEX_OBJ;
 

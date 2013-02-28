@@ -1,7 +1,7 @@
 #include <struct.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "stdio.h"
 #define ARRAY_MIN_NUM 4
 #define ARRAY_MAX_NUM 512
 

@@ -1,7 +1,7 @@
 #ifndef _KEYFRAME_H
 #define _KEYFRAME_H
-#include <Export.h>
-#include <math_3d.h>
+#include "Export.h"
+#include "math_3d.h"
 
 /*
 	将这两个类进行这样组织的原因:为了和Track类相适应

@@ -1,9 +1,9 @@
 #ifndef _ANIMATION_H
 #define _ANIMATION_H
-#include <Export.h>
-#include <AnimationTrack.h>
-#include <SceneNode.h>
-#include <struct.h>
+#include "Export.h"
+#include "AnimationTrack.h"
+#include "SceneNode.h"
+#include "struct.h"
 #include <string>
 
 /*

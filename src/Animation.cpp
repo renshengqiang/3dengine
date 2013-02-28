@@ -1,4 +1,4 @@
-#include <Animation.h>
+#include "Animation.h"
 #include <stdlib.h>
 
 Animation::Animation(const std::string &name, float length)

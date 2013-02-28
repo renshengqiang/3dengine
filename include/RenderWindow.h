@@ -1,6 +1,6 @@
 #ifndef _RENDER_WINDOW_H
 #define _RENDER_WINDOW_H
-#include <Export.h>
+#include "Export.h"
 
 class ENGINE_EXPORT RenderWindow{
 	public:

@@ -1,7 +1,7 @@
 #ifndef _ENGINE_STRUCT_H
 #define _ENGINE_STRUCT_H
-#include <stdio.h>
 #include "base.h"
+#include <stdio.h>
 /*==================================================*/
 #define GdMemMove(dst, src, n) memmove(dst, src, n)
 /*void GdMemMove(DUINT8 *dst, const DUINT8 *src, DINT n)

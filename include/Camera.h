@@ -1,8 +1,8 @@
 #ifndef _CAMERA_H
 #define _CAMERA_H
-#include <math_3d.h>
-#include <SceneNode.h>
-#include <Export.h>
+#include "math_3d.h"
+#include "SceneNode.h"
+#include "Export.h"
 
 class ENGINE_EXPORT Camera{
 	public:

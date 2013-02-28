@@ -4,11 +4,11 @@
 #include <RenderWindow.h>
 #include <Camera.h>
 #include <SceneNode.h>
-#include <Animation.h>
-#include <AnimationState.h>
-#include <FrameListener.h>
-#include <EventListener.h>
-#include <struct.h>
+#include "Animation.h"
+#include "AnimationState.h"
+#include "FrameListener.h"
+#include "EventListener.h"
+#include "struct.h"
 #include <string>
 
 class ENGINE_EXPORT SceneManager{

@@ -26,7 +26,7 @@ all:$(OUTDIR).dir $(OUTDIR)/$(EXENAME)
 $(OUTDIR)/$(EXENAME):$(EXEDEPS) $(EXEOBJS) 
 	$(CXX)  $(EXEOBJS) -o $@ $(LDFLAGS)
 
-
+-include $(EXEDEPS)
 %.d: %.c
 	@$(CC) -MM $(CFLAGS) $< | sed -e 's,^[0-9a-zA-Z._-]*: \([0-9a-zA-Z._-]*/\),\1&,' -e 's,^\([0-9a-zA-Z._-/]*\)\.o:,\1.o \1.d:,' > $@
 %.dd: %.cpp

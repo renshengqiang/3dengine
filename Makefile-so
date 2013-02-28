@@ -10,10 +10,10 @@ CFLAGS:=$(COMPILE_FLAGS)
 LDFLAGS:=$(LINK_FLAGS)
 DEBUG:=Y
 
-LIBOBJS:=$(patsubst %.cpp,%.loo,$(LIBSRCS))
-LIBOBJS:=$(patsubst %.c,%.lo,$(LIBOBJS))
-LIBDEPS:=$(patsubst %.cpp,%.ldd,$(LIBSRCS))
-LIBDEPS:=$(patsubst %.c,%.ld,$(LIBOBJS))
+LIBOBJS:=$(patsubst %.cpp,%.oo,$(LIBSRCS))
+LIBOBJS:=$(patsubst %.c,%.o,$(LIBOBJS))
+LIBDEPS:=$(patsubst %.cpp,%.dd,$(LIBSRCS))
+LIBDEPS:=$(patsubst %.c,%.d,$(LIBDEPS))
 CFLAGS+=-I. -Wall
 
 ifeq ($(DEBUG),Y)
@@ -28,13 +28,14 @@ all:$(OUTDIR).dir $(OUTDIR)/$(LIBNAME)
 $(OUTDIR)/$(LIBNAME):$(LIBDEPS) $(LIBOBJS)
 	$(CC) -shared -fPIC  $(LIBOBJS) -o $@.so $(LDFLAGS)
 
-%.ld: %.c
-	@$(CC) -MM $(CFLAGS) $< | sed -e 's,^[0-9a-zA-Z._-]*: \([0-9a-zA-Z._-]*/\),\1&,' -e 's,^\([0-9a-zA-Z._-/]*\)\.o:,\1.o \1.ld:,' > $@
-%.ldd: %.cpp
-	@$(CXX) -MM $(CFLAGS) $< | sed -e 's,^[0-9a-zA-Z._-]*: \([0-9a-zA-Z._-]*/\),\1&,' -e 's,^\([0-9a-zA-Z._-/]*\)\.o:,\1.oo \1.ldd:,' > $@
-%.loo:%.cpp
+-include $(LIBDEPS)
+%.d: %.c
+	@$(CC) -MM $(CFLAGS) $< | sed -e 's,^[0-9a-zA-Z._-]*: \([0-9a-zA-Z._-]*/\),\1&,' -e 's,^\([0-9a-zA-Z._-/]*\)\.o:,\1.o \1.d:,' > $@
+%.dd: %.cpp
+	@$(CXX) -MM $(CFLAGS) $< | sed -e 's,^[0-9a-zA-Z._-]*: \([0-9a-zA-Z._-]*/\),\1&,' -e 's,^\([0-9a-zA-Z._-/]*\)\.o:,\1.oo \1.dd:,' > $@
+%.oo:%.cpp
 	$(CXX) $(CFLAGS) $(DEFS) -c $< -o $@	
-%.lo:%.c
+%.o:%.c
 	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
 %.dir:
 	@echo "Checking directory $*"
