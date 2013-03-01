@@ -47,7 +47,7 @@ NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle)
 	gd_list_insert(&(listNode->siblingList),addPos,addPos->next);
 	return ret;
 }
-NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle, SceneNode *node)
+NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle, Node *node)
 {
 	NodeAnimationTrack *ret = CreateNodeTrack(handle);
 	ret->SetAssociatedNode(node);
@@ -123,7 +123,7 @@ void Animation::Apply(float timePos, float weight, float scale)
 	}
 	return;
 }
-void Animation::ApplyToNode(SceneNode *node, float timePos, float weight, float scale)
+void Animation::ApplyToNode(Node *node, float timePos, float weight, float scale)
 {
 	GD_LIST *pos;
 	struct NodeTrackListNode *listNode;

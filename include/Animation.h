@@ -2,7 +2,7 @@
 #define _ANIMATION_H
 #include "Export.h"
 #include "AnimationTrack.h"
-#include "SceneNode.h"
+#include "Node.h"
 #include "struct.h"
 #include <string>
 
@@ -52,14 +52,14 @@ class ENGINE_EXPORT Animation{
 			该Animation中的所有NodeAnimationTrack的handle必须是独立的
 		*/
 		NodeAnimationTrack *CreateNodeTrack(unsigned short handle);
-		NodeAnimationTrack *CreateNodeTrack(unsigned short handle, SceneNode *node);
+		NodeAnimationTrack *CreateNodeTrack(unsigned short handle, Node *node);
 		unsigned short GetNumNodeTracks(void) const;
 		bool HasNodeTrack(unsigned short handle) const;
 		NodeAnimationTrack *GetNodeTrack(unsigned short handle) const;
 		void DestoryNodeTrack(unsigned short handle);
 		void DestroyAllNodeTracks(void);
 		void Apply(float timePos, float weight = 1.0, float scale=1.0);
-		void ApplyToNode(SceneNode *node, float timePos, float weight = 1.0, float scale = 1.0);
+		void ApplyToNode(Node *node, float timePos, float weight = 1.0, float scale = 1.0);
 	private:
 		GD_LIST m_nodeTrackListHead;
 		std::string m_name;

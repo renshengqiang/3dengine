@@ -166,7 +166,7 @@ void SceneManager::_ApplySceneAnimations(void)
 		//reset
 		for(int j=0; j<animation->GetNumNodeTracks();++j){
 			NodeAnimationTrack *track = animation->GetNodeTrack(j);
-			SceneNode *node = track->GetAssociatedNode();
+			Node *node = track->GetAssociatedNode();
 			node->ResetToInitialState();
 		}
 		//use animation

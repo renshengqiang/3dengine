@@ -2,7 +2,7 @@
 #define _ANIMATION_TRACK_H
 #include "Export.h"
 #include "KeyFrame.h"
-#include "SceneNode.h"
+#include "Node.h"
 #include "struct.h"
 
 /*
@@ -56,18 +56,18 @@ class ENGINE_EXPORT NodeAnimationTrack : public AnimationTrack
 {
 	public:
 		NodeAnimationTrack(Animation *parent);
-		NodeAnimationTrack(Animation *parent, SceneNode *targetNode);
-		virtual SceneNode *GetAssociatedNode(void) const;
-		virtual void SetAssociatedNode(SceneNode *node);
+		NodeAnimationTrack(Animation *parent, Node *targetNode);
+		virtual Node *GetAssociatedNode(void) const;
+		virtual void SetAssociatedNode(Node *node);
 		virtual bool GetUseShortestPath(void) const;
 		virtual void SetUseShortestPath(bool useShortestPath);
 		virtual TransformKeyFrame *CreateNodeKeyFrame(float timePos);
 		virtual void GetInterpolatedKeyFrame(float timePos,KeyFrame * kf);
 		virtual void Apply(float timePos,float weight = 1.0,float scale = 1.0);
-		virtual void ApplyToNode(SceneNode *node, float timePos, float weight=1.0, float scale=1.0);
+		virtual void ApplyToNode(Node *node, float timePos, float weight=1.0, float scale=1.0);
 	private:
 		KeyFrame *_CreateKeyFrameImpl(float timePos);
-		SceneNode *mp_targetNode;
+		Node *mp_targetNode;
 		bool m_useShortestRotationPath;
 };
 #endif

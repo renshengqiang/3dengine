@@ -105,15 +105,15 @@ NodeAnimationTrack::NodeAnimationTrack(Animation *parent)
 	:AnimationTrack(parent),mp_targetNode(0),m_useShortestRotationPath(true)
 {
 }
-NodeAnimationTrack::NodeAnimationTrack(Animation *parent, SceneNode *targetNode)
+NodeAnimationTrack::NodeAnimationTrack(Animation *parent, Node *targetNode)
 	:AnimationTrack(parent),mp_targetNode(targetNode),m_useShortestRotationPath(true)
 {
 }
-SceneNode *NodeAnimationTrack::GetAssociatedNode(void) const
+Node *NodeAnimationTrack::GetAssociatedNode(void) const
 {
 	return mp_targetNode;
 }
-void NodeAnimationTrack::SetAssociatedNode(SceneNode *node)
+void NodeAnimationTrack::SetAssociatedNode(Node *node)
 {
 	mp_targetNode = node;
 	return;	
@@ -171,7 +171,7 @@ void NodeAnimationTrack::Apply(float timePos,float weight,float scale)
 	ApplyToNode(mp_targetNode,timePos,weight,scale);
 	return;
 }
-void NodeAnimationTrack::ApplyToNode(SceneNode *node, float timePos, float weight, float scl)
+void NodeAnimationTrack::ApplyToNode(Node *node, float timePos, float weight, float scl)
 {
 	TransformKeyFrame kf(0,timePos);
 
