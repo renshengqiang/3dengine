@@ -22,7 +22,7 @@ void Animation::SetLength(float len)
 {
 	m_length = len;
 }
-NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle)
+NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle, const std::string &name)
 {
 	GD_LIST *pos,*addPos;
 	struct NodeTrackListNode *listNode;
@@ -40,7 +40,7 @@ NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle)
 		else
 			break;
 	}//gd_list_for_each
-	NodeAnimationTrack *ret = new NodeAnimationTrack(this);
+	NodeAnimationTrack *ret = new NodeAnimationTrack(this, name);
 	listNode = (struct NodeTrackListNode *)malloc(sizeof(struct NodeTrackListNode));
 	listNode->handle = handle;
 	listNode->track = ret;
@@ -49,7 +49,7 @@ NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle)
 }
 NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle, Node *node)
 {
-	NodeAnimationTrack *ret = CreateNodeTrack(handle);
+	NodeAnimationTrack *ret = CreateNodeTrack(handle, node->GetName());
 	ret->SetAssociatedNode(node);
 	return ret;
 }

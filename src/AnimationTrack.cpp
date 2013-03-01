@@ -101,12 +101,18 @@ float AnimationTrack::GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, Key
 	else return (timePos-t1)/(t2-t1);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-NodeAnimationTrack::NodeAnimationTrack(Animation *parent)
-	:AnimationTrack(parent),mp_targetNode(0),m_useShortestRotationPath(true)
+NodeAnimationTrack::NodeAnimationTrack(Animation *parent, const std::string &name)
+	:AnimationTrack(parent),
+	m_name(name),
+	mp_targetNode(0),
+	m_useShortestRotationPath(true)
 {
 }
-NodeAnimationTrack::NodeAnimationTrack(Animation *parent, Node *targetNode)
-	:AnimationTrack(parent),mp_targetNode(targetNode),m_useShortestRotationPath(true)
+NodeAnimationTrack::NodeAnimationTrack(Animation *parent, Node *targetNode, const std::string &name)
+	:AnimationTrack(parent),
+	m_name(name),
+	mp_targetNode(targetNode),
+	m_useShortestRotationPath(true)
 {
 }
 Node *NodeAnimationTrack::GetAssociatedNode(void) const

@@ -51,7 +51,7 @@ class ENGINE_EXPORT Animation{
 			@param handle是用来检索该track在Animation中的位置；
 			该Animation中的所有NodeAnimationTrack的handle必须是独立的
 		*/
-		NodeAnimationTrack *CreateNodeTrack(unsigned short handle);
+		NodeAnimationTrack *CreateNodeTrack(unsigned short handle, const std::string &name="");
 		NodeAnimationTrack *CreateNodeTrack(unsigned short handle, Node *node);
 		unsigned short GetNumNodeTracks(void) const;
 		bool HasNodeTrack(unsigned short handle) const;

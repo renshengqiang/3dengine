@@ -84,7 +84,7 @@ Animation *SceneManager::GetAnimation(const std::string &name) const
 Animation *SceneManager::CreateAnimation(const  std::string & name,float length)
 {
 	if(HasAnimation(name)){
-		fprintf(stderr, "SceneManager::CreateAnimation : Error Create SceneNode Animation, animation named %s already exists\n", name.c_str());
+		fprintf(stderr, "SceneManager::CreateAnimation : Error Create Node Animation, animation named %s already exists\n", name.c_str());
 		return NULL;
 	}
 	Animation *animation = new Animation(name, length);
@@ -107,7 +107,7 @@ void SceneManager::DestroyAnimation(const  std::string & name)
 			return;
 		}
 	}
-	fprintf(stderr, "SceneManager::DestroyAnimation : Error Destroy SceneNode Animation, animation named %s already exists\n", name.c_str());
+	fprintf(stderr, "SceneManager::DestroyAnimation : Error Destroy Node Animation, animation named %s already exists\n", name.c_str());
 	return;
 }
 void SceneManager::DestroyAllAnimations(void)
