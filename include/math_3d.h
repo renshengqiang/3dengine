@@ -91,22 +91,22 @@ struct Matrix3f
 	float m[3][3];
 };
 struct Matrix4f
-{
-    float m[4][4];
+	{
+	float m[4][4];
 
-    Matrix4f();
+	Matrix4f();
 	Matrix4f(const aiMatrix4x4& assimpMatrix);    
-    Matrix4f(const aiMatrix3x3& assimpMatrix);
+	Matrix4f(const aiMatrix3x3& assimpMatrix);
 	Matrix4f(float a00, float a01, float a02, float a03,
-             float a10, float a11, float a12, float a13,
-             float a20, float a21, float a22, float a23,
-             float a30, float a31, float a32, float a33);
+	         float a10, float a11, float a12, float a13,
+	         float a20, float a21, float a22, float a23,
+	         float a30, float a31, float a32, float a33);
 
 	Matrix4f &operator+=(const Matrix4f &r);
 	Matrix4f &operator*=(float weight);
 
 	//初始化为单位矩阵
-    void InitIdentity();
+	void InitIdentity();
 	//初始化为零矩阵
 	void InitZero();
 	// 转置矩阵
@@ -115,18 +115,16 @@ struct Matrix4f
 	Matrix4f& Inverse();
 	//计算对应行列式的值
 	float Determinant() const; 
-	
-    Matrix4f operator*(const Matrix4f& Right) const;
-    void InitScaleTransform(float ScaleX, float ScaleY, float ScaleZ);
-    void InitRotateTransform(float RotateX, float RotateY, float RotateZ);
-    void InitTranslationTransform(float x, float y, float z);
-    void InitCameraTransform(const Vector3f& Target, const Vector3f& Up);	
+
+	Matrix4f operator*(const Matrix4f& Right) const;
+	void InitScaleTransform(float ScaleX, float ScaleY, float ScaleZ);
+	void InitRotateTransform(float RotateX, float RotateY, float RotateZ);
+	void InitTranslationTransform(float x, float y, float z);
+	void InitCameraTransform(const Vector3f& Target, const Vector3f& Up);	
 	void InitCameraTransform(const Vector3f& Pos, const Vector3f& Target, const Vector3f& Up);
-    void InitPersProjTransform(float FOV, float Width, float Height, float zNear, float zFar);
+	void InitPersProjTransform(float FOV, float Width, float Height, float zNear, float zFar);
 	void InitPersProjTransform(float FOV, float ar, float zNear, float zFar);
 	void MakeTransform(const Vector3f& position, const Vector3f& scale, const Quaternion& orientation);
-	
-	
 };
 Matrix4f operator*(const Matrix4f &m,float weight);
 Vector3f operator*(const Matrix4f &matrix,const Vector3f &vector);

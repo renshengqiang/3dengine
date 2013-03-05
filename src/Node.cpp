@@ -41,10 +41,10 @@ Node::Node(const std::string  &name):
 //----------------------------------------------------------
 Node::~Node()
 {
-	for(ChildIterator iter=m_childMap.begin(); iter!=m_childMap.end(); ++iter){
-		delete (iter->second);
+	for(ChildNodeIterator iter=m_childVec.begin(); iter!=m_childVec.end(); ++iter){
+		delete (*iter);
 	}
-	m_childMap.clear();
+	m_childVec.clear();
 }
  //-----------------------------------------------------------------------
 const std::string& Node::GetName(void) const
@@ -64,6 +64,17 @@ void Node::SetParent(Node * parent)
 		_needUpdate();
 	}
 	return;
+}
+//----------------------------------------------------------
+void Node::Reset(void)
+{
+	m_position = Vector3f(0.0f, 0.0f, 0.0f);
+	m_scale = Vector3f(1.0f, 1.0f, 1.0f);
+	m_orientation = Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
+
+	for(ChildNodeIterator iter = m_childVec.begin(); iter != m_childVec.end(); ++iter){
+		(*iter)->Reset();
+	 }
 }
 //----------------------------------------------------------
 const Quaternion &Node::_GetDerivedOrientation(void)
@@ -118,8 +129,8 @@ void Node::_Update(bool updateChildren,bool parentHasChanged)
 	{
 	    if (m_needChildUpdate || parentHasChanged)
 	    {
-	    	for(ChildIterator iter = m_childMap.begin(); iter != m_childMap.end(); ++iter){
-				iter->second->_Update(true, true);
+	    	for(ChildNodeIterator iter = m_childVec.begin(); iter != m_childVec.end(); ++iter){
+				(*iter)->_Update(true, true);
 	    	}
 	    }
 	    m_needChildUpdate = false;
@@ -172,7 +183,7 @@ void Node::AddChild(Node * child)
 		fprintf(stderr, "Node::AddChild: child already has a parent, ADD FAILURE\n");
 		return;
 	}
-	m_childMap.insert(ChildrenMap::value_type(child->GetName(), child));
+	m_childVec.push_back(child);
 	child->SetParent(this);
 }
 //----------------------------------------------------------
@@ -192,33 +203,37 @@ Node *Node::CreateChildImpl(const  std::string& name)
 //----------------------------------------------------------
 void Node::RemoveChild(Node *child)
 {
-	if (child)
-	{
-		ChildrenMap::iterator i = m_childMap.find(child->GetName());
-		// ensure it's our child
-		if (i != m_childMap.end() && i->second == child)
-		{
-			m_childMap.erase(i);
-			child->SetParent(NULL);
-		}
-	}
+	if (child){
+		for(ChildNodeIterator iter = m_childVec.begin(); iter != m_childVec.end(); ++iter){
+			if((*iter) == child){
+				m_childVec.erase(iter);
+				break;
+			}//if
+		}//for
+	}//child
 }
 //----------------------------------------------------------
 unsigned short Node::NumChildren(void) const
 {
-	return static_cast< unsigned short >(m_childMap.size());
+	return static_cast< unsigned short >(m_childVec.size());
 }
 //----------------------------------------------------------
 Node *Node::GetChild(unsigned short index) const
 {
-	if( index < m_childMap.size() )
-	{
-		ChildrenMap::const_iterator iter = m_childMap.begin();
-		while (index--) ++iter;
-		return iter->second;
-	}
+	if( index < m_childVec.size() )
+		return m_childVec[index];
 	else
 		return NULL;
+}
+//----------------------------------------------------------
+Node *Node::GetChild(const std::string &name) const
+{
+	Node *p_childNode;
+	for(ConstChildNodeIterator iter = m_childVec.begin(); iter != m_childVec.end(); ++iter){
+		if((*iter)->GetName() == name) return *iter;
+		else if((p_childNode = (*iter)->GetChild(name)) != NULL )  return p_childNode;
+	}
+	return NULL;
 }
 //----------------------------------------------------------
 const Quaternion &Node::GetOrientation(void) const

@@ -2,7 +2,7 @@
 #define _NODE_H
 #include "math_3d.h"
 #include "Export.h"
-#include <map>
+#include <vector>
 #include <string>
 
 class ENGINE_EXPORT Node{
@@ -18,8 +18,11 @@ public:
 		/// Transform is relative to world space
 		TS_WORLD
 	};
-	typedef std::map<std::string, Node *> ChildrenMap;
-	typedef std::map<std::string, Node *>::iterator ChildIterator;
+	//typedef std::map<std::string, Node *> ChildrenMap;
+	//typedef std::map<std::string, Node *>::iterator ChildIterator;
+	typedef std::vector<Node *> ChildNodeVector;
+	typedef std::vector<Node *>::iterator ChildNodeIterator;
+	typedef std::vector<Node *>::const_iterator ConstChildNodeIterator;
 	
 	Node();
 	Node(const std::string &name);
@@ -28,6 +31,8 @@ public:
 	const std::string& GetName(void) const; 
 	Node *GetParent(void) const;
 	void SetParent(Node *parent);
+	//复位到原始状态
+	void Reset(void);
 
 	/** Gets the orientation of the node as derived from all parents.
         */
@@ -52,6 +57,7 @@ public:
 	void RemoveChild(Node *child);
 	unsigned short NumChildren(void) const;
 	Node *GetChild(unsigned short index) const;
+	Node *GetChild(const std::string &name) const;
 	
 	/** Returns a quaternion representing the nodes orientation compared with it's parent
         */
@@ -90,7 +96,8 @@ public:
 protected:
 	std::string m_name;
 	Node *mp_parent;
-	ChildrenMap m_childMap;	
+	//ChildrenMap m_childMap;	
+	ChildNodeVector m_childVec;
 
 	//Flag to indicate own transform from parent is out of date
 	bool m_needSelfUpdate;

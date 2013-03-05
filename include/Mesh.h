@@ -5,6 +5,7 @@
 #include "SubMesh.h"
 #include "math_3d.h"
 #include "Texture.h"
+#include "Skeleton.h"
 
 #include <Importer.hpp>      // C++ importer interface
 #include <scene.h>       // Output data structure
@@ -27,26 +28,23 @@ class ENGINE_EXPORT Mesh
 public:
 	Mesh(const std::string& Filename);
 	~Mesh();
-	void RenderUseShader();
-	void Render();
+	void RenderUseShader(void);
+	void Render(void);
 	void BoneTransform(float timeInSeconds);
+	
+	void ReadNodeHeirarchy(float animationTime, SkeletonBone *pBone, const Matrix4f &parentTransform);
+	const Matrix4f CalcuInterPolatedTransform(const SkeletonNodeTrack *pTrack, float animationTime);
 
 private:
-	bool LoadMesh(const std::string& Filename);
-	bool InitFromScene(const aiScene* pScene, const std::string& Filename);
-	void InitMesh(unsigned int Index, const aiMesh* paiMesh);
-	bool InitMaterials(const aiScene* pScene, const std::string& Filename);
-	void LoadBones(const aiMesh* pMesh, SubMesh *submesh);
-	void Clear();
+	bool _LoadMesh(const std::string& filename);	
+	bool _InitMaterials(const std::string& filename);
+	void _InitSubMesh(unsigned int index, const aiMesh* paiMesh);
+	void _InitSubMeshAttachedBoneInfo(const aiMesh* pMesh, SubMesh *submesh);
+	void _InitSkeleton(const std::string& filename);
+	void _InitSkeletonNodeHeirarchy(SkeletonBone *pBone, const aiNode *paiNode);
+	void _InitSkeletonAnimation(void);
+	void _Clear();
 	//about skeleton animation 
-	const aiNodeAnim *FindNodeAnim(const aiAnimation *pAnimation, const std::string nodeName);
-	void ReadNodeHeirarchy(float animationTime, const aiNode *pNode, const Matrix4f &parentTransform);
-	unsigned FindPosition(float animationTime, const aiNodeAnim *pNodeAnim);
-	unsigned FindRotation(float animationTime, const aiNodeAnim *pNodeAnim);
-	unsigned FindScaling(float animationTime, const aiNodeAnim *pNodeAnim);
-	void CalcInterpolatedPosition(aiVector3D &out, float animationTime, const aiNodeAnim *pNodeAnim);
-	void CalcInterpolatedRotation(aiQuaternion &out, float animationTime, const aiNodeAnim *pNodeAnim);
-	void CalcInterpolatedScaling(aiVector3D &out, float animationTime, const aiNodeAnim *pNodeAnim);
 	void UpdateSubMesh(SubMesh &submesh);
 
 private:
@@ -61,6 +59,8 @@ private:
 	std::map<std::string, unsigned> m_boneMapping;
 	std::vector<struct BoneInfo> m_boneInfo;
 	Matrix4f m_globalInverseTransform;
+	//skeleton node Animation
+	Skeleton *mp_skeleton;
 };
 #endif	/* MESH_H */
 

@@ -7,20 +7,20 @@ Quaternion::Quaternion()
 
 Quaternion::Quaternion(float _x, float _y, float _z, float _w)
 {
-    x = _x;
-    y = _y;
-    z = _z;
-    w = _w;
+	x = _x;
+	y = _y;
+	z = _z;
+	w = _w;
 }
 
 Quaternion::Quaternion(const Vector3f &axis, float angle)
 {
 	float fHalfAngle ( 0.5*ToRadian(angle));
-    float fSin = sinf(fHalfAngle);
-    w = cosf(fHalfAngle);
-    x = fSin*axis.x;
-    y = fSin*axis.y;
-    z = fSin*axis.z;
+	float fSin = sinf(fHalfAngle);
+	w = cosf(fHalfAngle);
+	x = fSin*axis.x;
+	y = fSin*axis.y;
+	z = fSin*axis.z;
 }
 
 Quaternion& Quaternion::operator+=(const Quaternion &r)
@@ -172,45 +172,45 @@ Quaternion operator+(const Quaternion& l, const Quaternion& r)
 
 	ret+=r;
 
-    return ret;
+	return ret;
 }
 
 Quaternion operator-(const Quaternion& l, const Quaternion& r)
 {
-    Quaternion ret(l);
+	Quaternion ret(l);
 
 	ret-=r;
 
-    return ret;
+	return ret;
 
 }
 
 Quaternion operator*(const Quaternion& l, const Quaternion& r)
 {
-    Quaternion ret(l);
+	Quaternion ret(l);
 
 	ret*=r;
 
-    return ret;
+	return ret;
 }
 
 Quaternion operator*(const Quaternion& q, float t)
 {
-    Quaternion ret(q);
+	Quaternion ret(q);
 
 	ret*=t;
 
-    return ret;
+	return ret;
 
 }
 
 Quaternion operator*(const Quaternion& q, const Vector3f& v)
 {
-    Quaternion ret(q);
+	Quaternion ret(q);
 
 	ret*=v;
 
-    return ret;
+	return ret;
 
 }
 

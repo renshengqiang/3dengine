@@ -1,6 +1,6 @@
 PROJNAME:=engine
 LIBDIR:=../lib
-LINK_FLAGS:=-lSDL -lGL -lGLU -lGLEW -lstdc++ -lMagick++ -lassimp
+LINK_FLAGS:=-L/usr/local/lib -lSDL -lGL -lGLU -lGLEW -lstdc++ -lMagick++ -lassimp
 COMPILE_FLAGS:=-I/usr/include/SDL -I/usr/include/ImageMagick -I/usr/local/include/assimp -I../include -D_GNU_SOURCE=1 -D_REENTRANT -DARCH_X86=1 -Wno-int-to-pointer-cast
 COMPILE_FILES:= util/Array.c\
 				util/Timer.c\
@@ -20,5 +20,9 @@ COMPILE_FILES:= util/Array.c\
 				AnimationState.cpp \
 				Animation.cpp \
 				AnimationTrack.cpp \
-				KeyFrame.cpp
+				KeyFrame.cpp \
+				Skeleton.cpp \
+				SkeletonBone.cpp \
+				SkeletonNodeTrack.cpp \
+				SkeletonAnimation.cpp
 include ../Makefile-so

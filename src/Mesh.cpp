@@ -2,21 +2,26 @@
 #include "Render.h"
 #include "Shader.h"
 #include "util.h"
+#include "SkeletonBone.h"
+#include "Animation.h"
+#include "AnimationTrack.h"
+#include "KeyFrame.h"
 #include <assert.h>
 
 Mesh::Mesh(const std::string &fileName):
-	mp_scene(NULL)
+	mp_scene(NULL),
+	mp_skeleton(NULL)
 {
 	m_numBones = 0;
-	LoadMesh(fileName);
+	_LoadMesh(fileName);
 }
 //--------------------------------------------------------------------------------------
 Mesh::~Mesh()
 {
-	Clear();
+	_Clear();
 }
 //--------------------------------------------------------------------------------------
-void Mesh::Clear()
+void Mesh::_Clear()
 {
 	for (unsigned int i = 0 ; i < m_textures.size() ; i++) {
 		SAFE_DELETE(m_textures[i]);
@@ -24,107 +29,50 @@ void Mesh::Clear()
 	for(unsigned int i = 0; i < m_subMeshes.size(); ++i){
 		SAFE_DELETE(m_subMeshes[i]);
 	}
+	if(mp_skeleton) delete mp_skeleton;
 }
 //--------------------------------------------------------------------------------------
-bool Mesh::LoadMesh(const std::string& Filename)
+bool Mesh::_LoadMesh(const std::string& filename)
 {
 	// Release the previously loaded mesh (if it exists)
-	Clear();
-
-	bool Ret = false;
-	mp_scene = m_importer.ReadFile(Filename.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs);
+	_Clear();
+	mp_scene = m_importer.ReadFile(filename.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs);
 
 	if (mp_scene) {
 		m_globalInverseTransform = mp_scene->mRootNode->mTransformation;
 		m_globalInverseTransform.Inverse();
-		Ret = InitFromScene(mp_scene, Filename);
-
-		printf("Mesh %s has %d animation(s)\n", Filename.c_str(), mp_scene->mNumAnimations);
-		for(unsigned int i=0;i<mp_scene->mNumAnimations;++i){
-			const aiAnimation *pAnimation = mp_scene->mAnimations[i];
-			printf("Animation name : %s duration %f ticksPerSecond %f\n",pAnimation->mName.data, pAnimation->mDuration, pAnimation->mTicksPerSecond);
+		
+		m_subMeshes.resize(mp_scene->mNumMeshes);
+		m_textures.resize(mp_scene->mNumMaterials);
+		
+		printf("-----------------------------------------\n");
+		printf("Parsing Mesh : '%s'\n", filename.c_str());
+		//Initlialize the materials
+		if(_InitMaterials(filename) == false)
+			return false;
+		// Initialize the meshes in the scene one by one
+		printf("%d subMesh(es):\n", m_subMeshes.size());
+		for (unsigned int i = 0 ; i < m_subMeshes.size() ; ++i) {
+			const aiMesh* paiMesh = mp_scene->mMeshes[i];
+			m_subMeshes[i] = new SubMesh();
+			_InitSubMesh(i, paiMesh);
 		}
-	}
-	else {
-		printf("Error parsing '%s': '%s'\n", Filename.c_str(), m_importer.GetErrorString());
-	}
+		//Initilize the skeleton info
+		_InitSkeleton(filename);
 
-	return Ret;
-}
-//--------------------------------------------------------------------------------------
-bool Mesh::InitFromScene(const aiScene* pScene, const std::string& Filename)
-{  	
-	m_subMeshes.resize(pScene->mNumMeshes);
-	m_textures.resize(pScene->mNumMaterials);
-
-	//Initlialize the materials
-	if(InitMaterials(pScene, Filename) == false)
+		printf("Parsing Mesh : '%s' end\n", filename.c_str());
+		printf("-----------------------------------------\n\n");
+		return true;
+	}else {
+		printf("Error parsing '%s': '%s'\n", filename.c_str(), m_importer.GetErrorString());
 		return false;
-	// Initialize the meshes in the scene one by one
-	for (unsigned int i = 0 ; i < m_subMeshes.size() ; ++i) {
-		const aiMesh* paiMesh = pScene->mMeshes[i];
-		m_subMeshes[i] = new SubMesh();
-		InitMesh(i, paiMesh);
 	}
-	return true;
 }
 //--------------------------------------------------------------------------------------
-void Mesh::InitMesh(unsigned int Index, const aiMesh* paiMesh)
-{
-	const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
-
-	for (unsigned int i = 0 ; i < paiMesh->mNumVertices ; i++) {
-		const aiVector3D *pPos      = &(paiMesh->mVertices[i]);
-		//const aiVector3D *pNormal   = &(paiMesh->mNormals[i]);
-		const aiVector3D *pTexCoord = paiMesh->HasTextureCoords(0) ? &(paiMesh->mTextureCoords[0][i]) : &Zero3D;
-
-		m_subMeshes[Index]->AddCoord(Vector3f(pPos->x, pPos->y, pPos->z));
-		m_subMeshes[Index]->AddTextureCoord(Vector2f(pTexCoord->x, pTexCoord->y));
-	}
-	LoadBones(paiMesh, m_subMeshes[Index]);
-	for (unsigned int i = 0 ; i < paiMesh->mNumFaces ; i++) {
-		const aiFace& Face = paiMesh->mFaces[i];
-		assert(Face.mNumIndices == 3);
-		m_subMeshes[Index]->AddIndex(Face.mIndices[0]);
-		m_subMeshes[Index]->AddIndex(Face.mIndices[1]);
-		m_subMeshes[Index]->AddIndex(Face.mIndices[2]);
-	}
-	m_subMeshes[Index]->AddTexture(m_textures[paiMesh->mMaterialIndex]->GetTextureObj());
-	m_subMeshes[Index]->Finalize();
-
-}
-//--------------------------------------------------------------------------------------
-void Mesh::LoadBones(const aiMesh* pMesh, SubMesh *subMesh)
-{
-	for(unsigned int i=0;i< pMesh->mNumBones;++i){
-		unsigned int boneIndex = 0;
-		std::string boneName(pMesh->mBones[i]->mName.data);
-
-		if(m_boneMapping.find(boneName) == m_boneMapping.end()){
-			//在m_boneMapping中没有改骨骼信息，allocate an index for a new bone
-			boneIndex = m_numBones;
-			++m_numBones;
-			struct BoneInfo bi;
-			m_boneInfo.push_back(bi);
-			m_boneInfo[boneIndex].m_boneOffset = pMesh->mBones[i]->mOffsetMatrix;
-			m_boneMapping[boneName] = boneIndex;
-		}
-		else{
-			boneIndex = m_boneMapping[boneName];
-		}
-		for(unsigned int j = 0; j < pMesh->mBones[i]->mNumWeights; ++j){
-			unsigned short vertexId = pMesh->mBones[i]->mWeights[j].mVertexId;
-			float weight = pMesh->mBones[i]->mWeights[j].mWeight;
-
-			subMesh->AddBoneData(vertexId,boneIndex,weight);
-		}//for(unsigned int j
-	}//for(unsigned int i
-}
-//--------------------------------------------------------------------------------------
-bool Mesh::InitMaterials(const aiScene* pScene, const std::string& Filename)
+bool Mesh::_InitMaterials(const std::string& filename)
 {
 	// Extract the directory part from the file name
-	std::string::size_type SlashIndex = Filename.find_last_of("/");
+	std::string::size_type SlashIndex = filename.find_last_of("/");
 	std::string Dir;
 
 	if (SlashIndex == std::string::npos) {
@@ -134,14 +82,14 @@ bool Mesh::InitMaterials(const aiScene* pScene, const std::string& Filename)
 	    Dir = "/";
 	}
 	else {
-	    Dir = Filename.substr(0, SlashIndex);
+	    Dir = filename.substr(0, SlashIndex);
 	}
 
 	bool Ret = true;
 
 	// Initialize the materials
-	for (unsigned int i = 0 ; i < pScene->mNumMaterials ; i++) {
-	    const aiMaterial* pMaterial = pScene->mMaterials[i];
+	for (unsigned int i = 0 ; i < mp_scene->mNumMaterials ; i++) {
+	    const aiMaterial* pMaterial = mp_scene->mMaterials[i];
 
 	    m_textures[i] = NULL;
 
@@ -174,10 +122,132 @@ bool Mesh::InitMaterials(const aiScene* pScene, const std::string& Filename)
     return Ret;
 }
 //--------------------------------------------------------------------------------------
+void Mesh::_InitSubMesh(unsigned int index, const aiMesh* paiMesh)
+{
+	const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
+
+	printf("subMesh %d has %d vertices, %d faces\n", index, paiMesh->mNumVertices, paiMesh->mNumFaces);
+	for (unsigned int i = 0 ; i < paiMesh->mNumVertices ; i++) {
+		const aiVector3D *pPos      = &(paiMesh->mVertices[i]);
+		//const aiVector3D *pNormal   = &(paiMesh->mNormals[i]);
+		const aiVector3D *pTexCoord = paiMesh->HasTextureCoords(0) ? &(paiMesh->mTextureCoords[0][i]) : &Zero3D;
+
+		m_subMeshes[index]->AddCoord(Vector3f(pPos->x, pPos->y, pPos->z));
+		m_subMeshes[index]->AddTextureCoord(Vector2f(pTexCoord->x, pTexCoord->y));
+	}
+	for (unsigned int i = 0 ; i < paiMesh->mNumFaces ; i++) {
+		const aiFace& Face = paiMesh->mFaces[i];
+		
+		assert(Face.mNumIndices == 3);
+		m_subMeshes[index]->AddIndex(Face.mIndices[0]);
+		m_subMeshes[index]->AddIndex(Face.mIndices[1]);
+		m_subMeshes[index]->AddIndex(Face.mIndices[2]);
+	}
+	_InitSubMeshAttachedBoneInfo(paiMesh, m_subMeshes[index]);
+	m_subMeshes[index]->AddTexture(m_textures[paiMesh->mMaterialIndex]->GetTextureObj());
+
+	m_subMeshes[index]->Finalize();
+}
+//--------------------------------------------------------------------------------------
+void Mesh::_InitSubMeshAttachedBoneInfo(const aiMesh* pMesh, SubMesh *subMesh)
+{
+	for(unsigned int i=0;i< pMesh->mNumBones;++i){
+		unsigned int boneIndex = 0;
+		std::string boneName(pMesh->mBones[i]->mName.data);
+
+		if(m_boneMapping.find(boneName) == m_boneMapping.end()){
+			//在m_boneMapping中没有改骨骼信息，allocate an index for a new bone
+			boneIndex = m_numBones;
+			++m_numBones;
+			struct BoneInfo bi;
+			m_boneInfo.push_back(bi);
+			m_boneInfo[boneIndex].m_boneOffset = pMesh->mBones[i]->mOffsetMatrix;
+			m_boneMapping[boneName] = boneIndex;
+		}
+		else{
+			boneIndex = m_boneMapping[boneName];
+		}
+		for(unsigned int j = 0; j < pMesh->mBones[i]->mNumWeights; ++j){
+			unsigned short vertexId = pMesh->mBones[i]->mWeights[j].mVertexId;
+			float weight = pMesh->mBones[i]->mWeights[j].mWeight;
+
+			subMesh->AddBoneData(vertexId,boneIndex,weight);
+		}//for(unsigned int j
+	}//for(unsigned int i
+}
+//--------------------------------------------------------------------------------------
+void Mesh::_InitSkeleton(const std::string& filename)
+{
+	printf("Mesh %s has %d animation(s)\n", filename.c_str(), mp_scene->mNumAnimations);
+	for(unsigned int i=0;i<mp_scene->mNumAnimations;++i){
+		const aiAnimation *pAnimation = mp_scene->mAnimations[i];
+		printf("Animation name : %s duration %f ticksPerSecond %f\n",pAnimation->mName.data, pAnimation->mDuration, pAnimation->mTicksPerSecond);
+	}
+	if(mp_scene->mNumAnimations > 0){
+		std::string boneName(mp_scene->mRootNode->mName.data);
+		Matrix4f boneTrans(mp_scene->mRootNode->mTransformation);
+		
+		mp_skeleton = new Skeleton();
+		SkeletonBone *rootBone = new SkeletonBone(boneName, boneTrans);
+		mp_skeleton->SetRootBoneNode(rootBone);
+		_InitSkeletonNodeHeirarchy(rootBone, mp_scene->mRootNode);
+		_InitSkeletonAnimation();
+	}
+}
+//--------------------------------------------------------------------------------------
+void Mesh::_InitSkeletonNodeHeirarchy(SkeletonBone *pBone, const aiNode *paiNode)
+{
+	for(unsigned i=0; i < paiNode->mNumChildren; ++i){
+		std::string boneName(paiNode->mChildren[i]->mName.data);
+		Matrix4f boneTrans(paiNode->mChildren[i]->mTransformation);
+
+		SkeletonBone *childBone = pBone->CreateChildBone(boneName, boneTrans);
+		_InitSkeletonNodeHeirarchy(childBone, paiNode->mChildren[i]);
+	}
+}
+//--------------------------------------------------------------------------------------
+void Mesh::_InitSkeletonAnimation(void)
+{
+	for(unsigned i = 0; i < mp_scene->mNumAnimations; ++i){
+		float ticks = mp_scene->mAnimations[i]->mDuration;
+		float ticksPerSecond = mp_scene->mAnimations[i]->mTicksPerSecond;
+		SkeletonAnimation *pSkeletonAnimation = new SkeletonAnimation(ticks, ticksPerSecond);
+		if(ticksPerSecond == 0) ticksPerSecond =  24.0f;
+
+		for(unsigned j = 0; j < mp_scene->mAnimations[i]->mNumChannels; ++j){
+			const aiNodeAnim *pAiNodeAnim = mp_scene->mAnimations[i]->mChannels[j];
+			SkeletonNodeTrack *pTrack = new SkeletonNodeTrack(pAiNodeAnim->mNodeName.data);
+
+			for(unsigned k = 0; k < ticks;++k){
+				Vector3f transVec(0, 0, 0);
+				Vector3f scaleVec(1, 1, 1);
+				Quaternion rotateQuat(0,0,0,1);
+
+				if(pAiNodeAnim->mNumPositionKeys > k){
+					const aiVector3D &trans = pAiNodeAnim->mPositionKeys[k].mValue;
+					transVec = Vector3f(trans.x, trans.y, trans.z);
+				}
+				if(pAiNodeAnim->mNumScalingKeys > k){
+					const aiVector3D &scale = pAiNodeAnim->mScalingKeys[k].mValue;
+					scaleVec = Vector3f(scale.x, scale.y, scale.z);
+				}
+				if(pAiNodeAnim->mNumRotationKeys > k){
+					const aiQuaternion &rotate = pAiNodeAnim->mRotationKeys[k].mValue;
+					rotateQuat = Quaternion(rotate.x, rotate.y, rotate.z, rotate.w);
+				}
+
+				pTrack->AddKeyFrame(transVec, rotateQuat,scaleVec);
+			}
+			pSkeletonAnimation->AddTrack(pTrack);
+		}
+		mp_skeleton->AddAnimation(pSkeletonAnimation);
+	}
+}
+//--------------------------------------------------------------------------------------
 void Mesh::Render()
 {
 	for(unsigned int i=0; i < m_subMeshes.size(); ++i){
-		//UpdateMeshEntry(meshEntry);
+		//UpdateSubMesh(meshEntry);
 		//UpdateVertexObject(meshEntry.vertexObject,(float*)&meshEntry.finalVertexVector[0]);
 		m_subMeshes[i]->Render();
 	}
@@ -221,148 +291,44 @@ void Mesh::UpdateSubMesh(SubMesh &subMesh)
 */
 void Mesh::BoneTransform(float timeInSeconds)
 {
-	Matrix4f identity;
-	float ticksPerSecond = (float)(mp_scene->mAnimations[0]->mTicksPerSecond!=0 ? mp_scene->mAnimations[0]->mTicksPerSecond : 24.0f);
+	Matrix4f transform;
+	float ticksPerSecond = mp_skeleton->GetAnimation(0)->GetTicksPersecond();
 	float timeInTicks = ticksPerSecond * timeInSeconds;
-	float animationTime = fmodf(timeInTicks, (float)mp_scene->mAnimations[0]->mDuration);
-	identity.InitIdentity();
-
-	ReadNodeHeirarchy(animationTime,mp_scene->mRootNode,identity);
+	float animationTime = fmodf(timeInTicks, mp_skeleton->GetAnimation(0)->GetTicks()-1);
+	transform.InitIdentity();
+	ReadNodeHeirarchy(animationTime, mp_skeleton->GetRootBoneNode(), transform);
 	return;
 }
 //--------------------------------------------------------------------------------------
-void Mesh::ReadNodeHeirarchy(float animationTime,const aiNode * pNode,const Matrix4f & parentTransform)
+void Mesh::ReadNodeHeirarchy(float animationTime, SkeletonBone *pBone, const Matrix4f &parentTransform)
 {
-	std::string nodeName(pNode->mName.data);
-	const aiAnimation *pAnimation = mp_scene->mAnimations[0];
-	Matrix4f nodeTransformation(pNode->mTransformation);
-	const aiNodeAnim *pNodeAnim = FindNodeAnim(pAnimation,nodeName);
+	SkeletonAnimation *pAnimation = mp_skeleton->GetAnimation(0);
+	Matrix4f nodeTransformation(pBone->GetTransform());
+	const SkeletonNodeTrack *pTrack = pAnimation->GetTrack(pBone->GetName());
 
-	if(pNodeAnim){
-		//interpolate scaling and generate scaling transformation matrix
-		aiVector3D scaling;
-		CalcInterpolatedScaling(scaling,animationTime,pNodeAnim);
-		Matrix4f scalingM;
-		scalingM.InitScaleTransform(scaling.x,scaling.y,scaling.z);
-
-		//interpolate rotation and generate rotation transformation matrix
-		aiQuaternion rotation;
-		CalcInterpolatedRotation(rotation,animationTime,pNodeAnim);
-		Matrix4f rotationM = Matrix4f(rotation.GetMatrix());
-
-		//interpolate translation and generate translation transformation matrix
-		aiVector3D translation;
-		CalcInterpolatedPosition(translation,animationTime,pNodeAnim);
-		Matrix4f translationM;
-		translationM.InitTranslationTransform(translation.x, translation.y, translation.z);
-
-		//combine the above transformations
-		nodeTransformation = translationM * rotationM * scalingM;	
-	}
-
+	if(pTrack) nodeTransformation = CalcuInterPolatedTransform(pTrack, animationTime);
 	Matrix4f globalTranformation = parentTransform * nodeTransformation;
-
-	if(m_boneMapping.find(nodeName) != m_boneMapping.end()){
-		unsigned boneIndex = m_boneMapping[nodeName];
+	if(m_boneMapping.find(pBone->GetName()) != m_boneMapping.end()){
+		unsigned boneIndex = m_boneMapping[pBone->GetName()];
 		m_boneInfo[boneIndex].m_finalTransformation = m_globalInverseTransform * globalTranformation * m_boneInfo[boneIndex].m_boneOffset;
 	}
-	for(unsigned i=0; i < pNode->mNumChildren; ++i){
-		ReadNodeHeirarchy(animationTime,pNode->mChildren[i],globalTranformation);
+	for(unsigned i=0; i < pBone->NumChildren(); ++i){
+		ReadNodeHeirarchy(animationTime, (SkeletonBone *)pBone->GetChild(i), globalTranformation);
 	}
 }
 //--------------------------------------------------------------------------------------
-const aiNodeAnim *Mesh::FindNodeAnim(const aiAnimation * pAnimation,const std::string nodeName)
+const Matrix4f Mesh::CalcuInterPolatedTransform(const SkeletonNodeTrack *pTrack, float animationTime)
 {
-	for(unsigned i=0; i < pAnimation->mNumChannels; ++i){
-		const aiNodeAnim *pNodeAnim = pAnimation->mChannels[i];
-		if(std::string(pNodeAnim->mNodeName.data) == nodeName){
-			return pNodeAnim;
-		}
-	}
-	return NULL;
-}
-//--------------------------------------------------------------------------------------
-void Mesh::CalcInterpolatedPosition(aiVector3D & out,float animationTime,const aiNodeAnim * pNodeAnim)
-{
-	// we need at least two values to interpolate...
-	if(pNodeAnim->mNumPositionKeys == 1){
-		out = pNodeAnim->mPositionKeys[0].mValue;
-		return;
-	}
-	unsigned positionIndex = FindPosition(animationTime,pNodeAnim);
-	unsigned nextPositionIndex = positionIndex + 1;
-	float deltaTime = (float)(pNodeAnim->mPositionKeys[nextPositionIndex].mTime - pNodeAnim->mPositionKeys[positionIndex].mTime);
-	float factor = (animationTime - (float)pNodeAnim->mPositionKeys[positionIndex].mTime)/deltaTime;
-	const aiVector3D &start = pNodeAnim->mPositionKeys[positionIndex].mValue;
-	const aiVector3D &end = pNodeAnim->mPositionKeys[nextPositionIndex].mValue;
-	aiVector3D delta = end - start;
-	out = start + factor * delta;
-	return;
-}
-//--------------------------------------------------------------------------------------
-void Mesh::CalcInterpolatedRotation(aiQuaternion& out, float animationTime, const aiNodeAnim* pNodeAnim)
-{
-    if (pNodeAnim->mNumRotationKeys == 1) {
-        out = pNodeAnim->mRotationKeys[0].mValue;
-        return;
-    }
-    
-    unsigned rotationIndex = FindRotation(animationTime, pNodeAnim);
-    unsigned nextRotationIndex = (rotationIndex + 1);
+	Matrix4f trans;
+	unsigned firstIndex = animationTime;
+	unsigned secondIndex = animationTime + 1;
+	float firstRadio = secondIndex - animationTime;
+	float secondRadio = animationTime - firstIndex;
 
-    float deltaTime = (float)(pNodeAnim->mRotationKeys[nextRotationIndex].mTime - pNodeAnim->mRotationKeys[rotationIndex].mTime);
-    float factor = (animationTime - (float)pNodeAnim->mRotationKeys[rotationIndex].mTime) / deltaTime;
-    const aiQuaternion& startRotationQ = pNodeAnim->mRotationKeys[rotationIndex].mValue;
-    const aiQuaternion& endRotationQ   = pNodeAnim->mRotationKeys[nextRotationIndex].mValue;    
-    aiQuaternion::Interpolate(out, startRotationQ, endRotationQ, factor);
-    out = out.Normalize();
-	return;
-}
-//--------------------------------------------------------------------------------------
-void Mesh::CalcInterpolatedScaling(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim)
-{
-    if (pNodeAnim->mNumScalingKeys == 1) {
-        out = pNodeAnim->mScalingKeys[0].mValue;
-        return;
-    }
+	Vector3f position = pTrack->GetPosition(firstIndex) * firstRadio + pTrack->GetPosition(secondIndex) * secondRadio;
+	Vector3f scale = pTrack->GetScale(firstIndex) * firstRadio + pTrack->GetScale(secondIndex) * secondRadio;
+	Quaternion rotate = pTrack->GetRotation(firstIndex) * firstRadio + pTrack->GetRotation(secondIndex) * secondRadio;
 
-    unsigned scalingIndex = FindScaling(animationTime, pNodeAnim);
-    unsigned nextScalingIndex = (scalingIndex + 1);
-    float deltaTime = (float)(pNodeAnim->mScalingKeys[nextScalingIndex].mTime - pNodeAnim->mScalingKeys[scalingIndex].mTime);
-    float factor = (animationTime - (float)pNodeAnim->mScalingKeys[scalingIndex].mTime) / deltaTime;
-    const aiVector3D& start = pNodeAnim->mScalingKeys[scalingIndex].mValue;
-    const aiVector3D& end   = pNodeAnim->mScalingKeys[nextScalingIndex].mValue;
-    aiVector3D delta = end - start;
-    out = start + factor * delta;
-	return;
-}
-//--------------------------------------------------------------------------------------
-unsigned Mesh::FindPosition(float animationTime,const aiNodeAnim * pNodeAnim)
-{
-	for(unsigned i=0; i<pNodeAnim->mNumPositionKeys - 1; ++i){
-		if(animationTime < (float)pNodeAnim->mPositionKeys[i+1].mTime){
-			return i;
-		}
-	}
-	return 0;
-}
-//--------------------------------------------------------------------------------------
-unsigned Mesh::FindRotation(float animationTime, const aiNodeAnim* pNodeAnim)
-{
-    for (unsigned i = 0 ; i < pNodeAnim->mNumRotationKeys - 1 ; ++i) {
-        if (animationTime < (float)pNodeAnim->mRotationKeys[i + 1].mTime) {
-            return i;
-        }
-    }
-    return 0;
-}
-//--------------------------------------------------------------------------------------
-unsigned Mesh::FindScaling(float animationTime, const aiNodeAnim* pNodeAnim)
-{
-    for (unsigned i = 0 ; i < pNodeAnim->mNumScalingKeys - 1 ; ++i) {
-        if (animationTime < (float)pNodeAnim->mScalingKeys[i + 1].mTime) {
-            return i;
-        }
-    }
-    return 0;
+	trans.MakeTransform(position,scale,rotate);
+	return trans;
 }

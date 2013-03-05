@@ -77,42 +77,42 @@ Vector3f& Vector3f::operator*=(float f)
 
 Vector3f Vector3f::Cross(const Vector3f& v) const
 {
-    const float _x = y * v.z - z * v.y;
-    const float _y = z * v.x - x * v.z;
-    const float _z = x * v.y - y * v.x;
+	const float _x = y * v.z - z * v.y;
+	const float _y = z * v.x - x * v.z;
+	const float _z = x * v.y - y * v.x;
 
-    return Vector3f(_x, _y, _z);
+	return Vector3f(_x, _y, _z);
 }
 
 Vector3f& Vector3f::Normalize()
 {
-    const float length = sqrtf(x * x + y * y + z * z);
+	const float length = sqrtf(x * x + y * y + z * z);
 	assert(length!=0);
-    x /= length;
-    y /= length;
-    z /= length;
+	x /= length;
+	y /= length;
+	z /= length;
 
-    return *this;
+	return *this;
 }
 
 void Vector3f::Rotate(float Angle, const Vector3f& Axe)
 {
-    const float SinHalfAngle = sinf(ToRadian(Angle/2));
-    const float CosHalfAngle = cosf(ToRadian(Angle/2));
+	const float SinHalfAngle = sinf(ToRadian(Angle/2));
+	const float CosHalfAngle = cosf(ToRadian(Angle/2));
 
-    const float Rx = Axe.x * SinHalfAngle;
-    const float Ry = Axe.y * SinHalfAngle;
-    const float Rz = Axe.z * SinHalfAngle;
-    const float Rw = CosHalfAngle;
-    Quaternion RotationQ(Rx, Ry, Rz, Rw);
+	const float Rx = Axe.x * SinHalfAngle;
+	const float Ry = Axe.y * SinHalfAngle;
+	const float Rz = Axe.z * SinHalfAngle;
+	const float Rw = CosHalfAngle;
+	Quaternion RotationQ(Rx, Ry, Rz, Rw);
 
-    Quaternion ConjugateQ = RotationQ.Conjugate();
+	Quaternion ConjugateQ = RotationQ.Conjugate();
 	//ConjugateQ.Normalize();
-    Quaternion W = RotationQ * (*this) * ConjugateQ;
+	Quaternion W = RotationQ * (*this) * ConjugateQ;
 
-    x = W.x;
-    y = W.y;
-    z = W.z;
+	x = W.x;
+	y = W.y;
+	z = W.z;
 }
 
 Vector3f operator+(const Vector3f& l, const Vector3f& r)
@@ -120,7 +120,7 @@ Vector3f operator+(const Vector3f& l, const Vector3f& r)
 	Vector3f ret(l);
 
 	ret+=r;
-    return ret;
+	return ret;
 }
 
 Vector3f operator-(const Vector3f& l, const Vector3f& r)
@@ -128,7 +128,7 @@ Vector3f operator-(const Vector3f& l, const Vector3f& r)
 	Vector3f ret(l);
 
 	ret-=r;
-    return ret;
+	return ret;
 }
 
 Vector3f operator*(const Vector3f& l, float f)
@@ -136,7 +136,7 @@ Vector3f operator*(const Vector3f& l, float f)
 	Vector3f ret(l);
 
 	ret*=f;
-    return ret;
+	return ret;
 }
 
 Vector3f operator*(const Vector3f &l, const Vector3f &r)
@@ -144,7 +144,7 @@ Vector3f operator*(const Vector3f &l, const Vector3f &r)
 	Vector3f ret(l);
 
 	ret*=r;
-    return ret;
+	return ret;
 }
 
 Vector3f operator/(const Vector3f &l, const Vector3f &r)
@@ -152,8 +152,7 @@ Vector3f operator/(const Vector3f &l, const Vector3f &r)
 	Vector3f ret(l);
 
 	ret/=r;
-    return ret;
-
+	return ret;
 }
 
 Vector3f operator*(const Vector3f& v, const Quaternion &q)
