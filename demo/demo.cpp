@@ -43,7 +43,10 @@ class DemoApp:public FrameListener, public EventListener
 		Camera	*mp_camera;
 		RenderWindow *mp_renderWindow;
 		AnimationState *mp_animationState1,*mp_animationState2;
-		Mesh *mesh1,*mesh2;
+		AnimationState *mp_skeletonAnimationState;
+		Mesh *pMesh1,*pMesh2;
+		Entity *pEntity1, *pEntity2, *pEntity3;
+		
 };
 DemoApp::DemoApp(bool ifUseShader)
 {
@@ -53,8 +56,10 @@ DemoApp::DemoApp(bool ifUseShader)
 	mp_camera = mp_sceneManager->CreateCamera(Vector3f(0.0f,0.0f,0.0f),Vector3f(0, 0, -1.0f));
 	mp_sceneManager->AddFrameListener(this);
 	mp_sceneManager->AddEventListener(this);
-	mesh1=NULL;
-	mesh2=NULL;
+	pMesh1=NULL;
+	pMesh2=NULL;
+	pEntity1=NULL;
+	pEntity2=NULL;
 	mp_animationState1 = NULL;
 	mp_animationState2 = NULL;
 }
@@ -73,23 +78,40 @@ bool DemoApp::FrameQueued(long timeSinceLastFrame)
 	if(mp_animationState2){
 		mp_animationState2->AddTime(timeSinceLastFrame/(float)1000);
 	}
-	if(mesh2){
-		mesh2->BoneTransform(time);
+	if(mp_skeletonAnimationState){
+		mp_skeletonAnimationState->AddTime(timeSinceLastFrame/(float)1000);
 	}
+	/*
+	if(pEntity2){
+		pEntity2->BoneTransform(time);
+	}
+	*/
 	return FrameListener::FrameQueued(timeSinceLastFrame);
 }
 void DemoApp::CreateScene(void)
 {
-	mesh1 = new Mesh("./models/phoenix_ugv.md2");
-	mesh2 = new Mesh("./models/boblampclean.md5mesh");
+	pMesh1 = new Mesh("./models/phoenix_ugv.md2");
+	pMesh2 = new Mesh("./models/boblampclean.md5mesh");
+	pEntity1 = new Entity();
+	pEntity2 = new Entity();
+	pEntity3 = new Entity();
+	pEntity1->SetMesh(pMesh1);
+	pEntity2->SetMesh(pMesh2);
+	pEntity3->SetMesh(pMesh2);
+
 	SceneNode *rootNode = mp_sceneManager->GetRootNode();
 	SceneNode *node1 = rootNode->CreateChildSceneNode("childnode1");
 	node1->Translate(0,0,-500, SceneNode::TS_LOCAL);
 	SceneNode *node2 = rootNode->CreateChildSceneNode("childnode2");
 	node2->Translate(Vector3f(100, 0, -500), SceneNode::TS_LOCAL);
 	node2->Rotate(Vector3f(1,0,0), -90, SceneNode::TS_LOCAL);
-	node1->AttachMesh(mesh1);
-	node2->AttachMesh(mesh2);	
+	SceneNode *node3 = rootNode->CreateChildSceneNode("childnode3");
+	node3->Translate(Vector3f(100, -100, -250), SceneNode::TS_LOCAL);
+	node3->Rotate(Vector3f(1,0,0), -90, SceneNode::TS_LOCAL);
+	
+	node1->AttachEntity(pEntity1);
+	node2->AttachEntity(pEntity2);
+	node3->AttachEntity(pEntity3);
 
 	//create one scenenode animation
 	Animation *animation = mp_sceneManager->CreateAnimation("transAnim1",9);
@@ -125,7 +147,10 @@ void DemoApp::CreateScene(void)
 	mp_animationState2= mp_sceneManager->CreateAnimationState("transAnim2");
 	mp_animationState2->SetEnabled(true);
 	mp_animationState2->SetLoop(true);
-	
+
+	mp_skeletonAnimationState = pEntity2->GetAnimationState("");
+	mp_skeletonAnimationState->SetEnabled(false);
+	mp_skeletonAnimationState->SetLoop(false);
 }
 void DemoApp::Run()
 {

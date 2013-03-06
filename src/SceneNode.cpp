@@ -3,7 +3,7 @@
 //-------------------------------------------------------------
 SceneNode:: SceneNode(const std::string &name) :
 	Node(name),
-	mp_attachedMesh(0)
+	mp_attachedEntity(NULL)
 {
 }
 //-------------------------------------------------------------
@@ -11,26 +11,23 @@ SceneNode *SceneNode::CreateChildSceneNode(const std::string &name)
 {
 	return  static_cast<SceneNode*>(this->CreateChild(name));
 }
+//-------------------------------------------------------------
 SceneNode* SceneNode::CreateChildImpl(const std::string &name)
 {
 	return new SceneNode(name);
 }
 //-------------------------------------------------------------
-void SceneNode::AttachMesh(Mesh * mesh)
+void SceneNode::AttachEntity(Entity * pEntity)
 {
-	mp_attachedMesh = mesh;
-	return;
+	mp_attachedEntity = pEntity;
 }
 //-------------------------------------------------------------
-void SceneNode::DetachMesh(Mesh * mesh)
+void SceneNode::DetachEntity(void)
 {
-	if(mp_attachedMesh == mesh){
-		mp_attachedMesh=NULL;
-	}
-	return;
+	mp_attachedEntity = NULL;
 }
 //-------------------------------------------------------------
-Mesh *SceneNode::GetMesh(void)
+Entity *SceneNode::GetAttachedEntity(void)
 {
-	return mp_attachedMesh;
+	return mp_attachedEntity;
 }

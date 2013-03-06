@@ -13,5 +13,6 @@
 #include <Animation.h>
 #include <AnimationTrack.h>
 #include <KeyFrame.h>
+#include <Entity.h>
 
 #endif

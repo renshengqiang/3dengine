@@ -14,27 +14,16 @@
 #include <vector>
 #include <string>
 
-struct BoneInfo{
-	Matrix4f m_boneOffset;
-	Matrix4f m_finalTransformation;
-	BoneInfo()
-	{
-		m_boneOffset.InitIdentity();
-		m_finalTransformation.InitIdentity();
-	}
-};
+class Entity;
 class ENGINE_EXPORT Mesh
 {
+friend class Entity;
 public:
 	Mesh(const std::string& Filename);
 	~Mesh();
+	Skeleton *GetSkeleton(void);
 	void RenderUseShader(void);
 	void Render(void);
-	void BoneTransform(float timeInSeconds);
-	
-	void ReadNodeHeirarchy(float animationTime, SkeletonBone *pBone, const Matrix4f &parentTransform);
-	const Matrix4f CalcuInterPolatedTransform(const SkeletonNodeTrack *pTrack, float animationTime);
-
 private:
 	bool _LoadMesh(const std::string& filename);	
 	bool _InitMaterials(const std::string& filename);

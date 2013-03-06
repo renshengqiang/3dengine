@@ -21,6 +21,11 @@ Mesh::~Mesh()
 	_Clear();
 }
 //--------------------------------------------------------------------------------------
+Skeleton *Mesh::GetSkeleton(void)
+{
+	return mp_skeleton;
+}
+//--------------------------------------------------------------------------------------
 void Mesh::_Clear()
 {
 	for (unsigned int i = 0 ; i < m_textures.size() ; i++) {
@@ -59,7 +64,11 @@ bool Mesh::_LoadMesh(const std::string& filename)
 		}
 		//Initilize the skeleton info
 		_InitSkeleton(filename);
-
+		
+		//Free the aiScene
+		m_importer.FreeScene();
+		mp_scene = NULL;
+		
 		printf("Parsing Mesh : '%s' end\n", filename.c_str());
 		printf("-----------------------------------------\n\n");
 		return true;
@@ -211,7 +220,8 @@ void Mesh::_InitSkeletonAnimation(void)
 	for(unsigned i = 0; i < mp_scene->mNumAnimations; ++i){
 		float ticks = mp_scene->mAnimations[i]->mDuration;
 		float ticksPerSecond = mp_scene->mAnimations[i]->mTicksPerSecond;
-		SkeletonAnimation *pSkeletonAnimation = new SkeletonAnimation(ticks, ticksPerSecond);
+		char *name = mp_scene->mAnimations[i]->mName.data;
+		SkeletonAnimation *pSkeletonAnimation = new SkeletonAnimation(mp_skeleton, name, ticks, ticksPerSecond);
 		if(ticksPerSecond == 0) ticksPerSecond =  24.0f;
 
 		for(unsigned j = 0; j < mp_scene->mAnimations[i]->mNumChannels; ++j){
@@ -256,16 +266,10 @@ void Mesh::Render()
 void Mesh::RenderUseShader()
 {
 	for(unsigned int i=0;i < m_subMeshes.size();++i){
-		for(size_t j=0; j<m_boneInfo.size();++j){
-			SetTranslateMatrix(g_boneTransformLocation[j],&(m_boneInfo[j].m_finalTransformation));
-		}
-		if(m_numBones>0) SetIntValue(g_hasBonesLocation,1);
-		else SetIntValue(g_hasBonesLocation,0);
-		
 		m_subMeshes[i]->RenderUseShader();
 	}
 }
-///////////////////////////////////// skeleton animation /////////////////////////////////////////////
+//--------------------------------------------------------------------------------------
 /*
 	@remarks: for software animation use(skeleton animation & vertex animation)
 */
@@ -285,50 +289,4 @@ void Mesh::UpdateSubMesh(SubMesh &subMesh)
 		subMesh.CoordTransform(i,finalMatrix);
 	}
 	return;
-}
-/*
-	@remarks:calculate the bones' transform matrix, result saved in 'm_boneInfo'
-*/
-void Mesh::BoneTransform(float timeInSeconds)
-{
-	Matrix4f transform;
-	float ticksPerSecond = mp_skeleton->GetAnimation(0)->GetTicksPersecond();
-	float timeInTicks = ticksPerSecond * timeInSeconds;
-	float animationTime = fmodf(timeInTicks, mp_skeleton->GetAnimation(0)->GetTicks()-1);
-	transform.InitIdentity();
-	ReadNodeHeirarchy(animationTime, mp_skeleton->GetRootBoneNode(), transform);
-	return;
-}
-//--------------------------------------------------------------------------------------
-void Mesh::ReadNodeHeirarchy(float animationTime, SkeletonBone *pBone, const Matrix4f &parentTransform)
-{
-	SkeletonAnimation *pAnimation = mp_skeleton->GetAnimation(0);
-	Matrix4f nodeTransformation(pBone->GetTransform());
-	const SkeletonNodeTrack *pTrack = pAnimation->GetTrack(pBone->GetName());
-
-	if(pTrack) nodeTransformation = CalcuInterPolatedTransform(pTrack, animationTime);
-	Matrix4f globalTranformation = parentTransform * nodeTransformation;
-	if(m_boneMapping.find(pBone->GetName()) != m_boneMapping.end()){
-		unsigned boneIndex = m_boneMapping[pBone->GetName()];
-		m_boneInfo[boneIndex].m_finalTransformation = m_globalInverseTransform * globalTranformation * m_boneInfo[boneIndex].m_boneOffset;
-	}
-	for(unsigned i=0; i < pBone->NumChildren(); ++i){
-		ReadNodeHeirarchy(animationTime, (SkeletonBone *)pBone->GetChild(i), globalTranformation);
-	}
-}
-//--------------------------------------------------------------------------------------
-const Matrix4f Mesh::CalcuInterPolatedTransform(const SkeletonNodeTrack *pTrack, float animationTime)
-{
-	Matrix4f trans;
-	unsigned firstIndex = animationTime;
-	unsigned secondIndex = animationTime + 1;
-	float firstRadio = secondIndex - animationTime;
-	float secondRadio = animationTime - firstIndex;
-
-	Vector3f position = pTrack->GetPosition(firstIndex) * firstRadio + pTrack->GetPosition(secondIndex) * secondRadio;
-	Vector3f scale = pTrack->GetScale(firstIndex) * firstRadio + pTrack->GetScale(secondIndex) * secondRadio;
-	Quaternion rotate = pTrack->GetRotation(firstIndex) * firstRadio + pTrack->GetRotation(secondIndex) * secondRadio;
-
-	trans.MakeTransform(position,scale,rotate);
-	return trans;
 }

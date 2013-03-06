@@ -24,5 +24,6 @@ COMPILE_FILES:= util/Array.c\
 				Skeleton.cpp \
 				SkeletonBone.cpp \
 				SkeletonNodeTrack.cpp \
-				SkeletonAnimation.cpp
+				SkeletonAnimation.cpp \
+				Entity.cpp
 include ../Makefile-so

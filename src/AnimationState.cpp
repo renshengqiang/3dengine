@@ -56,7 +56,8 @@ void AnimationState::SetLength(float length)
 }
 void AnimationState::AddTime(float offset)
 {
-	SetTimePosition(m_timePos + offset);
+	if(m_enabled)
+		SetTimePosition(m_timePos + offset);
 	return;
 }
 bool AnimationState::HasEnded(void) const

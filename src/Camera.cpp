@@ -1,6 +1,6 @@
-#include <Camera.h>
-#include <Shader.h>
-#include <Render.h>
+#include "Camera.h"
+#include "Shader.h"
+#include "Render.h"
 #include <stdio.h>
 Camera::Camera(Vector3f pos,Vector3f target,Vector3f up)
 {
@@ -118,15 +118,15 @@ void Camera::RenderNode(SceneNode *rootNode)
 		Matrix4f modelViewMatrix;
 		for(int i=0;i<n;++i){
 			SceneNode *node = (SceneNode *)rootNode->GetChild(i);
-			Mesh *mesh = node->GetMesh();
+			Entity *pEntity = node->GetAttachedEntity();
 			node->_Update(false,false);
-			if(mesh != NULL){
+			if(pEntity!= NULL){
 				const Matrix4f &modelMatrix = node->_GetFullTransform();
 				modelViewMatrix = m_viewMatrix * modelMatrix;
 				//set matrix
 				SetModelViewMatrix(&modelViewMatrix);
-				//render mesh
-				mesh->Render();
+				//render entity
+				pEntity->Render();
 			}
 			RenderNode(node);//µ›πÈ‰÷»æ◊”node
 		}
@@ -142,15 +142,15 @@ void Camera::RenderNodeUseShader(SceneNode *rootNode)
 		Matrix4f perspectViewModelMatrix;
 		for(int i=0;i<n;++i){
 			SceneNode *node = (SceneNode *)rootNode->GetChild(i);
-			Mesh *mesh = node->GetMesh();
+			Entity *pEntity = node->GetAttachedEntity();
 			node->_Update(false, false);
-			if(mesh!=NULL){
+			if(pEntity!=NULL){
 				const Matrix4f &modelMatrix = node->_GetFullTransform();
 				perspectViewModelMatrix = perspectViewMatrix * modelMatrix;
 				//set matrix
 				SetTranslateMatrix(g_PVMMatrixLocation,&perspectViewModelMatrix);
-				//render mesh
-				mesh->RenderUseShader();
+				//render entity
+				pEntity->Render();
 			}
 			RenderNodeUseShader(node);
 		}
