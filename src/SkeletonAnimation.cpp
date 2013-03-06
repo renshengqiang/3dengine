@@ -46,32 +46,34 @@ const SkeletonNodeTrack *SkeletonAnimation::GetTrack(const std::string& name) co
 	return NULL;
 }
 //----------------------------------------------------------------------------------
-void SkeletonAnimation::ApplyToEntity(float timePos, Entity *pEntity)
+void SkeletonAnimation::ApplyToEntity(float timePos, BoneOffsetMatrixVector& boneOffsetMatrix)
 {
 	Matrix4f transform;
 	float timeInTicks = m_ticksPerSecond * timePos;
 	float animationTime = fmodf(timeInTicks, m_ticks - 1);
 	transform.InitIdentity();
-	ReadNodeHeirarchy(animationTime, mp_skeleton->GetRootBoneNode(), transform, pEntity);
+	_calcBoneOffsetHeirarchy(animationTime, mp_skeleton->GetRootBoneNode(), transform, boneOffsetMatrix);
 }
 //--------------------------------------------------------------------------------------
-void SkeletonAnimation::ReadNodeHeirarchy(float animationTime, SkeletonBone *pBone, const Matrix4f &parentTransform, Entity *pEntity)
+void SkeletonAnimation::_calcBoneOffsetHeirarchy(float animationTime, SkeletonBone *pBone, const Matrix4f &parentTransform, BoneOffsetMatrixVector& boneOffsetMatrix)
 {	
 	Matrix4f nodeTransformation(pBone->GetTransform());
 	const SkeletonNodeTrack *pTrack = GetTrack(pBone->GetName());
 
-	if(pTrack) nodeTransformation = CalcuInterPolatedTransform(pTrack, animationTime);
+	if(pTrack) nodeTransformation = _calcInterPolatedTransform(pTrack, animationTime);
 	Matrix4f globalTranformation = parentTransform * nodeTransformation;
-	if(pEntity->m_boneMapping.find(pBone->GetName()) != pEntity->m_boneMapping.end()){
-		unsigned boneIndex = pEntity->m_boneMapping[pBone->GetName()];
-		pEntity->m_boneInfo[boneIndex].m_finalTransformation = pEntity->m_globalInverseTransform * globalTranformation * pEntity->m_boneInfo[boneIndex].m_boneOffset;
+
+	int index = mp_skeleton->GetBoneIndex(pBone->GetName());
+	if(index != -1){
+		boneOffsetMatrix[index] = mp_skeleton->GetGlobalInverseMatrix() * globalTranformation * mp_skeleton->GetBoneOffset(index);
 	}
+	
 	for(unsigned i=0; i < pBone->NumChildren(); ++i){
-		ReadNodeHeirarchy(animationTime, (SkeletonBone *)pBone->GetChild(i), globalTranformation, pEntity);
+		_calcBoneOffsetHeirarchy(animationTime, (SkeletonBone *)pBone->GetChild(i), globalTranformation, boneOffsetMatrix);
 	}
 }
 //--------------------------------------------------------------------------------------
-const Matrix4f SkeletonAnimation::CalcuInterPolatedTransform(const SkeletonNodeTrack *pTrack, float animationTime)
+const Matrix4f SkeletonAnimation::_calcInterPolatedTransform(const SkeletonNodeTrack *pTrack, float animationTime)
 {
 	Matrix4f trans;
 	unsigned firstIndex = animationTime;

@@ -22,13 +22,10 @@ Entity::~Entity()
 void Entity::SetMesh(Mesh *mesh)
 {
 	mp_mesh = mesh;
-			
-	if(mesh->mp_skeleton){
-		mp_skeleton = mesh->mp_skeleton;
-		m_numBones = mesh->m_numBones;
-		m_boneMapping = mesh->m_boneMapping;
-		m_boneInfo = mesh->m_boneInfo;
-		m_globalInverseTransform = mesh->m_globalInverseTransform;
+	mp_skeleton = mesh->GetSkeleton(); 
+	if(mp_skeleton){
+		m_numBones = mesh->GetRelatedBoneNum();
+		m_boneOffsetMatrixVec.resize(m_numBones);
 		for(unsigned i=0; i < mp_skeleton->GetAnimationNum(); ++i){
 			SkeletonAnimation *pSkeletonAnim = mp_skeleton->GetAnimation(i);
 			std::string name = pSkeletonAnim->GetName();
@@ -51,11 +48,11 @@ AnimationState *Entity::GetAnimationState(const std::string &name)
 void Entity::Render(void)
 {
 	if(mp_activeAnimationState && mp_activeSkeletonAnim)  
-		mp_activeSkeletonAnim->ApplyToEntity(mp_activeAnimationState->GetTimePosition(), this);
+		mp_activeSkeletonAnim->ApplyToEntity(mp_activeAnimationState->GetTimePosition(), m_boneOffsetMatrixVec);
 	if(m_numBones>0) SetIntValue(g_hasBonesLocation,1);
 	else SetIntValue(g_hasBonesLocation,0);
-	for(unsigned i=0; i<m_boneInfo.size();++i){
-		SetTranslateMatrix(g_boneTransformLocation[i],&(m_boneInfo[i].m_finalTransformation));
+	for(unsigned i=0; i<m_numBones;++i){
+		SetTranslateMatrix(g_boneTransformLocation[i],&(m_boneOffsetMatrixVec[i]));
 	}
 	if(mp_mesh) mp_mesh->RenderUseShader();
 }

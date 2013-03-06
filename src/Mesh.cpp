@@ -26,6 +26,11 @@ Skeleton *Mesh::GetSkeleton(void)
 	return mp_skeleton;
 }
 //--------------------------------------------------------------------------------------
+unsigned Mesh::GetRelatedBoneNum(void)
+{
+	return m_numBones;
+}
+//--------------------------------------------------------------------------------------
 void Mesh::_Clear()
 {
 	for (unsigned int i = 0 ; i < m_textures.size() ; i++) {
@@ -44,8 +49,9 @@ bool Mesh::_LoadMesh(const std::string& filename)
 	mp_scene = m_importer.ReadFile(filename.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs);
 
 	if (mp_scene) {
-		m_globalInverseTransform = mp_scene->mRootNode->mTransformation;
-		m_globalInverseTransform.Inverse();
+		Matrix4f globalInverseTransform;
+		globalInverseTransform = mp_scene->mRootNode->mTransformation;
+		globalInverseTransform.Inverse();
 		
 		m_subMeshes.resize(mp_scene->mNumMeshes);
 		m_textures.resize(mp_scene->mNumMaterials);
@@ -55,16 +61,22 @@ bool Mesh::_LoadMesh(const std::string& filename)
 		//Initlialize the materials
 		if(_InitMaterials(filename) == false)
 			return false;
+		
+		//Initilize the skeleton info
+		_InitSkeleton(filename);
+		
 		// Initialize the meshes in the scene one by one
-		printf("%d subMesh(es):\n", m_subMeshes.size());
+		printf("Mesh '%s' has %d subMesh(es):\n", filename.c_str(), m_subMeshes.size());
 		for (unsigned int i = 0 ; i < m_subMeshes.size() ; ++i) {
 			const aiMesh* paiMesh = mp_scene->mMeshes[i];
 			m_subMeshes[i] = new SubMesh();
 			_InitSubMesh(i, paiMesh);
 		}
-		//Initilize the skeleton info
-		_InitSkeleton(filename);
-		
+		if(mp_skeleton){
+			mp_skeleton->SetGloabalInverseMatrix(globalInverseTransform);
+			m_numBones = mp_skeleton->GetBoneNum();
+		}
+				
 		//Free the aiScene
 		m_importer.FreeScene();
 		mp_scene = NULL;
@@ -160,37 +172,26 @@ void Mesh::_InitSubMesh(unsigned int index, const aiMesh* paiMesh)
 //--------------------------------------------------------------------------------------
 void Mesh::_InitSubMeshAttachedBoneInfo(const aiMesh* pMesh, SubMesh *subMesh)
 {
-	for(unsigned int i=0;i< pMesh->mNumBones;++i){
+	for(unsigned int i=0; i< pMesh->mNumBones;++i){
 		unsigned int boneIndex = 0;
 		std::string boneName(pMesh->mBones[i]->mName.data);
 
-		if(m_boneMapping.find(boneName) == m_boneMapping.end()){
-			//在m_boneMapping中没有改骨骼信息，allocate an index for a new bone
-			boneIndex = m_numBones;
-			++m_numBones;
-			struct BoneInfo bi;
-			m_boneInfo.push_back(bi);
-			m_boneInfo[boneIndex].m_boneOffset = pMesh->mBones[i]->mOffsetMatrix;
-			m_boneMapping[boneName] = boneIndex;
-		}
-		else{
-			boneIndex = m_boneMapping[boneName];
-		}
+		if(mp_skeleton) boneIndex = mp_skeleton->AddBoneOffset(boneName, pMesh->mBones[i]->mOffsetMatrix);
 		for(unsigned int j = 0; j < pMesh->mBones[i]->mNumWeights; ++j){
 			unsigned short vertexId = pMesh->mBones[i]->mWeights[j].mVertexId;
 			float weight = pMesh->mBones[i]->mWeights[j].mWeight;
 
 			subMesh->AddBoneData(vertexId,boneIndex,weight);
-		}//for(unsigned int j
-	}//for(unsigned int i
+		}
+	}
 }
 //--------------------------------------------------------------------------------------
 void Mesh::_InitSkeleton(const std::string& filename)
 {
-	printf("Mesh %s has %d animation(s)\n", filename.c_str(), mp_scene->mNumAnimations);
+	printf("Mesh '%s' has %d skeleton animation(s):\n", filename.c_str(), mp_scene->mNumAnimations);
 	for(unsigned int i=0;i<mp_scene->mNumAnimations;++i){
 		const aiAnimation *pAnimation = mp_scene->mAnimations[i];
-		printf("Animation name : %s duration %f ticksPerSecond %f\n",pAnimation->mName.data, pAnimation->mDuration, pAnimation->mTicksPerSecond);
+		printf("Animation name : '%s' duration %f ticksPerSecond %f\n",pAnimation->mName.data, pAnimation->mDuration, pAnimation->mTicksPerSecond);
 	}
 	if(mp_scene->mNumAnimations > 0){
 		std::string boneName(mp_scene->mRootNode->mName.data);
@@ -199,6 +200,7 @@ void Mesh::_InitSkeleton(const std::string& filename)
 		mp_skeleton = new Skeleton();
 		SkeletonBone *rootBone = new SkeletonBone(boneName, boneTrans);
 		mp_skeleton->SetRootBoneNode(rootBone);
+		mp_skeleton->AddBoneNode(boneName, rootBone);
 		_InitSkeletonNodeHeirarchy(rootBone, mp_scene->mRootNode);
 		_InitSkeletonAnimation();
 	}
@@ -211,6 +213,7 @@ void Mesh::_InitSkeletonNodeHeirarchy(SkeletonBone *pBone, const aiNode *paiNode
 		Matrix4f boneTrans(paiNode->mChildren[i]->mTransformation);
 
 		SkeletonBone *childBone = pBone->CreateChildBone(boneName, boneTrans);
+		mp_skeleton->AddBoneNode(boneName, childBone);
 		_InitSkeletonNodeHeirarchy(childBone, paiNode->mChildren[i]);
 	}
 }
@@ -280,8 +283,8 @@ void Mesh::UpdateSubMesh(SubMesh &subMesh)
 		if(subMesh.GetVertexAttachedBoneNum(i)> 0){
 			finalMatrix.InitZero();
 			for(unsigned j=0; j<4;++j){
-				struct AttachedBone *pBone = subMesh.GetVertexAttachedBones(i);
-				finalMatrix += (m_boneInfo[pBone->boneId[j]].m_finalTransformation * pBone->weight[j]);
+				//struct AttachedBone *pBone = subMesh.GetVertexAttachedBones(i);
+				//finalMatrix += ( m_boneInfo[pBone->boneId[j]].m_finalTransformation * pBone->weight[j]);
 			}
 		}
 		else

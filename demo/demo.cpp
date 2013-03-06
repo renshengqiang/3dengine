@@ -149,7 +149,7 @@ void DemoApp::CreateScene(void)
 	mp_animationState2->SetLoop(true);
 
 	mp_skeletonAnimationState = pEntity2->GetAnimationState("");
-	mp_skeletonAnimationState->SetEnabled(false);
+	mp_skeletonAnimationState->SetEnabled(true);
 	mp_skeletonAnimationState->SetLoop(false);
 }
 void DemoApp::Run()

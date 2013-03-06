@@ -31,10 +31,16 @@ SkeletonBone *Skeleton::GetRootBoneNode(void)
 	return mp_rootBoneNode;
 }
 //---------------------------------------------------------------------------------
+void	Skeleton::AddBoneNode(const std::string& name, SkeletonBone *pBone)
+{
+	m_boneMap.insert(BoneMapValueType(pBone->GetName(), pBone));
+}
+//---------------------------------------------------------------------------------
 SkeletonBone *Skeleton::GetBoneNode(const std::string &name)
 {
-	if(mp_rootBoneNode->GetName() == name) return mp_rootBoneNode;
-	else return (SkeletonBone *)mp_rootBoneNode->GetChild(name);
+	BoneMapIterator iter = m_boneMap.find(name);
+	if(iter!=m_boneMap.end()) return iter->second;
+	return NULL;
 }
 //---------------------------------------------------------------------------------
 unsigned Skeleton::GetAnimationNum(void)
@@ -54,4 +60,42 @@ SkeletonAnimation *Skeleton::GetAnimation(const std::string& name)
 		if(m_animationVec[i]->GetName() == name) return m_animationVec[i];
 	}
 	return NULL;
+}
+//---------------------------------------------------------------------------------
+int Skeleton::GetBoneIndex(const std::string& name)  const
+{
+	BoneNameIndexMapConstIterator iter = m_boneNameIndexMap.find(name);
+	if(iter != m_boneNameIndexMap.end()){
+		return iter->second;
+	}
+	return -1;/*not find*/
+}
+//---------------------------------------------------------------------------------
+const Matrix4f& Skeleton::GetBoneOffset(unsigned index) const
+{
+	return m_boneInfo[index];
+}
+//---------------------------------------------------------------------------------
+unsigned	Skeleton::GetBoneNum(void) const
+{
+	return m_boneInfo.size();
+}
+//---------------------------------------------------------------------------------
+unsigned Skeleton::AddBoneOffset(const std::string& name, const Matrix4f& offset)
+{
+	int index = GetBoneIndex(name);
+	if(index >= 0) return index;
+	m_boneInfo.push_back(offset);
+	m_boneNameIndexMap.insert(BoneNameIndexMapValueType(name, m_boneInfo.size() -1));
+	return m_boneInfo.size() - 1;
+}
+//---------------------------------------------------------------------------------
+const Matrix4f& Skeleton::GetGlobalInverseMatrix(void) const
+{
+	return m_globalInverseMatrix;
+}
+//---------------------------------------------------------------------------------
+void	Skeleton::SetGloabalInverseMatrix(const Matrix4f& matrix)
+{
+	m_globalInverseMatrix = matrix;
 }

@@ -14,16 +14,15 @@
 #include <vector>
 #include <string>
 
-class Entity;
 class ENGINE_EXPORT Mesh
 {
-friend class Entity;
 public:
 	Mesh(const std::string& Filename);
 	~Mesh();
 	Skeleton *GetSkeleton(void);
 	void RenderUseShader(void);
 	void Render(void);
+	unsigned GetRelatedBoneNum(void);
 private:
 	bool _LoadMesh(const std::string& filename);	
 	bool _InitMaterials(const std::string& filename);
@@ -45,9 +44,6 @@ private:
 	std::vector<Texture*> m_textures;
 	//bone info
 	unsigned m_numBones;
-	std::map<std::string, unsigned> m_boneMapping;
-	std::vector<struct BoneInfo> m_boneInfo;
-	Matrix4f m_globalInverseTransform;
 	//skeleton node Animation
 	Skeleton *mp_skeleton;
 };

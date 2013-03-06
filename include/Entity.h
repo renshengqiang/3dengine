@@ -9,7 +9,8 @@
 #include <string>
 
 class Entity{
-friend class SkeletonAnimation;
+typedef std::vector<Matrix4f> BoneOffsetMatrixVector;
+
 public:
 	Entity(const std::string& meshFile);
 	Entity();
@@ -23,9 +24,7 @@ private:
 	Skeleton *mp_skeleton;
 	
 	unsigned m_numBones;
-	std::map<std::string, unsigned> m_boneMapping;
-	std::vector<struct BoneInfo> m_boneInfo;
-	Matrix4f m_globalInverseTransform;
+	BoneOffsetMatrixVector m_boneOffsetMatrixVec;
 
 	//Entity对应的骨骼动画
 	AnimationStateSet m_animationStateSet;
