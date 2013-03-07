@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 class ENGINE_EXPORT Mesh
 {
@@ -47,5 +48,7 @@ private:
 	//skeleton node Animation
 	Skeleton *mp_skeleton;
 };
+
+typedef std::shared_ptr<Mesh>  MeshPtr;
 #endif	/* MESH_H */
 

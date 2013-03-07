@@ -1,7 +1,7 @@
 PROJNAME:=engine
 LIBDIR:=../lib
 LINK_FLAGS:=-L/usr/local/lib -lSDL -lGL -lGLU -lGLEW -lstdc++ -lMagick++ -lassimp
-COMPILE_FLAGS:=-I/usr/include/SDL -I/usr/include/ImageMagick -I/usr/local/include/assimp -I../include -D_GNU_SOURCE=1 -D_REENTRANT -DARCH_X86=1 -Wno-int-to-pointer-cast
+COMPILE_FLAGS:=-std=c++0x -I/usr/include/SDL -I/usr/include/ImageMagick -I/usr/local/include/assimp -I../include -D_GNU_SOURCE=1 -D_REENTRANT -DARCH_X86=1 -Wno-int-to-pointer-cast
 COMPILE_FILES:= util/Array.c\
 				util/Timer.c\
 				math/Vector.cpp \
@@ -25,5 +25,6 @@ COMPILE_FILES:= util/Array.c\
 				SkeletonBone.cpp \
 				SkeletonNodeTrack.cpp \
 				SkeletonAnimation.cpp \
-				Entity.cpp
+				Entity.cpp \
+				MeshManager.cpp
 include ../Makefile-so

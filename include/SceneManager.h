@@ -1,14 +1,15 @@
 #ifndef _SCENE_MANAGER_H
 #define _SCENE_MANAGER_H
-#include <Export.h>
-#include <RenderWindow.h>
-#include <Camera.h>
-#include <SceneNode.h>
+#include "Export.h"
+#include "RenderWindow.h"
+#include "Camera.h"
+#include "SceneNode.h"
 #include "Animation.h"
 #include "AnimationState.h"
 #include "FrameListener.h"
 #include "EventListener.h"
 #include "struct.h"
+#include "MeshManager.h"
 #include <string>
 
 class ENGINE_EXPORT SceneManager{
@@ -118,6 +119,8 @@ private:
 	bool m_ifUseShader;
 	GD_LIST m_animationListHead;
 	AnimationStateSet m_animationStateSet;
+
+	MeshManager *mMeshManager;
 };
 
 #endif

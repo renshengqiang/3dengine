@@ -44,7 +44,6 @@ class DemoApp:public FrameListener, public EventListener
 		RenderWindow *mp_renderWindow;
 		AnimationState *mp_animationState1,*mp_animationState2;
 		AnimationState *mp_skeletonAnimationState;
-		Mesh *pMesh1,*pMesh2;
 		Entity *pEntity1, *pEntity2, *pEntity3;
 		
 };
@@ -56,16 +55,16 @@ DemoApp::DemoApp(bool ifUseShader)
 	mp_camera = mp_sceneManager->CreateCamera(Vector3f(0.0f,0.0f,0.0f),Vector3f(0, 0, -1.0f));
 	mp_sceneManager->AddFrameListener(this);
 	mp_sceneManager->AddEventListener(this);
-	pMesh1=NULL;
-	pMesh2=NULL;
-	pEntity1=NULL;
-	pEntity2=NULL;
+	pEntity1=pEntity2=NULL;
 	mp_animationState1 = NULL;
 	mp_animationState2 = NULL;
 }
 DemoApp::~DemoApp()
 {
 	delete mp_sceneManager;
+	delete pEntity1;
+	delete pEntity2;
+	delete pEntity3;
 }
 bool DemoApp::FrameQueued(long timeSinceLastFrame)
 {	
@@ -81,23 +80,13 @@ bool DemoApp::FrameQueued(long timeSinceLastFrame)
 	if(mp_skeletonAnimationState){
 		mp_skeletonAnimationState->AddTime(timeSinceLastFrame/(float)1000);
 	}
-	/*
-	if(pEntity2){
-		pEntity2->BoneTransform(time);
-	}
-	*/
 	return FrameListener::FrameQueued(timeSinceLastFrame);
 }
 void DemoApp::CreateScene(void)
 {
-	pMesh1 = new Mesh("./models/phoenix_ugv.md2");
-	pMesh2 = new Mesh("./models/boblampclean.md5mesh");
-	pEntity1 = new Entity();
-	pEntity2 = new Entity();
-	pEntity3 = new Entity();
-	pEntity1->SetMesh(pMesh1);
-	pEntity2->SetMesh(pMesh2);
-	pEntity3->SetMesh(pMesh2);
+	pEntity1 = new Entity("./models/phoenix_ugv.md2");
+	pEntity2 = new Entity("./models/boblampclean.md5mesh");
+	pEntity3 = new Entity("./models/boblampclean.md5mesh");
 
 	SceneNode *rootNode = mp_sceneManager->GetRootNode();
 	SceneNode *node1 = rootNode->CreateChildSceneNode("childnode1");

@@ -1,58 +1,61 @@
 #include "Entity.h"
 #include "Shader.h"
+#include "MeshManager.h"
 
 //--------------------------------------------------------------------------------------
-Entity::Entity(const std::string&)
+Entity::Entity(const std::string& name)
 {
-}
-//--------------------------------------------------------------------------------------
-Entity::Entity() :
-	mp_mesh(NULL),
-	mp_skeleton(NULL),
-	m_numBones(0),
-	mp_activeAnimationState(NULL),
-	mp_activeSkeletonAnim(NULL)
-{
+	Skeleton *pSkeleton;
+	m_mesh = MeshManager::GetSingleton().CreateMesh(name);
+	pSkeleton = m_mesh->GetSkeleton(); 
+	if(pSkeleton){
+		m_numBoneMatrices = m_mesh->GetRelatedBoneNum();
+		m_boneOffsetMatrixVec.resize(m_numBoneMatrices);
+		for(unsigned i=0; i < pSkeleton->GetAnimationNum(); ++i){
+			SkeletonAnimation *pSkeletonAnim = pSkeleton->GetAnimation(i);
+			std::string name = pSkeletonAnim->GetName();
+			float length = pSkeletonAnim->GetTicks() /pSkeletonAnim->GetTicksPersecond();
+			
+			m_animationStateSet.CreateAnimationState(name,length, 0.0f, false);
+			m_animationMap.insert(SkeletonAnimationMapValueType(name, pSkeletonAnim));
+		}
+	}
 }
 //--------------------------------------------------------------------------------------
 Entity::~Entity()
 {
 }
 //--------------------------------------------------------------------------------------
-void Entity::SetMesh(Mesh *mesh)
-{
-	mp_mesh = mesh;
-	mp_skeleton = mesh->GetSkeleton(); 
-	if(mp_skeleton){
-		m_numBones = mesh->GetRelatedBoneNum();
-		m_boneOffsetMatrixVec.resize(m_numBones);
-		for(unsigned i=0; i < mp_skeleton->GetAnimationNum(); ++i){
-			SkeletonAnimation *pSkeletonAnim = mp_skeleton->GetAnimation(i);
-			std::string name = pSkeletonAnim->GetName();
-			float length = pSkeletonAnim->GetTicks() /pSkeletonAnim->GetTicksPersecond();
-			
-			m_animationStateSet.CreateAnimationState(name,length, 0.0f, false);
-		}
-	}
-}
-//--------------------------------------------------------------------------------------
 AnimationState *Entity::GetAnimationState(const std::string &name)
 {
-	mp_activeAnimationState = m_animationStateSet.GetAnimationState(name);
-	if(mp_activeAnimationState){
-		mp_activeSkeletonAnim = mp_skeleton->GetAnimation(name);
+	return m_animationStateSet.GetAnimationState(name);
+}
+//--------------------------------------------------------------------------------------
+void Entity::_updateAnimation(void)
+{
+	for(unsigned i = 0; i<m_numBoneMatrices; ++i){
+		m_boneOffsetMatrixVec[i].InitIdentity();
 	}
-	return mp_activeAnimationState;
+	int n = m_animationStateSet.GetEnabledAnimationStateNum();
+	AnimationState *animationState;
+	SkeletonAnimation *animation;
+	for(int i=0; i<n; ++i){
+		animationState = m_animationStateSet.GetEnabledAnimationState(i);
+		animation = m_animationMap.find(animationState->GetName())->second;
+		//use animation
+		animation->ApplyToEntity(animationState->GetTimePosition(), m_boneOffsetMatrixVec);
+	}
+	return ;
 }
 //--------------------------------------------------------------------------------------
 void Entity::Render(void)
 {
-	if(mp_activeAnimationState && mp_activeSkeletonAnim)  
-		mp_activeSkeletonAnim->ApplyToEntity(mp_activeAnimationState->GetTimePosition(), m_boneOffsetMatrixVec);
-	if(m_numBones>0) SetIntValue(g_hasBonesLocation,1);
+	_updateAnimation();
+	if(m_numBoneMatrices > 0) SetIntValue(g_hasBonesLocation,1);
 	else SetIntValue(g_hasBonesLocation,0);
-	for(unsigned i=0; i<m_numBones;++i){
+	for(unsigned i=0; i<m_numBoneMatrices;++i){
 		SetTranslateMatrix(g_boneTransformLocation[i],&(m_boneOffsetMatrixVec[i]));
 	}
-	if(mp_mesh) mp_mesh->RenderUseShader();
+	//if(mp_mesh) mp_mesh->RenderUseShader();
+	if(m_mesh.get()) m_mesh->RenderUseShader();
 }

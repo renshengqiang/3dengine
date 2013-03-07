@@ -65,7 +65,11 @@ void SkeletonAnimation::_calcBoneOffsetHeirarchy(float animationTime, SkeletonBo
 
 	int index = mp_skeleton->GetBoneIndex(pBone->GetName());
 	if(index != -1){
-		boneOffsetMatrix[index] = mp_skeleton->GetGlobalInverseMatrix() * globalTranformation * mp_skeleton->GetBoneOffset(index);
+		//通过这种方式来实现，可以用来支持多个骨骼动画的支持
+		boneOffsetMatrix[index] = boneOffsetMatrix[index] * 
+								mp_skeleton->GetGlobalInverseMatrix() * 
+								globalTranformation * 
+								mp_skeleton->GetBoneOffset(index);
 	}
 	
 	for(unsigned i=0; i < pBone->NumChildren(); ++i){
@@ -88,4 +92,3 @@ const Matrix4f SkeletonAnimation::_calcInterPolatedTransform(const SkeletonNodeT
 	trans.MakeTransform(position,scale,rotate);
 	return trans;
 }
-

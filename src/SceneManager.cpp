@@ -16,11 +16,14 @@ SceneManager::SceneManager(enum ManagerType type):
 	//所有node都是在该node下面进行创建
 	mp_rootNode = new SceneNode("rootNode");
 	gd_list_init_head(&m_animationListHead);
+
+	mMeshManager = new MeshManager();
 }
 SceneManager::~SceneManager()
 {
 	DestroyAllAnimationStates();
 	DestroyAllAnimations();
+	delete mMeshManager;
 }
 Camera* SceneManager::CreateCamera(Vector3f pos, Vector3f target, Vector3f up)
 {
