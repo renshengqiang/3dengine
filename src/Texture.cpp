@@ -1,12 +1,14 @@
 #include "Texture.h"
 #include <iostream>
 
+//-----------------------------------------------------------------------
 Texture::Texture(GLenum TextureTarget, const std::string& FileName)
 {
     m_textureTarget = TextureTarget;
     m_fileName      = FileName;
     m_pImage        = NULL;
 }
+//-----------------------------------------------------------------------
 bool Texture::Load()
 {
     try {
@@ -26,7 +28,7 @@ bool Texture::Load()
 
     return true;
 }
-
+//-----------------------------------------------------------------------
 void Texture::Bind(GLenum TextureUnit)
 {
     glActiveTexture(TextureUnit);

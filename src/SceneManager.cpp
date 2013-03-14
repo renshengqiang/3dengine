@@ -5,6 +5,7 @@
 #include "Timer.h"
 #include <stdlib.h>
 
+//-----------------------------------------------------------------------
 SceneManager::SceneManager(enum ManagerType type):
 	m_managerType(type),
 	mp_cameraInUse(0),
@@ -16,15 +17,18 @@ SceneManager::SceneManager(enum ManagerType type):
 	//所有node都是在该node下面进行创建
 	mp_rootNode = new SceneNode("rootNode");
 	gd_list_init_head(&m_animationListHead);
-
+	
+	//create a singleton MeshManager
 	mMeshManager = new MeshManager();
 }
+//-----------------------------------------------------------------------
 SceneManager::~SceneManager()
 {
 	DestroyAllAnimationStates();
 	DestroyAllAnimations();
 	delete mMeshManager;
 }
+//-----------------------------------------------------------------------
 Camera* SceneManager::CreateCamera(Vector3f pos, Vector3f target, Vector3f up)
 {
 	if(mp_cameraInUse!=NULL)
@@ -32,6 +36,7 @@ Camera* SceneManager::CreateCamera(Vector3f pos, Vector3f target, Vector3f up)
 	mp_cameraInUse = new Camera(pos, target, up);
 	return mp_cameraInUse;
 }
+//-----------------------------------------------------------------------
 RenderWindow* SceneManager::CreateRenderWindow(int w, int h)
 {
 	mp_renderWindow = new RenderWindow(w,h);
@@ -43,24 +48,28 @@ RenderWindow* SceneManager::CreateRenderWindow(int w, int h)
 	//GLEW可以使得众多扩展可以正确运行，如glGenBuffers等
 	if(InitGlew()==false)
 		mp_renderWindow->Quit(-1);
+	//show the OpenGL library version info , this is window-system specified
+	GetGLInfo();
 	return mp_renderWindow;
 }
+//-----------------------------------------------------------------------
 void SceneManager::AddFrameListener(FrameListener * frameListener)
 {
 	mp_frameListener = frameListener;
 	return;
 }
+//-----------------------------------------------------------------------
 void SceneManager::AddEventListener(EventListener * eventListener)
 {
 	mp_eventListener = eventListener;
 	return;
 }
+//-----------------------------------------------------------------------
 SceneNode * SceneManager::GetRootNode(void)
 {
 	return mp_rootNode;
 }
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////// animation /////////////////////////////////////////////
+//-----------------------------------animation------------------------------------
 bool SceneManager::HasAnimation(const  std::string & name) const
 {
 	GD_LIST *pos;
@@ -73,6 +82,7 @@ bool SceneManager::HasAnimation(const  std::string & name) const
 	}
 	return false;
 }
+//-----------------------------------------------------------------------
 Animation *SceneManager::GetAnimation(const std::string &name) const
 {
 	GD_LIST *pos;
@@ -84,6 +94,7 @@ Animation *SceneManager::GetAnimation(const std::string &name) const
 	}
 	return NULL;
 }
+//-----------------------------------------------------------------------
 Animation *SceneManager::CreateAnimation(const  std::string & name,float length)
 {
 	if(HasAnimation(name)){
@@ -96,6 +107,7 @@ Animation *SceneManager::CreateAnimation(const  std::string & name,float length)
 	gd_list_add(&(listNode->siblingList),&m_animationListHead);
 	return animation;
 }
+//-----------------------------------------------------------------------
 void SceneManager::DestroyAnimation(const  std::string & name)
 {
 	GD_LIST *pos;
@@ -113,6 +125,7 @@ void SceneManager::DestroyAnimation(const  std::string & name)
 	fprintf(stderr, "SceneManager::DestroyAnimation : Error Destroy Node Animation, animation named %s already exists\n", name.c_str());
 	return;
 }
+//-----------------------------------------------------------------------
 void SceneManager::DestroyAllAnimations(void)
 {
 	GD_LIST *pos, *temp;
@@ -126,14 +139,17 @@ void SceneManager::DestroyAllAnimations(void)
 	}
 	return;
 }
+//-----------------------------------------------------------------------
 bool SceneManager::HasAnimationState(const std::string &name) const
 {
 	return m_animationStateSet.HasAnimationState(name);
 }
+//-----------------------------------------------------------------------
 AnimationState *SceneManager::GetAnimationState(const  std::string name)
 {
 	return m_animationStateSet.GetAnimationState(name);
 }
+//-----------------------------------------------------------------------
 AnimationState *SceneManager::CreateAnimationState(const  std::string & name)
 {
 	if(HasAnimationState(name)){
@@ -148,16 +164,19 @@ AnimationState *SceneManager::CreateAnimationState(const  std::string & name)
 
 	return m_animationStateSet.CreateAnimationState(name,animation->GetLength());
 }
+//-----------------------------------------------------------------------
 void SceneManager::DestroyAnimationState(const  std::string & name)
 {
 	m_animationStateSet.RemoveAnimationState(name);
 	return;
 }
+//-----------------------------------------------------------------------
 void SceneManager::DestroyAllAnimationStates(void)
 {
 	m_animationStateSet.RemoveAllAnimationStates();
 	return;
 }
+//-----------------------------------------------------------------------
 void SceneManager::_ApplySceneAnimations(void)
 {
 	int n = m_animationStateSet.GetEnabledAnimationStateNum();
@@ -177,9 +196,7 @@ void SceneManager::_ApplySceneAnimations(void)
 	}
 	return;
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////// Rendering Operation //////////////////////////////////////////
+//------------------------------Rendering Operation-------------------------------
 void SceneManager::StartRendering(bool m_ifUseShader)
 {
 	this->m_ifUseShader = m_ifUseShader;
@@ -194,6 +211,7 @@ void SceneManager::StartRendering(bool m_ifUseShader)
 		if(RenderOneFrame() == false) break;
 	}
 }
+//-----------------------------------------------------------------------
 bool SceneManager::InitRendering(void)
 {
 	//create and use shader
@@ -207,6 +225,7 @@ bool SceneManager::InitRendering(void)
 	InitRenderState();
 	return true;
 }
+//-----------------------------------------------------------------------
 void SceneManager::QuitFromRendering(void)
 {
 	if(mp_renderWindow){
@@ -214,17 +233,20 @@ void SceneManager::QuitFromRendering(void)
 	}
 	return;
 }
+//-----------------------------------------------------------------------
 /*
  *1.清空缓冲区；
  *2.绘制所有物体；
  *3.执行FrameQueued函数；
  *4.交换缓冲区
  */
+ int sceceFps = 0;
 bool SceneManager::RenderOneFrame(void)
 {   
 	ClearBuffer();
 	_ApplySceneAnimations();
 	if(mp_cameraInUse!=NULL) mp_cameraInUse->Render(mp_rootNode, m_ifUseShader);
+	DrawOverlay(sceceFps);
 	if(mp_frameListener) {
 		if(mp_frameListener->FrameQueued(GetElapsedTime()) == false)
 			return false;

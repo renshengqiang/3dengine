@@ -6,7 +6,7 @@ Vector2f::Vector2f()
 	x = 0;
 	y = 0;
 }
-
+//-----------------------------------------------------------------------
 Vector2f::Vector2f(float _x, float _y)
 {
 	x = _x;
@@ -20,19 +20,21 @@ Vector3f::Vector3f()
 	y = 0;
 	z = 0;
 }
-
+//-----------------------------------------------------------------------
 Vector3f::Vector3f(float _x, float _y, float _z)
 {
 	x = _x;
 	y = _y;
 	z = _z;
 }
+//-----------------------------------------------------------------------
 Vector3f::Vector3f(const Vector3f &vector)
 {
 	x = vector.x;
 	y = vector.y;
 	z = vector.z;
 }
+//-----------------------------------------------------------------------
 Vector3f& Vector3f::operator+=(const Vector3f& r)
 {
 	x += r.x;
@@ -41,7 +43,7 @@ Vector3f& Vector3f::operator+=(const Vector3f& r)
 
 	return *this;
 }
-
+//-----------------------------------------------------------------------
 Vector3f& Vector3f::operator-=(const Vector3f& r)
 {
 	x -= r.x;
@@ -50,7 +52,7 @@ Vector3f& Vector3f::operator-=(const Vector3f& r)
 
 	return *this;
 }
-
+//-----------------------------------------------------------------------
 Vector3f& Vector3f::operator*=(const Vector3f &r)
 {
 	x*=r.x;
@@ -58,7 +60,7 @@ Vector3f& Vector3f::operator*=(const Vector3f &r)
 	z*=r.z;
 	return *this;
 }
-
+//-----------------------------------------------------------------------
 Vector3f& Vector3f::operator/=(const Vector3f &r)
 {
 	x/=r.x;
@@ -66,6 +68,7 @@ Vector3f& Vector3f::operator/=(const Vector3f &r)
 	z/=r.z;
 	return *this;
 }
+//-----------------------------------------------------------------------
 Vector3f& Vector3f::operator*=(float f)
 {
 	x *= f;
@@ -74,7 +77,7 @@ Vector3f& Vector3f::operator*=(float f)
 
 	return *this;
 }
-
+//-----------------------------------------------------------------------
 Vector3f Vector3f::Cross(const Vector3f& v) const
 {
 	const float _x = y * v.z - z * v.y;
@@ -83,7 +86,7 @@ Vector3f Vector3f::Cross(const Vector3f& v) const
 
 	return Vector3f(_x, _y, _z);
 }
-
+//-----------------------------------------------------------------------
 Vector3f& Vector3f::Normalize()
 {
 	const float length = sqrtf(x * x + y * y + z * z);
@@ -94,7 +97,7 @@ Vector3f& Vector3f::Normalize()
 
 	return *this;
 }
-
+//-----------------------------------------------------------------------
 void Vector3f::Rotate(float Angle, const Vector3f& Axe)
 {
 	const float SinHalfAngle = sinf(ToRadian(Angle/2));
@@ -114,7 +117,7 @@ void Vector3f::Rotate(float Angle, const Vector3f& Axe)
 	y = W.y;
 	z = W.z;
 }
-
+//-----------------------------------------------------------------------
 Vector3f operator+(const Vector3f& l, const Vector3f& r)
 {
 	Vector3f ret(l);
@@ -122,7 +125,7 @@ Vector3f operator+(const Vector3f& l, const Vector3f& r)
 	ret+=r;
 	return ret;
 }
-
+//-----------------------------------------------------------------------
 Vector3f operator-(const Vector3f& l, const Vector3f& r)
 {
 	Vector3f ret(l);
@@ -130,7 +133,7 @@ Vector3f operator-(const Vector3f& l, const Vector3f& r)
 	ret-=r;
 	return ret;
 }
-
+//-----------------------------------------------------------------------
 Vector3f operator*(const Vector3f& l, float f)
 {
 	Vector3f ret(l);
@@ -138,7 +141,7 @@ Vector3f operator*(const Vector3f& l, float f)
 	ret*=f;
 	return ret;
 }
-
+//-----------------------------------------------------------------------
 Vector3f operator*(const Vector3f &l, const Vector3f &r)
 {
 	Vector3f ret(l);
@@ -146,7 +149,7 @@ Vector3f operator*(const Vector3f &l, const Vector3f &r)
 	ret*=r;
 	return ret;
 }
-
+//-----------------------------------------------------------------------
 Vector3f operator/(const Vector3f &l, const Vector3f &r)
 {
 	Vector3f ret(l);
@@ -154,7 +157,7 @@ Vector3f operator/(const Vector3f &l, const Vector3f &r)
 	ret/=r;
 	return ret;
 }
-
+//-----------------------------------------------------------------------
 Vector3f operator*(const Vector3f& v, const Quaternion &q)
 {
 	// nVidia SDK implementation
@@ -167,9 +170,8 @@ Vector3f operator*(const Vector3f& v, const Quaternion &q)
 
 	return v + uv + uuv;
 }
-
+//-----------------------------------------------------------------------
 bool operator==(const Vector3f &l, const Vector3f &r)
 {
 	return l.x==r.x && l.y==r.y && l.z==r.z;
 }
-

@@ -12,6 +12,7 @@
 #include "MeshManager.h"
 #include <string>
 
+extern int sceceFps;
 class ENGINE_EXPORT SceneManager{
 public:
 	enum ManagerType{

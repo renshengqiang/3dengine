@@ -1,10 +1,11 @@
 #include "math_3d.h"
 
+//-----------------------------------------------------------------------
 Quaternion::Quaternion()
 {
 	x=0;y=0;z=0;w=1;
 }
-
+//-----------------------------------------------------------------------
 Quaternion::Quaternion(float _x, float _y, float _z, float _w)
 {
 	x = _x;
@@ -12,7 +13,7 @@ Quaternion::Quaternion(float _x, float _y, float _z, float _w)
 	z = _z;
 	w = _w;
 }
-
+//-----------------------------------------------------------------------
 Quaternion::Quaternion(const Vector3f &axis, float angle)
 {
 	float fHalfAngle ( 0.5*ToRadian(angle));
@@ -22,7 +23,7 @@ Quaternion::Quaternion(const Vector3f &axis, float angle)
 	y = fSin*axis.y;
 	z = fSin*axis.z;
 }
-
+//-----------------------------------------------------------------------
 Quaternion& Quaternion::operator+=(const Quaternion &r)
 {
 	w += r.w;
@@ -32,7 +33,7 @@ Quaternion& Quaternion::operator+=(const Quaternion &r)
 
 	return *this;
 }
-
+//-----------------------------------------------------------------------
 Quaternion& Quaternion::operator-=(const Quaternion &r)
 {
 	w -= r.w;
@@ -42,7 +43,7 @@ Quaternion& Quaternion::operator-=(const Quaternion &r)
 	
 	return *this;
 }
-
+//-----------------------------------------------------------------------
 Quaternion& Quaternion::operator*=(const Quaternion &r)
 {
     const float tw = (w * r.w) - (x * r.x) - (y * r.y) - (z * r.z);
@@ -57,6 +58,7 @@ Quaternion& Quaternion::operator*=(const Quaternion &r)
 	
     return *this;
 }
+//-----------------------------------------------------------------------
 Quaternion& Quaternion::operator*=(const Vector3f &v)
 {
     const float tw = - (x * v.x) - (y * v.y) - (z * v.z);
@@ -71,7 +73,7 @@ Quaternion& Quaternion::operator*=(const Vector3f &v)
 
     return *this;
 }
-
+//-----------------------------------------------------------------------
 Quaternion& Quaternion::operator*=(float t)
 {
 	w *= t;
@@ -81,12 +83,12 @@ Quaternion& Quaternion::operator*=(float t)
 
 	return *this;
 }
-
+//-----------------------------------------------------------------------
 Quaternion Quaternion::operator-() const
 {
 	return Quaternion(-x,-y,-z,-w);
 }
-
+//-----------------------------------------------------------------------
 void Quaternion::Normalize()
 {
     float Length = sqrtf(x * x + y * y + z * z + w * w);
@@ -96,13 +98,13 @@ void Quaternion::Normalize()
     z /= Length;
     w /= Length;
 }
-
+//-----------------------------------------------------------------------
 Quaternion Quaternion::Conjugate()
 {
     Quaternion ret(-x, -y, -z, w);
     return ret;
 }
-
+//-----------------------------------------------------------------------
 Quaternion Quaternion::Inverse () const
 {
   float fNorm = w*w+x*x+y*y+z*z;
@@ -117,12 +119,12 @@ Quaternion Quaternion::Inverse () const
 	  return Quaternion(0,0,0,0);
   }
 }
-
+//-----------------------------------------------------------------------
 float Quaternion::Dot (const Quaternion& rkQ) const
 {
    return w*rkQ.w+x*rkQ.x+y*rkQ.y+z*rkQ.z;
 }
-
+//-----------------------------------------------------------------------
 Quaternion Quaternion::nlerp(float fT, const Quaternion& rkP,
     const Quaternion& rkQ, bool shortestPath)
 {
@@ -139,7 +141,7 @@ Quaternion Quaternion::nlerp(float fT, const Quaternion& rkP,
     result.Normalize();
     return result;
 }
-
+//-----------------------------------------------------------------------
 void Quaternion::ToRotationMatrix (Matrix3f& kRot) const
 {
     float fTx  = x+x;
@@ -165,7 +167,7 @@ void Quaternion::ToRotationMatrix (Matrix3f& kRot) const
     kRot.m[2][1] = fTyz+fTwx;
     kRot.m[2][2] = 1.0f-(fTxx+fTyy);
 }
-
+//-----------------------------------------------------------------------
 Quaternion operator+(const Quaternion& l, const Quaternion& r)
 {
 	Quaternion ret(l);
@@ -174,7 +176,7 @@ Quaternion operator+(const Quaternion& l, const Quaternion& r)
 
 	return ret;
 }
-
+//-----------------------------------------------------------------------
 Quaternion operator-(const Quaternion& l, const Quaternion& r)
 {
 	Quaternion ret(l);
@@ -184,7 +186,7 @@ Quaternion operator-(const Quaternion& l, const Quaternion& r)
 	return ret;
 
 }
-
+//-----------------------------------------------------------------------
 Quaternion operator*(const Quaternion& l, const Quaternion& r)
 {
 	Quaternion ret(l);
@@ -193,7 +195,7 @@ Quaternion operator*(const Quaternion& l, const Quaternion& r)
 
 	return ret;
 }
-
+//-----------------------------------------------------------------------
 Quaternion operator*(const Quaternion& q, float t)
 {
 	Quaternion ret(q);
@@ -203,7 +205,7 @@ Quaternion operator*(const Quaternion& q, float t)
 	return ret;
 
 }
-
+//-----------------------------------------------------------------------
 Quaternion operator*(const Quaternion& q, const Vector3f& v)
 {
 	Quaternion ret(q);
@@ -213,4 +215,3 @@ Quaternion operator*(const Quaternion& q, const Vector3f& v)
 	return ret;
 
 }
-

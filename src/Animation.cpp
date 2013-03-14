@@ -1,27 +1,33 @@
 #include "Animation.h"
 #include <stdlib.h>
 
+//-----------------------------------------------------------------------
 Animation::Animation(const std::string &name, float length)
 	:m_name(name),m_length(length)
 {
 	gd_list_init_head(&m_nodeTrackListHead);
 }
+//-----------------------------------------------------------------------
 Animation:: ~Animation()
 {
 	DestroyAllNodeTracks();
 }
+//-----------------------------------------------------------------------
 const std::string &Animation::GetName(void) const
 {
 	return m_name;
 }
+//-----------------------------------------------------------------------
 float Animation::GetLength(void) const
 {
 	return m_length;
 }
+//-----------------------------------------------------------------------
 void Animation::SetLength(float len)
 {
 	m_length = len;
 }
+//-----------------------------------------------------------------------
 NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle, const std::string &name)
 {
 	GD_LIST *pos,*addPos;
@@ -47,12 +53,14 @@ NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle, const std:
 	gd_list_insert(&(listNode->siblingList),addPos,addPos->next);
 	return ret;
 }
+//-----------------------------------------------------------------------
 NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle, Node *node)
 {
 	NodeAnimationTrack *ret = CreateNodeTrack(handle, node->GetName());
 	ret->SetAssociatedNode(node);
 	return ret;
 }
+//-----------------------------------------------------------------------
 unsigned short Animation::GetNumNodeTracks(void) const
 {
 	GD_LIST *pos;
@@ -61,6 +69,7 @@ unsigned short Animation::GetNumNodeTracks(void) const
 	gd_list_for_each(pos,&m_nodeTrackListHead) ++n;
 	return n;
 }
+//-----------------------------------------------------------------------
 bool Animation::HasNodeTrack(unsigned short handle) const
 {
 	GD_LIST *pos;
@@ -72,6 +81,7 @@ bool Animation::HasNodeTrack(unsigned short handle) const
 	}
 	return false;
 }
+//-----------------------------------------------------------------------
 NodeAnimationTrack *Animation::GetNodeTrack(unsigned short handle) const
 {
 	GD_LIST *pos;
@@ -83,6 +93,7 @@ NodeAnimationTrack *Animation::GetNodeTrack(unsigned short handle) const
 	}
 	return NULL;
 }
+//-----------------------------------------------------------------------
 void Animation::DestoryNodeTrack(unsigned short handle)
 {
 	GD_LIST *pos;
@@ -99,6 +110,7 @@ void Animation::DestoryNodeTrack(unsigned short handle)
 	}
 	return;
 }
+//-----------------------------------------------------------------------
 void Animation::DestroyAllNodeTracks(void)
 {
 	GD_LIST *pos,*temp;
@@ -112,6 +124,7 @@ void Animation::DestroyAllNodeTracks(void)
 	}
 	return;
 }
+//-----------------------------------------------------------------------
 void Animation::Apply(float timePos, float weight, float scale)
 {
 	GD_LIST *pos;
@@ -123,6 +136,7 @@ void Animation::Apply(float timePos, float weight, float scale)
 	}
 	return;
 }
+//-----------------------------------------------------------------------
 void Animation::ApplyToNode(Node *node, float timePos, float weight, float scale)
 {
 	GD_LIST *pos;

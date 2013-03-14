@@ -1,6 +1,7 @@
 #include "RenderWindow.h"
 #include <SDL/SDL.h>
 
+//-----------------------------------------------------------------------
 RenderWindow::RenderWindow(int windowWidth,int windowHeight)
 {
 	/* Information about the current video settings. */    
@@ -39,11 +40,13 @@ RenderWindow::RenderWindow(int windowWidth,int windowHeight)
 	m_WindowHeight=windowHeight;
 	m_WindowWidth=windowWidth;
 }
+//-----------------------------------------------------------------------
 void RenderWindow::Quit(int exit_code)
 {
 	SDL_Quit( );
 	exit(exit_code);
 }
+//-----------------------------------------------------------------------
 void RenderWindow::SwapBuffer()
 {
 	SDL_GL_SwapBuffers();

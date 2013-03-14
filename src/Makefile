@@ -1,7 +1,7 @@
 PROJNAME:=engine
 LIBDIR:=../lib
-LINK_FLAGS:=-L/usr/local/lib -lSDL -lGL -lGLU -lGLEW -lstdc++ -lMagick++ -lassimp
-COMPILE_FLAGS:=-std=c++0x -I/usr/include/SDL -I/usr/include/ImageMagick -I/usr/local/include/assimp -I../include -D_GNU_SOURCE=1 -D_REENTRANT -DARCH_X86=1 -Wno-int-to-pointer-cast
+LINK_FLAGS:=-L/usr/local/lib -L/usr/lib/i386-linux-gnu/ -lSDL -lGL -lGLU -lGLEW -lstdc++ -lMagick++ -lassimp -lfreetype
+COMPILE_FLAGS:=-std=c++0x -I/usr/include/SDL -I/usr/include/freetype2 -I/usr/include/ImageMagick -I/usr/local/include/assimp -I../include -D_GNU_SOURCE=1 -D_REENTRANT -DARCH_X86=1 -Wno-int-to-pointer-cast
 COMPILE_FILES:= util/Array.c\
 				util/Timer.c\
 				math/Vector.cpp \
@@ -26,5 +26,6 @@ COMPILE_FILES:= util/Array.c\
 				SkeletonNodeTrack.cpp \
 				SkeletonAnimation.cpp \
 				Entity.cpp \
-				MeshManager.cpp
+				MeshManager.cpp \
+				FreeType.cpp
 include ../Makefile-so

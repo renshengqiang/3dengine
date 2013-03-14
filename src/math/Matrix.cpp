@@ -1,9 +1,11 @@
 #include "math_3d.h"
 
+//-----------------------------------------------------------------------
 Matrix4f::Matrix4f()
 {
 	InitIdentity();
 }
+//-----------------------------------------------------------------------
 Matrix4f::Matrix4f(const aiMatrix4x4& AssimpMatrix)
 {
 	m[0][0] = AssimpMatrix.a1; m[0][1] = AssimpMatrix.a2; m[0][2] = AssimpMatrix.a3; m[0][3] = AssimpMatrix.a4;
@@ -11,7 +13,7 @@ Matrix4f::Matrix4f(const aiMatrix4x4& AssimpMatrix)
 	m[2][0] = AssimpMatrix.c1; m[2][1] = AssimpMatrix.c2; m[2][2] = AssimpMatrix.c3; m[2][3] = AssimpMatrix.c4;
 	m[3][0] = AssimpMatrix.d1; m[3][1] = AssimpMatrix.d2; m[3][2] = AssimpMatrix.d3; m[3][3] = AssimpMatrix.d4;
 }
-
+//-----------------------------------------------------------------------
 Matrix4f::Matrix4f(const aiMatrix3x3& AssimpMatrix)
 {
 	m[0][0] = AssimpMatrix.a1; m[0][1] = AssimpMatrix.a2; m[0][2] = AssimpMatrix.a3; m[0][3] = 0.0f;
@@ -19,7 +21,7 @@ Matrix4f::Matrix4f(const aiMatrix3x3& AssimpMatrix)
 	m[2][0] = AssimpMatrix.c1; m[2][1] = AssimpMatrix.c2; m[2][2] = AssimpMatrix.c3; m[2][3] = 0.0f;
 	m[3][0] = 0.0f			 ; m[3][1] = 0.0f			; m[3][2] = 0.0f		   ; m[3][3] = 1.0f;
 }
-
+//-----------------------------------------------------------------------
 Matrix4f::Matrix4f(float a00, float a01, float a02, float a03,
 		 float a10, float a11, float a12, float a13,
 		 float a20, float a21, float a22, float a23,
@@ -30,7 +32,7 @@ Matrix4f::Matrix4f(float a00, float a01, float a02, float a03,
 	m[2][0] = a20; m[2][1] = a21; m[2][2] = a22; m[2][3] = a23;
 	m[3][0] = a30; m[3][1] = a31; m[3][2] = a32; m[3][3] = a33; 	   
 }
-
+//-----------------------------------------------------------------------
 Matrix4f &Matrix4f::operator+=(const Matrix4f &Right)
 {
 	for(int i=0;i<4;++i)
@@ -38,7 +40,7 @@ Matrix4f &Matrix4f::operator+=(const Matrix4f &Right)
 			m[i][j] += Right.m[i][j];
 	return *this;
 }
-
+//-----------------------------------------------------------------------
 Matrix4f &Matrix4f::operator*=(float weight)
 {
 	for(int i=0;i<4;++i){
@@ -47,7 +49,7 @@ Matrix4f &Matrix4f::operator*=(float weight)
 	}
 	return *this;
 }
-
+//-----------------------------------------------------------------------
 Matrix4f Matrix4f::operator*(const Matrix4f& Right) const
 {
 	Matrix4f Ret;
@@ -63,7 +65,7 @@ Matrix4f Matrix4f::operator*(const Matrix4f& Right) const
 
 	return Ret;
 }
-
+//-----------------------------------------------------------------------
 void Matrix4f::InitIdentity()
 {
 	m[0][0] = 1.0f; m[0][1] = 0.0f; m[0][2] = 0.0f; m[0][3] = 0.0f;
@@ -71,7 +73,7 @@ void Matrix4f::InitIdentity()
 	m[2][0] = 0.0f; m[2][1] = 0.0f; m[2][2] = 1.0f; m[2][3] = 0.0f;
 	m[3][0] = 0.0f; m[3][1] = 0.0f; m[3][2] = 0.0f; m[3][3] = 1.0f;
 }
-
+//-----------------------------------------------------------------------
 void Matrix4f::InitZero()
 {
 	m[0][0] = 0.0f; m[0][1] = 0.0f; m[0][2] = 0.0f; m[0][3] = 0.0f;
@@ -79,7 +81,7 @@ void Matrix4f::InitZero()
 	m[2][0] = 0.0f; m[2][1] = 0.0f; m[2][2] = 0.0f; m[2][3] = 0.0f;
 	m[3][0] = 0.0f; m[3][1] = 0.0f; m[3][2] = 0.0f; m[3][3] = 0.0f;	
 }
-
+//-----------------------------------------------------------------------
 Matrix4f Matrix4f::Transpose() const
 {
 	Matrix4f n;
@@ -92,7 +94,7 @@ Matrix4f Matrix4f::Transpose() const
 	
 	return n;
 }
-
+//-----------------------------------------------------------------------
 float Matrix4f::Determinant() const
 {
 	return m[0][0]*m[1][1]*m[2][2]*m[3][3] - m[0][0]*m[1][1]*m[2][3]*m[3][2] + m[0][0]*m[1][2]*m[2][3]*m[3][1] - m[0][0]*m[1][2]*m[2][1]*m[3][3] 
@@ -102,8 +104,7 @@ float Matrix4f::Determinant() const
 		+ m[0][2]*m[1][1]*m[2][3]*m[3][0] - m[0][2]*m[1][1]*m[2][0]*m[3][3] - m[0][3]*m[1][0]*m[2][1]*m[3][2] + m[0][3]*m[1][0]*m[2][2]*m[3][1]
 		- m[0][3]*m[1][1]*m[2][2]*m[3][0] + m[0][3]*m[1][1]*m[2][0]*m[3][2] - m[0][3]*m[1][2]*m[2][0]*m[3][1] + m[0][3]*m[1][2]*m[2][1]*m[3][0];
 }
-
-
+//-----------------------------------------------------------------------
 Matrix4f& Matrix4f::Inverse()
 {
 	// Compute the reciprocal determinant
@@ -146,7 +147,7 @@ Matrix4f& Matrix4f::Inverse()
 
 	return *this;
 }
-
+//-----------------------------------------------------------------------
 void Matrix4f::InitScaleTransform(float ScaleX, float ScaleY, float ScaleZ)
 {
     m[0][0] = ScaleX; m[0][1] = 0.0f;   m[0][2] = 0.0f;   m[0][3] = 0.0f;
@@ -154,7 +155,7 @@ void Matrix4f::InitScaleTransform(float ScaleX, float ScaleY, float ScaleZ)
     m[2][0] = 0.0f;   m[2][1] = 0.0f;   m[2][2] = ScaleZ; m[2][3] = 0.0f;
     m[3][0] = 0.0f;   m[3][1] = 0.0f;   m[3][2] = 0.0f;   m[3][3] = 1.0f;
 }
-
+//-----------------------------------------------------------------------
 void Matrix4f::InitRotateTransform(float RotateX, float RotateY, float RotateZ)
 {
     Matrix4f rx, ry, rz;
@@ -180,7 +181,7 @@ void Matrix4f::InitRotateTransform(float RotateX, float RotateY, float RotateZ)
 
     *this = rz * ry * rx;
 }
-
+//-----------------------------------------------------------------------
 void Matrix4f::InitTranslationTransform(float x, float y, float z)
 {
     m[0][0] = 1.0f; m[0][1] = 0.0f; m[0][2] = 0.0f; m[0][3] = x;
@@ -188,7 +189,7 @@ void Matrix4f::InitTranslationTransform(float x, float y, float z)
     m[2][0] = 0.0f; m[2][1] = 0.0f; m[2][2] = 1.0f; m[2][3] = z;
     m[3][0] = 0.0f; m[3][1] = 0.0f; m[3][2] = 0.0f; m[3][3] = 1.0f;
 }
-
+//-----------------------------------------------------------------------
 void Matrix4f::InitCameraTransform(const Vector3f& Target, const Vector3f& Up)
 {
     Vector3f N = Target;
@@ -203,6 +204,7 @@ void Matrix4f::InitCameraTransform(const Vector3f& Target, const Vector3f& Up)
     m[2][0] = N.x;   m[2][1] = N.y;   m[2][2] = N.z;   m[2][3] = 0.0f;
     m[3][0] = 0.0f;  m[3][1] = 0.0f;  m[3][2] = 0.0f;  m[3][3] = 1.0f;
 }
+//-----------------------------------------------------------------------
 void Matrix4f::InitCameraTransform(const Vector3f& Pos, const Vector3f& Target, const Vector3f& Up)
 {
 	Vector3f N = Target;
@@ -223,7 +225,7 @@ void Matrix4f::InitCameraTransform(const Vector3f& Pos, const Vector3f& Target, 
 	m[1][3] = -(Pos.x*V.x + Pos.y*V.y + Pos.z*V.z);
 	m[2][3] = (Pos.x*N.x + Pos.y*N.y + Pos.z*N.z);
 }
-
+//-----------------------------------------------------------------------
 void Matrix4f::InitPersProjTransform(float FOV, float Width, float Height, float zNear, float zFar)
 {
     const float ar         = Width / Height;
@@ -235,7 +237,7 @@ void Matrix4f::InitPersProjTransform(float FOV, float Width, float Height, float
     m[2][0] = 0.0f;                   m[2][1] = 0.0f;            m[2][2] = (-zNear -zFar)/zRange ; m[2][3] = 2.0f * zFar*zNear/zRange;
     m[3][0] = 0.0f;                   m[3][1] = 0.0f;            m[3][2] = 1.0f;          m[3][3] = 0.0;
 }
-
+//-----------------------------------------------------------------------
 void Matrix4f::InitPersProjTransform(float FOV, float ar, float zNear, float zFar)
 {
 	const float zRange	   = zNear - zFar;
@@ -246,6 +248,7 @@ void Matrix4f::InitPersProjTransform(float FOV, float ar, float zNear, float zFa
 	m[2][0] = 0.0f; 				  m[2][1] = 0.0f;			 m[2][2] = (zNear + zFar)/zRange ; m[2][3] = 2.0f * zFar*zNear/zRange;
 	m[3][0] = 0.0f; 				  m[3][1] = 0.0f;			 m[3][2] = -1.0f;		  m[3][3] = 0.0;
 }
+//-----------------------------------------------------------------------
 void Matrix4f::MakeTransform(const Vector3f& position, const Vector3f& scale, const Quaternion& orientation)
 {
     // Ordering:实际效果的顺序，非代码顺序
@@ -264,7 +267,7 @@ void Matrix4f::MakeTransform(const Vector3f& position, const Vector3f& scale, co
     // No projection term
     m[3][0] = 0; m[3][1] = 0; m[3][2] = 0; m[3][3] = 1;
 }
-
+//-----------------------------------------------------------------------
 Matrix4f operator*(const Matrix4f &m,float weight)
 {
 	Matrix4f ret(m);
@@ -273,6 +276,7 @@ Matrix4f operator*(const Matrix4f &m,float weight)
 
 	return ret;
 }
+//-----------------------------------------------------------------------
 /*
 	Vector transformation using '*'
 	@remarks
@@ -290,4 +294,3 @@ Vector3f operator*(const Matrix4f &M,const Vector3f &V)
 	ret.z = (M.m[2][0]*V.x + M.m[2][1]*V.y + M.m[2][2]*V.z + M.m[2][3])*fInvW;
 	return ret;
 }
-

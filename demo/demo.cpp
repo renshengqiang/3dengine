@@ -21,7 +21,8 @@ void* FpsThread(void*)
         select(1, NULL, NULL, NULL, &tv);
         printf("fps: %d\n", fps);
 		fflush(stdout);
-        fps = 0;
+	sceceFps = fps;
+	fps = 0;
     }
 	return NULL;
 }

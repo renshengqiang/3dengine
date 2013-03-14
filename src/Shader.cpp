@@ -12,6 +12,8 @@ GLuint g_PVMMatrixLocation;
 GLuint g_samplerLocation;
 GLuint g_boneTransformLocation[MAX_BONE_NUM];
 
+GLuint shader_handler;
+
 static const char *pVS = "											\n\
 #version 120														\n\
 const int MAX_BONE_NUM = 100;										\n\
@@ -49,6 +51,7 @@ void main()														\n\
 {																\n\
 	gl_FragColor = texture2D(sampler, texCoord.st);						\n\
 }";
+//-----------------------------------------------------------------------
 const char* _shader_type_2_string(int type)
 {
 	if(type == GL_VERTEX_SHADER)
@@ -58,6 +61,7 @@ const char* _shader_type_2_string(int type)
 	else
 		return "Unknown";
 }
+//-----------------------------------------------------------------------
 static bool AddShader(GLuint shader_handler, const char *shader_text, GLenum shader_type) 
 {
 	GLuint shader_obj = glCreateShader(shader_type);
@@ -83,9 +87,10 @@ static bool AddShader(GLuint shader_handler, const char *shader_text, GLenum sha
 	glAttachShader(shader_handler, shader_obj);
 	return true;
 }
+//-----------------------------------------------------------------------
 bool CreateShaders()
 {
-	GLuint shader_handler = glCreateProgram();
+	shader_handler = glCreateProgram();
 	if(shader_handler == 0){
 		fprintf(stderr, "CreateShaders: create program fail\n");
 		return false;
@@ -138,4 +143,11 @@ bool CreateShaders()
 	//printf("Position:%d\n", glGetAttribLocation(shader_handler, "Position"));
 	return true;
 }
-
+void UseShaderToRender(void)
+{
+	glUseProgram(shader_handler);
+}
+void UseFixedPipeline(void)
+{
+	glUseProgram(0);
+}

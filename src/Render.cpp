@@ -3,6 +3,7 @@
 #include "Shader.h"
 #include "math_3d.h"
 #include "util.h"
+#include "FreeType.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -446,6 +447,7 @@ PIXEL_OBJ *CreatePixelObject(const char *file,GLenum textureUnit, GLenum texture
 	}
 	return obj;
 }
+//-----------------------------------------------------------------------
 PIXEL_OBJ *CreatePixelObject2(GLuint object, GLenum textureUnit, GLenum textureTarget)
 {
 	struct PixelObj *pixelObject = (struct PixelObj *)malloc(sizeof(struct PixelObj));
@@ -456,6 +458,7 @@ PIXEL_OBJ *CreatePixelObject2(GLuint object, GLenum textureUnit, GLenum textureT
 	}
 	return pixelObject;
 }
+//-----------------------------------------------------------------------
 /*
  绘制步骤:
  * 1. 使能相关顶点数据相关客户端状态
@@ -514,6 +517,7 @@ void DrawObject(int type, const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj
 	}	
 	return ;
 }
+//-----------------------------------------------------------------------
 void DrawOjectUseShader(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, const PIXEL_OBJ *pixelObj)
 {
 	glEnableVertexAttribArray(g_vertexPostionLocation);
@@ -539,28 +543,33 @@ void DrawOjectUseShader(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, 
 	glDisableVertexAttribArray(g_vertexPostionLocation);
 	glDisableVertexAttribArray(g_vertexTexCoordLocation);
 }
+//-----------------------------------------------------------------------
 void SetModelViewMatrix(const Matrix4f * modelviewMatrix)
 {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadTransposeMatrixf(&(modelviewMatrix->m[0][0]));
 	return;
 }
+//-----------------------------------------------------------------------
 void SetProjectMatrix(const Matrix4f * projectMatrix)
 {
 	glMatrixMode(GL_PROJECTION);
 	glLoadTransposeMatrixf(&(projectMatrix->m[0][0]));
 	return;
 }
+//-----------------------------------------------------------------------
 void SetTranslateMatrix(const GLuint location, const Matrix4f * transMatrix)
 {
 	glUniformMatrix4fv(location, 1, GL_TRUE, &(transMatrix->m[0][0]));
 	return;
 }
+//-----------------------------------------------------------------------
 void SetIntValue(const GLuint location, GLint value)
 {
 	glUniform1i(location, value);
 	return;
 }
+//-----------------------------------------------------------------------
 bool InitGlew(void)
 {
 	//init glew
@@ -571,14 +580,68 @@ bool InitGlew(void)
 	}
 	return true;
 }
+//-----------------------------------------------------------------------
+void GetGLInfo(void)
+{
+	GLint depth,units;
+	glGetIntegerv(GL_MAX_MODELVIEW_STACK_DEPTH,&depth);
+	glGetIntegerv(GL_MAX_TEXTURE_UNITS, &units);
+	printf("----------- OpenGL Version Info -----------\n"
+	        "Opengl version: %s\n""Vendor version: %s\n"
+	        "Shading language version: %s\n"
+	        "Extentions info:%s\n"
+	        "ModelView matrix stack depth:%d\n"
+	        "Max texture units:%d\n"
+	       "-----------------------------------------\n\n",
+	       glGetString(GL_VERSION),
+	       glGetString(GL_VENDOR), 
+	       glGetString(GL_SHADING_LANGUAGE_VERSION),
+	       glGetString(GL_EXTENSIONS),
+	       depth,
+	       units
+	       );
+}
+//-----------------------------------------------------------------------
+freetype::font_data our_font;
 bool InitRenderState(void)
 {	
-	//init state
-	glClearColor(0,0,0,0);
-	glEnable(GL_DEPTH_TEST);	
+	//-- Enable smooth shading
+	glShadeModel(GL_SMOOTH);
+
+	//-- Set the background black
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+	//-- Enables Depth Test
+	glEnable(GL_DEPTH_TEST);
+
+	//-- The Type of Depth Test To Do
+	glDepthFunc(GL_LEQUAL);
+
+	//-- Really Nice Perspective Calculations
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+	// -- Init Font
+	our_font.init("./fonts/Test.ttf", 32);
 	return true;
 }
+//-----------------------------------------------------------------------
 void ClearBuffer(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+//-----------------------------------------------------------------------
+void DrawOverlay(int fps)
+{
+	UseFixedPipeline();
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glClear(GL_DEPTH_BUFFER_BIT);
+	
+	glColor3f(0.0, 1.0, 0.0);
+	freetype::print(our_font, 0, 0, "FPS: %d", fps);
+
+	glPopMatrix();
+	UseShaderToRender();
 }

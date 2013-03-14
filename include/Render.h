@@ -82,8 +82,10 @@ struct context {
 	int pixel2_obj;
 };
 bool InitGlew(void);
+void GetGLInfo(void);
 bool InitRenderState(void);
 void ClearBuffer(void);
+void DrawOverlay(int fps);
 void DrawObject(int type,const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj, struct context *contx);
 void DrawOjectUseShader(const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj);
 void SetModelViewMatrix(const Matrix4f *modelviewMatrix);

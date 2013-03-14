@@ -2,6 +2,9 @@
 #include "Shader.h"
 #include "Render.h"
 #include <stdio.h>
+
+
+//-----------------------------------------------------------------------
 Camera::Camera(Vector3f pos,Vector3f target,Vector3f up)
 {
 	m_projectionMatrixChanged = true;
@@ -37,6 +40,7 @@ Camera::Camera(Vector3f pos,Vector3f target,Vector3f up)
 	}
 	m_angleVertical = -ToDegree(asin(m_targetVector.y));
 }
+//-----------------------------------------------------------------------
 void Camera::Update()
 {
 	const Vector3f Vaxis(0.0f, 1.0f, 0.0f);
@@ -56,18 +60,21 @@ void Camera::Update()
 	m_viewMatrix.InitCameraTransform(m_positionVector,m_targetVector,m_upVector);
 	return;
 }
+//-----------------------------------------------------------------------
 void Camera::SetAspetcRadio(float aspectRadio)
 {
 	m_aspectRadio= aspectRadio;
 	m_projectionMatrixChanged = true;
 	return;
 }
+//-----------------------------------------------------------------------
 void Camera::SetFov(float angle)
 {
 	m_FOV = angle;
 	m_projectionMatrixChanged = true;
 	return;
 }
+//-----------------------------------------------------------------------
 void Camera::SetClipDistance(float near,float far)
 {
 	m_zNear = near;
@@ -75,24 +82,28 @@ void Camera::SetClipDistance(float near,float far)
 	m_projectionMatrixChanged = true;
 	return;
 }
+//-----------------------------------------------------------------------
 void Camera::Translate(Vector3f movement)
 {
 	m_positionVector+=movement;
 	m_viewMatrixChanged = true;
 	return;
 }
+//-----------------------------------------------------------------------
 void Camera::Yaw(float angle)
 {
 	m_angleHorizontal+=angle;
 	m_viewMatrixChanged = true;
 	return;
 }
+//-----------------------------------------------------------------------
 void Camera::Pitch(float angle)
 {
 	m_angleVertical+=angle;
 	m_viewMatrixChanged = true;
 	return;
 }
+//-----------------------------------------------------------------------
 void Camera::Render(SceneNode *rootNode, bool ifUseShader)
 {
 	if(m_projectionMatrixChanged){
@@ -111,6 +122,7 @@ void Camera::Render(SceneNode *rootNode, bool ifUseShader)
 		RenderNode(rootNode);
 	return;
 }
+//-----------------------------------------------------------------------
 void Camera::RenderNode(SceneNode *rootNode)
 {
 	if(rootNode!=NULL){
@@ -133,6 +145,7 @@ void Camera::RenderNode(SceneNode *rootNode)
 	}
 	return;	
 }
+//-----------------------------------------------------------------------
 void Camera::RenderNodeUseShader(SceneNode *rootNode)
 {
 	Matrix4f perspectViewMatrix;

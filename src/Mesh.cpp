@@ -8,6 +8,7 @@
 #include "KeyFrame.h"
 #include <assert.h>
 
+//-----------------------------------------------------------------------
 Mesh::Mesh(const std::string &fileName):
 	mp_scene(NULL),
 	mp_skeleton(NULL)

@@ -11,5 +11,8 @@ extern GLuint g_hasBonesLocation;
 extern GLuint g_PVMMatrixLocation;
 extern GLuint g_samplerLocation;
 extern GLuint g_boneTransformLocation[MAX_BONE_NUM];
-bool CreateShaders();	
+
+bool CreateShaders();
+void UseShaderToRender(void);
+void UseFixedPipeline(void);
 #endif

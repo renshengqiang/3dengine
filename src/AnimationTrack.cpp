@@ -2,19 +2,23 @@
 #include "Animation.h"
 #include <stdlib.h>
 
+//-----------------------------------------------------------------------
 AnimationTrack::AnimationTrack(Animation * parent)
 	:mp_parent(parent)
 {
 	GdArrayInit(&m_keyFrameArray,sizeof(KeyFrame *));
 }
+//-----------------------------------------------------------------------
 AnimationTrack::~AnimationTrack()
 {
 	RemoveAllKeyFrames();
 }
+//-----------------------------------------------------------------------
 unsigned short AnimationTrack::GetNumKeyFrames(void) const
 {
 	return GD_ARRAY_LENGTH(m_keyFrameArray);
 }
+//-----------------------------------------------------------------------
 KeyFrame *AnimationTrack::GetKeyFrame(unsigned short index)
 {
 	KeyFrame *kf;
@@ -23,6 +27,7 @@ KeyFrame *AnimationTrack::GetKeyFrame(unsigned short index)
 		return kf;
 	}else return NULL;
 }
+//-----------------------------------------------------------------------
 KeyFrame *AnimationTrack::CreateKeyFrame(float timePos)
 {
 	KeyFrame *kf = _CreateKeyFrameImpl(timePos);
@@ -37,6 +42,7 @@ KeyFrame *AnimationTrack::CreateKeyFrame(float timePos)
 	*temp2 = kf;
 	return kf;	
 }
+//-----------------------------------------------------------------------
 void AnimationTrack::RemoveKeyFrame(unsigned short index)
 {
 	KeyFrame *keyFrame = 0;
@@ -47,6 +53,7 @@ void AnimationTrack::RemoveKeyFrame(unsigned short index)
 	}
 	return;
 }
+//-----------------------------------------------------------------------
 void AnimationTrack::RemoveAllKeyFrames(void)
 {
 	KeyFrame *keyFrame = 0;
@@ -57,6 +64,7 @@ void AnimationTrack::RemoveAllKeyFrames(void)
 	GdArrayReset(&m_keyFrameArray);	
 	return;
 }
+//-----------------------------------------------------------------------
 /*
 	按两种情况进行分别处理:
 	1. Animation的时间 == 最后一个keyFrame的时间 + Animation的时间 != 最后一个keyFrame的时间，但是timePos在创建的keyFrame的时间值之间
@@ -100,7 +108,7 @@ float AnimationTrack::GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, Key
 	if(t1==t2) return timePos/t2;
 	else return (timePos-t1)/(t2-t1);
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------
 NodeAnimationTrack::NodeAnimationTrack(Animation *parent, const std::string &name)
 	:AnimationTrack(parent),
 	m_name(name),
@@ -108,6 +116,7 @@ NodeAnimationTrack::NodeAnimationTrack(Animation *parent, const std::string &nam
 	m_useShortestRotationPath(true)
 {
 }
+//-----------------------------------------------------------------------
 NodeAnimationTrack::NodeAnimationTrack(Animation *parent, Node *targetNode, const std::string &name)
 	:AnimationTrack(parent),
 	m_name(name),
@@ -115,32 +124,39 @@ NodeAnimationTrack::NodeAnimationTrack(Animation *parent, Node *targetNode, cons
 	m_useShortestRotationPath(true)
 {
 }
+//-----------------------------------------------------------------------
 Node *NodeAnimationTrack::GetAssociatedNode(void) const
 {
 	return mp_targetNode;
 }
+//-----------------------------------------------------------------------
 void NodeAnimationTrack::SetAssociatedNode(Node *node)
 {
 	mp_targetNode = node;
 	return;	
 }
+//-----------------------------------------------------------------------
 bool NodeAnimationTrack::GetUseShortestPath(void) const
 {
 	return m_useShortestRotationPath;
 }
+//-----------------------------------------------------------------------
 void NodeAnimationTrack::SetUseShortestPath(bool useShortestPath)
 {
 	m_useShortestRotationPath = useShortestPath;
 }
+//-----------------------------------------------------------------------
 TransformKeyFrame *NodeAnimationTrack::CreateNodeKeyFrame(float timePos)
 {
 	return static_cast<TransformKeyFrame*>(CreateKeyFrame(timePos));
 }
+//-----------------------------------------------------------------------
 KeyFrame *NodeAnimationTrack::_CreateKeyFrameImpl(float timePos)
 {
 	TransformKeyFrame *keyFrame = new TransformKeyFrame(this,timePos);
 	return keyFrame;
 }	
+//-----------------------------------------------------------------------
 /*
 	调用GetKeyFrameAtTime得到两个KeyFrame,并根据这两个keyFrame进行插值
 	注意 : 若调用GetKeyFrameAtTime得到的两个KeyFrame相同，则将KeyFrame1的各个变量设置为"单位" KeyFrame
@@ -172,11 +188,13 @@ void NodeAnimationTrack::GetInterpolatedKeyFrame(float timePos,KeyFrame * kf)
 	keyFrameRet->SetScale(k1Scale*(1-rate2) + k2->GetScale()*rate2);
 	return;
 }
+//-----------------------------------------------------------------------
 void NodeAnimationTrack::Apply(float timePos,float weight,float scale)
 {
 	ApplyToNode(mp_targetNode,timePos,weight,scale);
 	return;
 }
+//-----------------------------------------------------------------------
 void NodeAnimationTrack::ApplyToNode(Node *node, float timePos, float weight, float scl)
 {
 	TransformKeyFrame kf(0,timePos);
