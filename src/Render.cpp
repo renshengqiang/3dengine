@@ -629,19 +629,105 @@ void ClearBuffer(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
-//-----------------------------------------------------------------------
-void DrawOverlay(int fps)
+void DrawSkyBox(GLuint *textures, float horizon_angle, float verticle_angle)
 {
 	UseFixedPipeline();
 
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
+	glOrtho(-1,1,-1,1,0,2);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	gluLookAt(0,0,0,0,0,-1,0,1,0);
+
+	glRotatef(180, 0,0,1);
+	glRotatef(horizon_angle, 0,1,0);
+	glRotatef(verticle_angle,  1,0,0);
+	
+	glEnable(GL_TEXTURE_2D);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glActiveTexture(GL_TEXTURE0);
+	glDisable(GL_DEPTH_TEST);
+	
+	// front
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glBegin(GL_QUADS);
+		glTexCoord2f(0,0); glVertex3f(  1.0f,-1.0f,-1.0f);
+		glTexCoord2f(1,0); glVertex3f(-1.0f,-1.0f,-1.0f);
+		glTexCoord2f(1,1); glVertex3f(-1.0f,  1.0f,-1.0f);
+		glTexCoord2f(0,1); glVertex3f(  1.0f,  1.0f,-1.0f);
+	glEnd();
+
+	//left
+	glBindTexture(GL_TEXTURE_2D, textures[1]);
+	glBegin(GL_QUADS);
+		glTexCoord2f(0,0); glVertex3f(  1.0f,-1.0f,  1.0f);
+		glTexCoord2f(1,0); glVertex3f(  1.0f,-1.0f,-1.0f);	
+		glTexCoord2f(1,1); glVertex3f(  1.0f,  1.0f,-1.0f);
+		glTexCoord2f(0,1); glVertex3f(  1.0f,  1.0f,  1.0f);
+	glEnd();
+
+	// back
+	glBindTexture(GL_TEXTURE_2D, textures[2]);
+	glBegin(GL_QUADS);
+		glTexCoord2f(0,0); glVertex3f(-1.0f,-1.0f,  1.0f);
+		glTexCoord2f(1,0); glVertex3f(  1.0f,-1.0f,  1.0f);
+		glTexCoord2f(1,1); glVertex3f(  1.0f,  1.0f,  1.0f);
+		glTexCoord2f(0,1); glVertex3f(-1.0f,  1.0f,  1.0f);
+	glEnd();
+
+	//right
+	glBindTexture(GL_TEXTURE_2D, textures[3]);
+	glBegin(GL_QUADS);
+		glTexCoord2f(0,0); glVertex3f(-1.0f,-1.0f,-1.0f);
+		glTexCoord2f(1,0); glVertex3f(-1.0f,-1.0f,  1.0f);
+		glTexCoord2f(1,1); glVertex3f(-1.0f,  1.0f,  1.0f);
+		glTexCoord2f(0,1); glVertex3f(-1.0f,  1.0f,-1.0f);
+	glEnd();
+
+	//top
+	glBindTexture(GL_TEXTURE_2D, textures[4]);
+	glBegin(GL_QUADS);
+		glTexCoord2f(0,0); glVertex3f(-1.0f,  1.0f,  1.0f);
+		glTexCoord2f(1,0); glVertex3f(  1.0f,  1.0f,  1.0f);
+		glTexCoord2f(1,1); glVertex3f(  1.0f,  1.0f,-1.0f);		
+		glTexCoord2f(0,1); glVertex3f(-1.0f,  1.0f,-1.0f);
+	glEnd();
+
+	//bottom
+	glBindTexture(GL_TEXTURE_2D, textures[5]);
+	glBegin(GL_QUADS);
+		glTexCoord2f(0,0); glVertex3f(-1.0f,-1.0f,-1.0f);
+		glTexCoord2f(0,1); glVertex3f(-1.0f,-1.0f,  1.0f);
+		glTexCoord2f(1,1); glVertex3f(  1.0f,-1.0f,  1.0f);
+		glTexCoord2f(1,0); glVertex3f(  1.0f,-1.0f,-1.0f);
+	glEnd();
+
+	glEnable(GL_DEPTH_TEST);
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	UseShaderToRender();
+}
+//-----------------------------------------------------------------------
+void DrawOverlay(int fps)
+{
+	static int worst = 100 ,best = 0;
+	if(fps && fps<worst) worst = fps;
+	if(fps>best) best = fps;
+	
+	UseFixedPipeline();
+
+	//glMatrixMode(GL_PROJECTION);
+	//glPushMatrix();
+	//glLoadIdentity();
 	glClear(GL_DEPTH_BUFFER_BIT);
 	
 	glColor3f(0.0, 1.0, 0.0);
-	freetype::print(our_font, 0, 0, "FPS: %d", fps);
+	freetype::print(our_font, 0, 120, "F  P  S:%d\nWorst:%d\nBest  :%d\n", fps, worst, best);
 
-	glPopMatrix();
+	//glPopMatrix();
 	UseShaderToRender();
 }

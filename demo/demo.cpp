@@ -196,7 +196,7 @@ void DemoApp::HandleMouseMotion(SDL_MouseMotionEvent event)
 	if(mp_camera){
 		//printf("rel : (%d %d)\n", event.xrel, event.yrel);
 		//0.225 = 180/800 0.3 = 180/600
-		mp_camera->Yaw(-event.xrel*HANGLESTEP);
+		mp_camera->Yaw(-2*event.xrel*HANGLESTEP);
 		mp_camera->Pitch(-event.yrel*VANGLESTEP);
 	}
 }
