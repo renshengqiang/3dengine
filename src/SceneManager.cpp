@@ -205,8 +205,8 @@ char texture_name[][100] = {
 	"./skybox/sp3back.jpg",
 	"./skybox/sp3top.jpg",
 	"./skybox/sp3bot.jpg",
-	"./skybox/sp3right.jpg",
-	"./skybox/sp3left.jpg"	
+	"./skybox/sp3left.jpg",
+	"./skybox/sp3right.jpg"	
 };
 void SceneManager::StartRendering(bool m_ifUseShader)
 {
