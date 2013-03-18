@@ -199,13 +199,14 @@ void SceneManager::_ApplySceneAnimations(void)
 //------------------------------Rendering Operation-------------------------------
 #include "Texture.h"
 GLuint texture_obj[6];
+
 char texture_name[][100] = {
 	"./skybox/sp3front.jpg",
-	"./skybox/sp3left.jpg",
 	"./skybox/sp3back.jpg",
-	"./skybox/sp3right.jpg",
 	"./skybox/sp3top.jpg",
-	"./skybox/sp3bot.jpg"	
+	"./skybox/sp3bot.jpg",
+	"./skybox/sp3right.jpg",
+	"./skybox/sp3left.jpg"	
 };
 void SceneManager::StartRendering(bool m_ifUseShader)
 {
@@ -222,9 +223,9 @@ void SceneManager::StartRendering(bool m_ifUseShader)
 	** 1. 处理用户输入；
 	** 2. 渲染一帧
 	*/
-	while( 1 ) {
-		if(mp_eventListener) mp_eventListener->ProcessEvents(); 
+	while( 1 ) {		
 		if(RenderOneFrame() == false) break;
+		if(mp_eventListener) mp_eventListener->ProcessEvents(); 
 	}
 }
 //-----------------------------------------------------------------------
