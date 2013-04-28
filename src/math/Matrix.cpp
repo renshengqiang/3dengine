@@ -238,15 +238,21 @@ void Matrix4f::InitPersProjTransform(float FOV, float Width, float Height, float
     m[3][0] = 0.0f;                   m[3][1] = 0.0f;            m[3][2] = 1.0f;          m[3][3] = 0.0;
 }
 //-----------------------------------------------------------------------
-void Matrix4f::InitPersProjTransform(float FOV, float ar, float zNear, float zFar)
+void Matrix4f::InitPersProjTransform(float FOV, float AR, float zNear, float zFar)
 {
 	const float zRange	   = zNear - zFar;
 	const float tanHalfFOV = tanf(ToRadian(FOV / 2.0f));
 
-	m[0][0] = 1.0f/(tanHalfFOV * ar); m[0][1] = 0.0f;			 m[0][2] = 0.0f;		  m[0][3] = 0.0;
+	m[0][0] = 1.0f/(tanHalfFOV * AR); m[0][1] = 0.0f;			 m[0][2] = 0.0f;		  m[0][3] = 0.0;
 	m[1][0] = 0.0f; 				  m[1][1] = 1.0f/tanHalfFOV; m[1][2] = 0.0f;		  m[1][3] = 0.0;
 	m[2][0] = 0.0f; 				  m[2][1] = 0.0f;			 m[2][2] = (zNear + zFar)/zRange ; m[2][3] = 2.0f * zFar*zNear/zRange;
 	m[3][0] = 0.0f; 				  m[3][1] = 0.0f;			 m[3][2] = -1.0f;		  m[3][3] = 0.0;
+	/*不知道为什么就是不行
+	m[0][0] = -1.0f/(tanHalfFOV * ar);  m[0][1] = 0.0f;			 m[0][2] = 0.0f;		  m[0][3] = 0.0;
+	m[1][0] = 0.0f; 				  m[1][1] = -1.0f/tanHalfFOV; m[1][2] = 0.0f;		  m[1][3] = 0.0;
+	m[2][0] = 0.0f; 				  m[2][1] = 0.0f;			 m[2][2] = -(zNear + zFar)/zRange ; m[2][3] = -2.0f * zFar*zNear/zRange;
+	m[3][0] = 0.0f; 				  m[3][1] = 0.0f;			 m[3][2] = 1.0f;		  m[3][3] = 0.0;
+	*/
 }
 //-----------------------------------------------------------------------
 void Matrix4f::MakeTransform(const Vector3f& position, const Vector3f& scale, const Quaternion& orientation)

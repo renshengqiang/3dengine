@@ -1,9 +1,9 @@
 #include "SkeletonBone.h"
 
 SkeletonBone::SkeletonBone(const std::string &name, const Matrix4f &transform):
-	Node(name),
-	m_transformMatrix(transform)
+	Node(name)
 {
+	m_cachedTransform = transform;
 }
 //---------------------------------------------------------------------------------
 SkeletonBone::SkeletonBone(const std::string &name):
@@ -17,12 +17,12 @@ SkeletonBone::~SkeletonBone()
 //---------------------------------------------------------------------------------
 const Matrix4f& SkeletonBone::GetTransform(void)
 {
-	return m_transformMatrix;
+	return m_cachedTransform;
 }
 //---------------------------------------------------------------------------------
 void SkeletonBone::SetTransform(const Matrix4f& transform)
 {
-	m_transformMatrix = transform;
+	m_cachedTransform = transform;
 }
 //---------------------------------------------------------------------------------
 SkeletonBone *SkeletonBone::CreateChildBone(const std::string &name, const Matrix4f &transform)

@@ -16,9 +16,6 @@ public:
 	
 protected:
 	virtual SkeletonBone* CreateChildImpl(const std::string &name);
-	
-private:
-	Matrix4f m_transformMatrix;
 };
 
 #endif
