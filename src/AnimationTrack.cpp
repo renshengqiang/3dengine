@@ -160,32 +160,46 @@ KeyFrame *NodeAnimationTrack::_CreateKeyFrameImpl(float timePos)
 /*
 	调用GetKeyFrameAtTime得到两个KeyFrame,并根据这两个keyFrame进行插值
 	注意 : 若调用GetKeyFrameAtTime得到的两个KeyFrame相同，则将KeyFrame1的各个变量设置为"单位" KeyFrame
+	这是因为我们没有为所有的动画创建默认的第一帧，而OGRE是默认的添加了第一帧的
 */
-void NodeAnimationTrack::GetInterpolatedKeyFrame(float timePos,KeyFrame * kf)
+void NodeAnimationTrack::GetInterpolatedKeyFrame(float timePos, KeyFrame *kf)
 {
 	TransformKeyFrame *keyFrameRet = static_cast<TransformKeyFrame*>(kf);
 	KeyFrame *kBase1,*kBase2;
-	TransformKeyFrame *k1, *k2;
+	float rate2 = this->GetKeyFrameAtTime(timePos,&kBase1,&kBase2);
+	
+	TransformKeyFrame *k1 = static_cast<TransformKeyFrame*>(kBase1);
+	TransformKeyFrame *k2 = static_cast<TransformKeyFrame*>(kBase2);
+
 	Quaternion k1Quaternion(0,0,0,1);
 	Vector3f k1Translate(0,0,0);
 	Vector3f k1Scale(1,1,1);
-
-	float rate2 = this->GetKeyFrameAtTime(timePos,&kBase1,&kBase2);
-	k1 = static_cast<TransformKeyFrame*>(kBase1);
-	k2 = static_cast<TransformKeyFrame*>(kBase2);
-	/*
-		这里本来应该是按照用户设置的插值方式进行插值
-		目前我对spline没有什么认识，因此先采取最简单的方式进行插值，即线性插值
-		对旋转的插值，根据m_useShortestPath选择是按照直线的方式进行插值还是按照曲线的方式
-	*/
-	if(k1!=k2){
+	if(k1!=k2)
+	{
 		k1Quaternion = k1->GetRotation();
 		k1Translate = k1->GetTranslate();
 		k1Scale = k1->GetScale();
 	}
-	keyFrameRet->SetRotation(Quaternion::nlerp(rate2, k1Quaternion,k2->GetRotation(), m_useShortestRotationPath));
-	keyFrameRet->SetTranslate(k1Translate*(1-rate2) + k2->GetTranslate()*rate2);
-	keyFrameRet->SetScale(k1Scale*(1-rate2) + k2->GetScale()*rate2);
+
+	Animation::InterpolationMode im = mp_parent->GetInterpolationMode();
+	Animation::RotationInterpolationMode rim = mp_parent->GetRotationInterpolationMode();
+	switch(im){
+		case Animation::IM_LINEAR:
+			if(rim == Animation::RIM_LINEAR)
+			{
+				keyFrameRet->SetRotation(Quaternion::slerp(rate2, k1Quaternion, k2->GetRotation(), m_useShortestRotationPath));
+			}
+			else
+			{
+				keyFrameRet->SetRotation(Quaternion::nlerp(rate2, k1Quaternion, k2->GetRotation(), m_useShortestRotationPath));
+			}
+			keyFrameRet->SetTranslate(k1Translate*(1-rate2) + k2->GetTranslate()*rate2);
+			keyFrameRet->SetScale(k1Scale*(1-rate2) + k2->GetScale()*rate2);
+			break;
+		case Animation::IM_SPLINE:
+			//todo: add spline interpolation support
+			break;
+	}
 	return;
 }
 //-----------------------------------------------------------------------

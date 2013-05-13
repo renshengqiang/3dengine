@@ -74,8 +74,11 @@ struct Quaternion
 		void ToRotationMatrix (Matrix3f& kRot) const;
 		float Dot (const Quaternion& rkQ) const;
 		static Quaternion nlerp(float fT, const Quaternion& rkP,const Quaternion& rkQ, bool shortestPath);
+		static Quaternion slerp(float fT, const Quaternion& rkP,const Quaternion& rkQ, bool shortestPath);
 		Quaternion Inverse () const;
 	    Quaternion Conjugate();  
+	/// Cutoff for sine near zero
+        static const float msEpsilon;
 		
  };
 

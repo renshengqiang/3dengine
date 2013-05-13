@@ -46,6 +46,9 @@ class ENGINE_EXPORT Animation{
 		const std::string &GetName(void) const;
 		float GetLength(void) const;
 		void SetLength(float len);
+		InterpolationMode GetInterpolationMode(void);
+		void SetRotationInterpolationMode(RotationInterpolationMode rim);
+		RotationInterpolationMode GetRotationInterpolationMode(void);
 		/*
 			创建一个可驱动一个SceneNode的NodeAnimationTrack
 			@param handle是用来检索该track在Animation中的位置；

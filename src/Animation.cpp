@@ -3,7 +3,10 @@
 
 //-----------------------------------------------------------------------
 Animation::Animation(const std::string &name, float length)
-	:m_name(name),m_length(length)
+	:m_name(name),
+	m_length(length),
+	m_interpolationMode(IM_LINEAR),
+	m_rotateInterpolationMode(RIM_LINEAR)
 {
 	gd_list_init_head(&m_nodeTrackListHead);
 }
@@ -26,6 +29,20 @@ float Animation::GetLength(void) const
 void Animation::SetLength(float len)
 {
 	m_length = len;
+}
+//-----------------------------------------------------------------------
+Animation::InterpolationMode Animation::GetInterpolationMode(void)
+{
+	return m_interpolationMode;
+}
+void  Animation::SetRotationInterpolationMode(RotationInterpolationMode rim)
+{
+	m_rotateInterpolationMode = rim;
+}
+//-----------------------------------------------------------------------
+Animation::RotationInterpolationMode Animation::GetRotationInterpolationMode(void)
+{
+	return m_rotateInterpolationMode;
 }
 //-----------------------------------------------------------------------
 NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle, const std::string &name)

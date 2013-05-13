@@ -114,16 +114,16 @@ void DemoApp::CreateScene(void)
 	keyFrame->SetTranslate(Vector3f(-100, 0, -100));
 	keyFrame->SetRotation(Quaternion(Vector3f(0,1,0),-90));
 	keyFrame->SetScale(Vector3f(2,2,2));
-
+	
 	animation = mp_sceneManager->CreateAnimation("transAnim1-1", 9);
-	track = animation->CreateNodeTrack(1, node1);
+	track = animation->CreateNodeTrack(0, node1);
 	keyFrame = track->CreateNodeKeyFrame(3);
 	keyFrame->SetTranslate(Vector3f(-100, 0, -100));
 	keyFrame = track->CreateNodeKeyFrame(6);
 	keyFrame->SetTranslate(Vector3f(-100, 0, 0));
 	keyFrame = track->CreateNodeKeyFrame(9);
 	keyFrame->SetTranslate(Vector3f(0,0,0));
-
+	
 	//根据节点当前位置做节点动画，否则是根据节点创建时的位置进行动画
 	node1->SetInitialState();
 	mp_animationState1= mp_sceneManager->CreateAnimationState("transAnim1");
@@ -136,6 +136,7 @@ void DemoApp::CreateScene(void)
 	
 	//another scenenode animation
 	animation = mp_sceneManager->CreateAnimation("transAnim2",5.792);
+	animation->SetRotationInterpolationMode(Animation::RIM_SPHERICAL);
 	track = animation->CreateNodeTrack(0, node2);
 	keyFrame = track->CreateNodeKeyFrame(1.448);
 	keyFrame->SetTranslate(Vector3f(0, 0, 250));
@@ -154,7 +155,7 @@ void DemoApp::CreateScene(void)
 
 	mp_skeletonAnimationState = pEntity2->GetAnimationState("");
 	mp_skeletonAnimationState->SetEnabled(true);
-	mp_skeletonAnimationState->SetLoop(false);
+	mp_skeletonAnimationState->SetLoop(true);
 }
 void DemoApp::Run()
 {

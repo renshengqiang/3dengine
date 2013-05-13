@@ -7,7 +7,7 @@
 #include <string>
 
 /*
-	Animation类的作用:
+	AnimationTrack类的作用:
 	1. 对Track中的时间相关的操作进行封装；
 	2. 为了适应更多类型的和节点相关的动画，将此类抽象出来作为多种节点相关动画类的父类
 */
