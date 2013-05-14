@@ -52,6 +52,7 @@ NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle, const std:
 	}
 	NodeAnimationTrack *ret = new NodeAnimationTrack(this, name);
 	m_nodeTrackList.insert(std::make_pair(handle, ret));
+	TransformKeyFrame*pKeyFrame = ret->CreateNodeKeyFrame(0);//默认添加第一帧
 	return ret;
 }
 //-----------------------------------------------------------------------------

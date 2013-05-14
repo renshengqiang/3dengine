@@ -81,42 +81,46 @@ void AnimationTrack::RemoveAllKeyFrames(void)
 //-----------------------------------------------------------------------
 /*
 	按两种情况进行分别处理:
-	1. Animation的时间 == 最后一个keyFrame的时间 和 Animation的时间 != 最后一个keyFrame的时间，但是timePos在创建的keyFrame的时间值之间
-	2. Animation的时间 != 最后一个keyFrame的时间 且timePos超出了最后一个keyFrame的时间
-	策略:
-	1. 分两种:
-		1.1 返回的keyFrame1 == keyFrame2,表示在第一帧之前，返回timePos/keyFrame2的时间
-		1.2 返回的keyFrame1 != keyFrame2,表示正常的在两帧之间，返回(timePos - keyFrame1的时间)/(keyFram2的时间/keyFrame1的时间)
-	2.最后一帧作为keyFrame1,  第一帧作为keyFrame2,比例 = (timePos - 最后一帧的时间)/(动画长度 + 第一帧时间)
+	case 1. 当前的时间在最后一帧的后面，表示用户创建的动画的时间长度较长，但是关键帧没有完全赋值
+	case 2. 正常情况，在正常的两帧之间
+	第一种情况，需要在首尾两帧之间进行插值；比例系数为(timePos - lastFrame.time)/(animation.time - firstFrame.time)
+	一般而言，第一帧的时间是0，因此上述比例即为(timePos - lastFrame.time)/animation.time
 */
 float AnimationTrack::GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, KeyFrame **keyFrame2)
 {
 	float totalAnimationLength = mp_parent->GetLength();
 	float t1,t2;
 	unsigned i; 
+	
 	assert(totalAnimationLength > 0.0f && "Invalid animation length!");
 
-	if(timePos > totalAnimationLength && totalAnimationLength> 0.0f)
+	if(timePos >= totalAnimationLength)
 		timePos = fmodf(timePos, totalAnimationLength);
 	
 	for(i=0; i<m_keyFrameList.size(); ++i)
 	{
 		if(m_keyFrameList[i]->GetTime() > timePos) break;
 	}
-	//情况1, 一般不会遇到
-	if(i == m_keyFrameList.size())
+	if(i == m_keyFrameList.size())//case 1
 	{
-		*keyFrame1 = m_keyFrameList[m_keyFrameList.size() - 1];
-		*keyFrame2 = m_keyFrameList[0];
-		t1 = (*keyFrame1)->GetTime();
-		t2 = mp_parent->GetLength() + (*keyFrame2)->GetTime();
+		if(m_keyFrameList.size() > 0)
+		{
+			*keyFrame1 = m_keyFrameList[m_keyFrameList.size() - 1];
+			*keyFrame2 = m_keyFrameList[0];
+			t1 = (*keyFrame1)->GetTime();
+			t2 = mp_parent->GetLength() + (*keyFrame2)->GetTime();
+		}
+		else
+		{
+			*keyFrame1 = *keyFrame2 = NULL;
+			return 0;
+		}
 	}
-	//情况2
-	else
+	else//case 2
 	{
 		*keyFrame2 = m_keyFrameList[i];
 		t2=(*keyFrame2)->GetTime();
-		if(i!=0)--i;
+		if(i!=0)--i;//防止第一帧不存在的情况，一般不会出现
 		*keyFrame1 = m_keyFrameList[i];
 		t1=(*keyFrame1)->GetTime();
 	}
@@ -184,38 +188,47 @@ void NodeAnimationTrack::GetInterpolatedKeyFrame(float timePos, KeyFrame *kf)
 	TransformKeyFrame *keyFrameRet = static_cast<TransformKeyFrame*>(kf);
 	KeyFrame *kBase1,*kBase2;
 	float rate2 = this->GetKeyFrameAtTime(timePos,&kBase1,&kBase2);
-	
-	TransformKeyFrame *k1 = static_cast<TransformKeyFrame*>(kBase1);
-	TransformKeyFrame *k2 = static_cast<TransformKeyFrame*>(kBase2);
 
-	Quaternion k1Quaternion(0,0,0,1);
-	Vector3f k1Translate(0,0,0);
-	Vector3f k1Scale(1,1,1);
-	if(k1!=k2)
+	if(kBase1 && kBase2)
 	{
-		k1Quaternion = k1->GetRotation();
-		k1Translate = k1->GetTranslate();
-		k1Scale = k1->GetScale();
-	}
+		TransformKeyFrame *k1 = static_cast<TransformKeyFrame*>(kBase1);
+		TransformKeyFrame *k2 = static_cast<TransformKeyFrame*>(kBase2);
 
-	Animation::InterpolationMode im = mp_parent->GetInterpolationMode();
-	Animation::RotationInterpolationMode rim = mp_parent->GetRotationInterpolationMode();
-	switch(im){
-		case Animation::IM_LINEAR:
-			if(rim == Animation::RIM_LINEAR)
-			{
-				keyFrameRet->SetRotation(Quaternion::slerp(rate2, k1Quaternion, k2->GetRotation(), m_useShortestRotationPath));
-			}
-			else
-			{
-				keyFrameRet->SetRotation(Quaternion::nlerp(rate2, k1Quaternion, k2->GetRotation(), m_useShortestRotationPath));
-			}
-			keyFrameRet->SetTranslate(k1Translate*(1-rate2) + k2->GetTranslate()*rate2);
-			keyFrameRet->SetScale(k1Scale*(1-rate2) + k2->GetScale()*rate2);
-			break;
-		case Animation::IM_SPLINE:
-			//todo: add spline interpolation support
-			break;
+		Quaternion k1Quaternion(0,0,0,1);
+		Vector3f k1Translate(0,0,0);
+		Vector3f k1Scale(1,1,1);
+		if(k1!=k2)
+		{
+			k1Quaternion = k1->GetRotation();
+			k1Translate = k1->GetTranslate();
+			k1Scale = k1->GetScale();
+		}
+
+		Animation::InterpolationMode im = mp_parent->GetInterpolationMode();
+		Animation::RotationInterpolationMode rim = mp_parent->GetRotationInterpolationMode();
+		switch(im){
+			case Animation::IM_LINEAR:
+				if(rim == Animation::RIM_LINEAR)
+				{
+					keyFrameRet->SetRotation(Quaternion::slerp(rate2, k1Quaternion, k2->GetRotation(), m_useShortestRotationPath));
+				}
+				else
+				{
+					keyFrameRet->SetRotation(Quaternion::nlerp(rate2, k1Quaternion, k2->GetRotation(), m_useShortestRotationPath));
+				}
+				keyFrameRet->SetTranslate(k1Translate*(1-rate2) + k2->GetTranslate()*rate2);
+				keyFrameRet->SetScale(k1Scale*(1-rate2) + k2->GetScale()*rate2);
+				break;
+			case Animation::IM_SPLINE:
+				//todo: add spline interpolation support
+				break;
+		}
+	}
+	else
+	{
+		keyFrameRet->SetTranslate(Vector3f(0.0, 0.0, 0.0));
+		keyFrameRet->SetScale(Vector3f(1.0, 1.0, 1.0));
+		keyFrameRet->SetRotation(Quaternion(0.0, 0.0, 0.0, 1.0));
 	}
 	return;
 }
