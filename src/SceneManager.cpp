@@ -16,8 +16,6 @@ SceneManager::SceneManager(enum ManagerType type):
 {
 	//所有node都是在该node下面进行创建
 	mp_rootNode = new SceneNode("rootNode");
-	gd_list_init_head(&m_animationListHead);
-	
 	//create a singleton MeshManager
 	mMeshManager = new MeshManager();
 }
@@ -72,25 +70,15 @@ SceneNode * SceneManager::GetRootNode(void)
 //-----------------------------------animation------------------------------------
 bool SceneManager::HasAnimation(const  std::string & name) const
 {
-	GD_LIST *pos;
-	struct AnimationListNode *listNode;
-
-	gd_list_for_each(pos,&m_animationListHead){
-		listNode = (struct AnimationListNode *)GD_ENTRY(pos,struct AnimationListNode,siblingList);
-		if(name == listNode->animation->GetName())
-			return true;
-	}
-	return false;
+	return m_animationList.find(name) != m_animationList.end();
 }
 //-----------------------------------------------------------------------
 Animation *SceneManager::GetAnimation(const std::string &name) const
 {
-	GD_LIST *pos;
-	struct AnimationListNode *listNode;
-
-	gd_list_for_each(pos,&m_animationListHead){
-		listNode = (struct AnimationListNode *)GD_ENTRY(pos,struct AnimationListNode,siblingList);
-		if(name == listNode->animation->GetName()) return listNode->animation;
+	AnimationConstIterator iter = m_animationList.find(name);
+	if(iter != m_animationList.end())
+	{
+		return iter->second;
 	}
 	return NULL;
 }
@@ -102,41 +90,33 @@ Animation *SceneManager::CreateAnimation(const  std::string & name,float length)
 		return NULL;
 	}
 	Animation *animation = new Animation(name, length);
-	struct AnimationListNode *listNode = (struct AnimationListNode *)malloc(sizeof(struct AnimationListNode));
-	listNode->animation=animation;
-	gd_list_add(&(listNode->siblingList),&m_animationListHead);
+	m_animationList.insert(std::make_pair(name, animation));
 	return animation;
 }
 //-----------------------------------------------------------------------
 void SceneManager::DestroyAnimation(const  std::string & name)
 {
-	GD_LIST *pos;
-	struct AnimationListNode *listNode;
+	AnimationIterator iter = m_animationList.find(name);
 
-	gd_list_for_each(pos,&m_animationListHead){
-		listNode = (struct AnimationListNode *)GD_ENTRY(pos,struct AnimationListNode,siblingList);
-		if(name == listNode->animation->GetName()){
-			gd_list_del(pos);
-			delete listNode->animation;
-			free(listNode);
-			return;
-		}
+	if(iter != m_animationList.end())
+	{
+		delete iter->second;
+		m_animationList.erase(iter);
 	}
-	fprintf(stderr, "SceneManager::DestroyAnimation : Error Destroy Node Animation, animation named %s already exists\n", name.c_str());
-	return;
+	else
+	{
+		fprintf(stderr, "SceneManager::DestroyAnimation : Error Destroy Node Animation, animation named %s already exists\n", name.c_str());
+	}
+	return ;
 }
 //-----------------------------------------------------------------------
 void SceneManager::DestroyAllAnimations(void)
 {
-	GD_LIST *pos, *temp;
-	struct AnimationListNode *listNode;
-
-	gd_list_for_each_safe(pos,temp,&m_animationListHead){
-		listNode = (struct AnimationListNode*)GD_ENTRY(pos,struct AnimationListNode,siblingList);
-		gd_list_del(pos);
-		delete listNode->animation;
-		free(listNode);
+	for(AnimationIterator iter = m_animationList.begin(); iter != m_animationList.end(); ++iter)
+	{
+		delete iter->second;
 	}
+	m_animationList.clear();
 	return;
 }
 //-----------------------------------------------------------------------
@@ -162,7 +142,7 @@ AnimationState *SceneManager::CreateAnimationState(const  std::string & name)
 		return NULL;
 	}
 
-	return m_animationStateSet.CreateAnimationState(name,animation->GetLength());
+	return m_animationStateSet.CreateAnimationState(name, animation->GetLength());
 }
 //-----------------------------------------------------------------------
 void SceneManager::DestroyAnimationState(const  std::string & name)
@@ -179,15 +159,16 @@ void SceneManager::DestroyAllAnimationStates(void)
 //-----------------------------------------------------------------------
 void SceneManager::_ApplySceneAnimations(void)
 {
-	int n = m_animationStateSet.GetEnabledAnimationStateNum();
-	AnimationState *animationState;
-	Animation *animation;
-	for(int i=0; i<n; ++i){
-		animationState = m_animationStateSet.GetEnabledAnimationState(i);
-		animation = GetAnimation(animationState->GetName());
+	AnimationStateSet::EnabledAnimationStateIterator iter = m_animationStateSet._GetEnabledAnimationIteratorBegin();
+	
+	for(; iter!=m_animationStateSet._GetEnabledAnimationIeratorEnd(); ++iter){
+		AnimationState * animationState = *iter;
+		Animation *animation = GetAnimation(animationState->GetName());
 		//reset
-		for(int j=0; j<animation->GetNumNodeTracks();++j){
-			NodeAnimationTrack *track = animation->GetNodeTrack(j);
+		for(Animation::NodeTrackIterator iter1 = animation->GetNodeTrackBegin(); 
+			iter1 != animation->GetNodeTrackEnd(); ++iter1)
+		{
+			NodeAnimationTrack *track = iter1->second;
 			Node *node = track->GetAssociatedNode();
 			node->ResetToInitialState();
 		}
@@ -196,7 +177,7 @@ void SceneManager::_ApplySceneAnimations(void)
 	}
 	return;
 }
-//------------------------------Rendering Operation-------------------------------
+//------------------------------Rendering Operation----------------------------
 void SceneManager::StartRendering(bool m_ifUseShader)
 {
 	this->m_ifUseShader = m_ifUseShader;

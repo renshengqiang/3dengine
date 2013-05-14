@@ -8,7 +8,6 @@
 #include "AnimationState.h"
 #include "FrameListener.h"
 #include "EventListener.h"
-#include "struct.h"
 #include "MeshManager.h"
 #include <string>
 
@@ -18,10 +17,11 @@ public:
 	enum ManagerType{
 		MANAGER_GENERAL = 0x1
 	};
-	struct AnimationListNode{
-		Animation *animation;
-		GD_LIST siblingList;
-	};
+
+	typedef std::map<std::string, Animation*> AnimationList;
+	typedef AnimationList::iterator AnimationIterator;
+	typedef AnimationList::const_iterator AnimationConstIterator;
+	
 	SceneManager(enum ManagerType=MANAGER_GENERAL);
 	~SceneManager();
 	Camera* CreateCamera(Vector3f pos= Vector3f(0,0,0), Vector3f target=Vector3f(0,0,-1), Vector3f up=Vector3f(0,1,0));
@@ -118,7 +118,8 @@ private:
 	EventListener *mp_eventListener;
 	SceneNode	*mp_rootNode;
 	bool m_ifUseShader;
-	GD_LIST m_animationListHead;
+	
+	AnimationList m_animationList;
 	AnimationStateSet m_animationStateSet;
 
 	MeshManager *mMeshManager;

@@ -1,12 +1,10 @@
 #include "AnimationTrack.h"
 #include "Animation.h"
-#include <stdlib.h>
 
 //-----------------------------------------------------------------------
 AnimationTrack::AnimationTrack(Animation * parent)
 	:mp_parent(parent)
 {
-	GdArrayInit(&m_keyFrameArray,sizeof(KeyFrame *));
 }
 //-----------------------------------------------------------------------
 AnimationTrack::~AnimationTrack()
@@ -16,58 +14,74 @@ AnimationTrack::~AnimationTrack()
 //-----------------------------------------------------------------------
 unsigned short AnimationTrack::GetNumKeyFrames(void) const
 {
-	return GD_ARRAY_LENGTH(m_keyFrameArray);
+	return m_keyFrameList.size();
 }
 //-----------------------------------------------------------------------
 KeyFrame *AnimationTrack::GetKeyFrame(unsigned short index)
 {
-	KeyFrame *kf;
-	if(index<GD_ARRAY_LENGTH(m_keyFrameArray)){
-		kf = *(KeyFrame**)GdArrayGet(&m_keyFrameArray,index);
-		return kf;
-	}else return NULL;
+	if(index < m_keyFrameList.size())
+	{
+		return m_keyFrameList[index];
+	}
+	return NULL;
 }
 //-----------------------------------------------------------------------
 KeyFrame *AnimationTrack::CreateKeyFrame(float timePos)
 {
 	KeyFrame *kf = _CreateKeyFrameImpl(timePos);
-	KeyFrame *temp1,**temp2;
-	int i;
-
-	for(i=0;i < GD_ARRAY_LENGTH(m_keyFrameArray); ++i){
-		temp1 = *(KeyFrame **)GdArrayGet(&m_keyFrameArray,i);
-		if(timePos<temp1->GetTime()) break;
+	KeyFrameReverseIterator iter;
+	
+	//采用插入排序的方法
+	m_keyFrameList.push_back(kf);
+	for(iter = m_keyFrameList.rbegin() +1; iter != m_keyFrameList.rend(); ++iter)
+	{
+		if((*iter)->GetTime() > timePos)
+		{
+			*(iter - 1) = *iter;
+		}
+		else
+		{
+			--iter;//就是插在iter这个位置
+			break;
+		}
 	}
-	temp2 = (KeyFrame **)GdArrayAdd(&m_keyFrameArray,i,1);
-	*temp2 = kf;
+	if(iter == m_keyFrameList.rend())
+	{
+		m_keyFrameList[0] = kf;
+	}
+	else
+	{
+		*iter = kf;
+	}
 	return kf;	
 }
 //-----------------------------------------------------------------------
 void AnimationTrack::RemoveKeyFrame(unsigned short index)
 {
-	KeyFrame *keyFrame = 0;
-	if(index<GD_ARRAY_LENGTH(m_keyFrameArray)){
-		keyFrame = *(KeyFrame **)GdArrayGet(&m_keyFrameArray, index);
-		delete keyFrame;
-		GdArrayDelete(&m_keyFrameArray,index,1);
+	if(index < m_keyFrameList.size())
+	{
+		KeyFrameIterator iter = m_keyFrameList.begin();
+		while(index--) ++iter;
+		delete *iter;
+		m_keyFrameList.erase(iter);
 	}
 	return;
 }
 //-----------------------------------------------------------------------
 void AnimationTrack::RemoveAllKeyFrames(void)
 {
-	KeyFrame *keyFrame = 0;
-	for(int i=0;i<GD_ARRAY_LENGTH(m_keyFrameArray);++i){
-		keyFrame = *(KeyFrame **)GdArrayGet(&m_keyFrameArray,i);
-		if(keyFrame) delete keyFrame;
+	for(KeyFrameIterator iter = m_keyFrameList.begin(); iter != m_keyFrameList.end(); ++iter)
+	{
+		KeyFrame *pKeyFrame = *iter;
+		delete pKeyFrame;
 	}
-	GdArrayReset(&m_keyFrameArray);	
+	m_keyFrameList.clear();
 	return;
 }
 //-----------------------------------------------------------------------
 /*
 	按两种情况进行分别处理:
-	1. Animation的时间 == 最后一个keyFrame的时间 + Animation的时间 != 最后一个keyFrame的时间，但是timePos在创建的keyFrame的时间值之间
+	1. Animation的时间 == 最后一个keyFrame的时间 和 Animation的时间 != 最后一个keyFrame的时间，但是timePos在创建的keyFrame的时间值之间
 	2. Animation的时间 != 最后一个keyFrame的时间 且timePos超出了最后一个keyFrame的时间
 	策略:
 	1. 分两种:
@@ -78,85 +92,88 @@ void AnimationTrack::RemoveAllKeyFrames(void)
 float AnimationTrack::GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, KeyFrame **keyFrame2)
 {
 	float totalAnimationLength = mp_parent->GetLength();
-	KeyFrame *temp;
-	int i; 
 	float t1,t2;
+	unsigned i; 
 	assert(totalAnimationLength > 0.0f && "Invalid animation length!");
 
 	if(timePos > totalAnimationLength && totalAnimationLength> 0.0f)
 		timePos = fmodf(timePos, totalAnimationLength);
-	for(i=0;i<GD_ARRAY_LENGTH(m_keyFrameArray);++i){
-		temp = *(KeyFrame **)GdArrayGet(&m_keyFrameArray,i);
-		if(timePos<temp->GetTime()) break;
+	
+	for(i=0; i<m_keyFrameList.size(); ++i)
+	{
+		if(m_keyFrameList[i]->GetTime() > timePos) break;
 	}
-	//情况1
-	if(i==GD_ARRAY_LENGTH(m_keyFrameArray)){
-		*keyFrame1 = *(KeyFrame **)GdArrayGet(&m_keyFrameArray,GD_ARRAY_LENGTH(m_keyFrameArray)-1);
-		*keyFrame2 = *(KeyFrame **)GdArrayGet(&m_keyFrameArray,0);
+	//情况1, 一般不会遇到
+	if(i == m_keyFrameList.size())
+	{
+		*keyFrame1 = m_keyFrameList[m_keyFrameList.size() - 1];
+		*keyFrame2 = m_keyFrameList[0];
 		t1 = (*keyFrame1)->GetTime();
 		t2 = mp_parent->GetLength() + (*keyFrame2)->GetTime();
 	}
 	//情况2
 	else
 	{
-		*keyFrame2 = *(KeyFrame **)GdArrayGet(&m_keyFrameArray,i);
+		*keyFrame2 = m_keyFrameList[i];
 		t2=(*keyFrame2)->GetTime();
 		if(i!=0)--i;
-		*keyFrame1 = *(KeyFrame **)GdArrayGet(&m_keyFrameArray, i);
+		*keyFrame1 = m_keyFrameList[i];
 		t1=(*keyFrame1)->GetTime();
 	}
 	if(t1==t2) return timePos/t2;
 	else return (timePos-t1)/(t2-t1);
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 NodeAnimationTrack::NodeAnimationTrack(Animation *parent, const std::string &name)
 	:AnimationTrack(parent),
 	m_name(name),
 	mp_targetNode(0),
-	m_useShortestRotationPath(true)
+	m_useShortestRotationPath(false)
 {
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 NodeAnimationTrack::NodeAnimationTrack(Animation *parent, Node *targetNode, const std::string &name)
 	:AnimationTrack(parent),
 	m_name(name),
 	mp_targetNode(targetNode),
-	m_useShortestRotationPath(true)
+	m_useShortestRotationPath(false)
 {
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 Node *NodeAnimationTrack::GetAssociatedNode(void) const
 {
 	return mp_targetNode;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void NodeAnimationTrack::SetAssociatedNode(Node *node)
 {
 	mp_targetNode = node;
 	return;	
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 bool NodeAnimationTrack::GetUseShortestPath(void) const
 {
 	return m_useShortestRotationPath;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void NodeAnimationTrack::SetUseShortestPath(bool useShortestPath)
 {
 	m_useShortestRotationPath = useShortestPath;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 TransformKeyFrame *NodeAnimationTrack::CreateNodeKeyFrame(float timePos)
 {
 	return static_cast<TransformKeyFrame*>(CreateKeyFrame(timePos));
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 KeyFrame *NodeAnimationTrack::_CreateKeyFrameImpl(float timePos)
 {
 	TransformKeyFrame *keyFrame = new TransformKeyFrame(this,timePos);
 	return keyFrame;
 }	
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 /*
 	调用GetKeyFrameAtTime得到两个KeyFrame,并根据这两个keyFrame进行插值
 	注意 : 若调用GetKeyFrameAtTime得到的两个KeyFrame相同，则将KeyFrame1的各个变量设置为"单位" KeyFrame

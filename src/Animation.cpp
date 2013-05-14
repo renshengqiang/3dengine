@@ -1,36 +1,35 @@
 #include "Animation.h"
 #include <stdlib.h>
 
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 Animation::Animation(const std::string &name, float length)
 	:m_name(name),
 	m_length(length),
 	m_interpolationMode(IM_LINEAR),
 	m_rotateInterpolationMode(RIM_LINEAR)
 {
-	gd_list_init_head(&m_nodeTrackListHead);
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 Animation:: ~Animation()
 {
 	DestroyAllNodeTracks();
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 const std::string &Animation::GetName(void) const
 {
 	return m_name;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 float Animation::GetLength(void) const
 {
 	return m_length;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void Animation::SetLength(float len)
 {
 	m_length = len;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 Animation::InterpolationMode Animation::GetInterpolationMode(void)
 {
 	return m_interpolationMode;
@@ -39,129 +38,92 @@ void  Animation::SetRotationInterpolationMode(RotationInterpolationMode rim)
 {
 	m_rotateInterpolationMode = rim;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 Animation::RotationInterpolationMode Animation::GetRotationInterpolationMode(void)
 {
 	return m_rotateInterpolationMode;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle, const std::string &name)
 {
-	GD_LIST *pos,*addPos;
-	struct NodeTrackListNode *listNode;
-
-	//寻找插入的位置，链表中按照handle大小顺序排列，循环结束，addPos即为插入位置
-	addPos = &m_nodeTrackListHead;
-	gd_list_for_each(pos,&m_nodeTrackListHead){
-		listNode = GD_ENTRY(pos,struct NodeTrackListNode,siblingList);
-		if(listNode->handle == handle){
-			fprintf(stderr, "Animation::CreateNodeTrack : Node track with the specified hangle %d already exists\n",handle);
+	if(m_nodeTrackList.find(handle) != m_nodeTrackList.end()){
+		fprintf(stderr, "Animation::CreateNodeTrack : Node track with the specified hangle %d already exists\n",handle);
 			return NULL;
-		}
-		else if(listNode->handle < handle)
-			addPos = &(listNode->siblingList);
-		else
-			break;
-	}//gd_list_for_each
+	}
 	NodeAnimationTrack *ret = new NodeAnimationTrack(this, name);
-	listNode = (struct NodeTrackListNode *)malloc(sizeof(struct NodeTrackListNode));
-	listNode->handle = handle;
-	listNode->track = ret;
-	gd_list_insert(&(listNode->siblingList),addPos,addPos->next);
+	m_nodeTrackList.insert(std::make_pair(handle, ret));
 	return ret;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 NodeAnimationTrack *Animation::CreateNodeTrack(unsigned short handle, Node *node)
 {
 	NodeAnimationTrack *ret = CreateNodeTrack(handle, node->GetName());
 	ret->SetAssociatedNode(node);
 	return ret;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 unsigned short Animation::GetNumNodeTracks(void) const
 {
-	GD_LIST *pos;
-	int n = 0;
-
-	gd_list_for_each(pos,&m_nodeTrackListHead) ++n;
-	return n;
+	return m_nodeTrackList.size();
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 bool Animation::HasNodeTrack(unsigned short handle) const
 {
-	GD_LIST *pos;
-	struct NodeTrackListNode *listNode;
-
-	gd_list_for_each(pos, &m_nodeTrackListHead){
-		listNode = GD_ENTRY(pos,struct NodeTrackListNode,siblingList);
-		if(listNode->handle == handle) return true;
-	}
-	return false;
+	return m_nodeTrackList.find(handle)!=m_nodeTrackList.end();
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 NodeAnimationTrack *Animation::GetNodeTrack(unsigned short handle) const
 {
-	GD_LIST *pos;
-	struct NodeTrackListNode *listNode;
-
-	gd_list_for_each(pos, &m_nodeTrackListHead){
-		listNode = GD_ENTRY(pos,struct NodeTrackListNode,siblingList);
-		if(listNode->handle == handle) return listNode->track;
-	}
+	NodeTrackConstIterator iter = m_nodeTrackList.find(handle);
+	if(iter != m_nodeTrackList.end()) return iter->second;
 	return NULL;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+Animation::NodeTrackIterator Animation::GetNodeTrackBegin(void)
+{
+	return m_nodeTrackList.begin();
+}
+//-----------------------------------------------------------------------------
+const Animation::NodeTrackIterator Animation::GetNodeTrackEnd(void)
+{
+	return m_nodeTrackList.end();
+}
+//-----------------------------------------------------------------------------
 void Animation::DestoryNodeTrack(unsigned short handle)
 {
-	GD_LIST *pos;
-	struct NodeTrackListNode *listNode;
-
-	gd_list_for_each(pos,&m_nodeTrackListHead){
-		listNode = GD_ENTRY(pos,struct NodeTrackListNode,siblingList);
-		if(listNode->handle == handle){
-			gd_list_del(pos);
-			delete listNode->track;
-			free(listNode);
-			return;
-		}
+	NodeTrackIterator iter = m_nodeTrackList.find(handle);
+	if(iter != m_nodeTrackList.end())
+	{
+		delete iter->second;
+		m_nodeTrackList.erase(iter);
 	}
 	return;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void Animation::DestroyAllNodeTracks(void)
 {
-	GD_LIST *pos,*temp;
-	struct NodeTrackListNode *listNode;
-
-	gd_list_for_each_safe(pos,temp,&m_nodeTrackListHead){
-		listNode = GD_ENTRY(pos,struct NodeTrackListNode,siblingList);
-		gd_list_del(pos);
-		delete listNode->track;
-		free(listNode);
+	for(NodeTrackIterator iter = m_nodeTrackList.begin(); iter != m_nodeTrackList.end(); ++iter)
+	{
+		delete iter->second;
 	}
+	m_nodeTrackList.clear();
 	return;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void Animation::Apply(float timePos, float weight, float scale)
 {
-	GD_LIST *pos;
-	struct NodeTrackListNode *listNode;
-
-	gd_list_for_each(pos,&m_nodeTrackListHead){
-		listNode = GD_ENTRY(pos, struct NodeTrackListNode, siblingList);
-		listNode->track->Apply(timePos,weight,scale);
+	for(NodeTrackIterator iter = m_nodeTrackList.begin(); iter!= m_nodeTrackList.end(); ++iter)
+	{
+		iter->second->Apply(timePos, weight, scale);
 	}
 	return;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void Animation::ApplyToNode(Node *node, float timePos, float weight, float scale)
 {
-	GD_LIST *pos;
-	struct NodeTrackListNode *listNode;
-
-	gd_list_for_each(pos,&m_nodeTrackListHead){
-		listNode = GD_ENTRY(pos, struct NodeTrackListNode, siblingList);
-		listNode->track->ApplyToNode(node,timePos,weight,scale);
+	for(NodeTrackIterator iter = m_nodeTrackList.begin(); iter!= m_nodeTrackList.end(); ++iter)
+	{
+		iter->second->ApplyToNode(node, timePos, weight, scale);
 	}
 	return;
 }

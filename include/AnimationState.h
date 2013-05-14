@@ -1,8 +1,9 @@
 #ifndef _ANIMATION_STATE_H
 #define _ANIMATION_STATE_H
 #include "Export.h"
-#include "struct.h"
 #include <string>
+#include <map>
+#include <set>
 /*
 	AnimationState类的作用:对动画的状态进行管理
 	动画的状态:
@@ -38,11 +39,11 @@ class ENGINE_EXPORT AnimationState{
 };
 class ENGINE_EXPORT AnimationStateSet{
 	public:
-		struct AnimationStateListNode{
-			AnimationState *animationState;
-			GD_LIST siblingList;
-			GD_LIST enabledSiblingList;
-		};
+		typedef std::map<std::string, AnimationState*> AnimationStateList;
+		typedef AnimationStateList::iterator AnimationStateIterator;
+		typedef std::set<AnimationState*> EnabledAnimationStateList;
+		typedef EnabledAnimationStateList::iterator EnabledAnimationStateIterator;
+		
 		AnimationStateSet();
 		~AnimationStateSet();
 		AnimationState *CreateAnimationState(const std::string &name, float length, float timePos = 0.0, bool enabled = false);
@@ -51,14 +52,13 @@ class ENGINE_EXPORT AnimationStateSet{
 		void RemoveAnimationState(const std::string &name);
 		void RemoveAllAnimationStates(void);
 
-		bool HasEnabledAnimationState(void) const;
-		int GetEnabledAnimationStateNum(void) const;
-		AnimationState *GetEnabledAnimationState(int index);
+		EnabledAnimationStateIterator _GetEnabledAnimationIteratorBegin(void);
+		EnabledAnimationStateIterator _GetEnabledAnimationIeratorEnd(void);
 
 		void _NotifyAnimationStateEnabled(AnimationState *target, bool enabled);
 	protected:
-		GD_LIST m_animationStateHead;
-		GD_LIST m_enabledAnimationStateHead;
+		AnimationStateList m_animationStateList;
+		EnabledAnimationStateList m_enabledAnimationStateList;
 };
 
 #endif

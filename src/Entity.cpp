@@ -3,7 +3,8 @@
 #include "MeshManager.h"
 
 //--------------------------------------------------------------------------------------
-Entity::Entity(const std::string& name)
+Entity::Entity(const std::string& name):
+	m_numBoneMatrices(0)
 {
 	Skeleton *pSkeleton;
 	m_mesh = MeshManager::GetSingleton().CreateMesh(name);
@@ -36,12 +37,11 @@ void Entity::_updateAnimation(void)
 	for(unsigned i = 0; i<m_numBoneMatrices; ++i){
 		m_boneOffsetMatrixVec[i].InitIdentity();
 	}
-	int n = m_animationStateSet.GetEnabledAnimationStateNum();
-	AnimationState *animationState;
-	SkeletonAnimation *animation;
-	for(int i=0; i<n; ++i){
-		animationState = m_animationStateSet.GetEnabledAnimationState(i);
-		animation = m_animationMap.find(animationState->GetName())->second;
+	AnimationStateSet::EnabledAnimationStateIterator iter = m_animationStateSet._GetEnabledAnimationIteratorBegin();
+	for(;iter!=m_animationStateSet._GetEnabledAnimationIeratorEnd(); ++iter)
+	{
+		AnimationState *animationState = *iter;
+		SkeletonAnimation *animation = m_animationMap.find(animationState->GetName())->second;
 		//use animation
 		animation->ApplyToEntity(animationState->GetTimePosition(), m_boneOffsetMatrixVec);
 	}

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 AnimationState::AnimationState(const  std::string & name,float length, AnimationStateSet *parent, float timePos, bool enabled)
 	:mp_parent(parent),
 	m_name(name),
@@ -12,21 +12,21 @@ AnimationState::AnimationState(const  std::string & name,float length, Animation
 	m_enabled(enabled)
 {
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 AnimationState::~AnimationState()
 {
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 const std::string &AnimationState::GetName(void) const
 {
 	return m_name;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 float AnimationState::GetTimePosition(void) const
 {
 	return m_timePos;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void AnimationState::SetTimePosition(float timePos)
 {
 	if (timePos != m_timePos)
@@ -50,35 +50,35 @@ void AnimationState::SetTimePosition(float timePos)
     }
 	return;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 float AnimationState::GetLength() const
 {
 	return m_length;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void AnimationState::SetLength(float length)
 {
 	m_length = length;
 	return;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void AnimationState::AddTime(float offset)
 {
 	if(m_enabled)
 		SetTimePosition(m_timePos + offset);
 	return;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 bool AnimationState::HasEnded(void) const
 {
 	return (m_timePos>= m_length && !m_loop);
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 bool AnimationState::GetEnabled(void) const
 {
 	return m_enabled;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void AnimationState::SetEnabled(bool enabled)
 {
 	if(mp_parent)
@@ -86,18 +86,18 @@ void AnimationState::SetEnabled(bool enabled)
 	m_enabled = enabled;
 	return;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 AnimationStateSet::AnimationStateSet()
 {
-	gd_list_init_head(&m_animationStateHead);
-	gd_list_init_head(&m_enabledAnimationStateHead);
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 AnimationStateSet::~AnimationStateSet()
 {
 	RemoveAllAnimationStates();
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 AnimationState *AnimationStateSet::CreateAnimationState(const std::string &name, float length, float timePos, bool enabled)
 {
 	if(HasAnimationState(name)){
@@ -105,124 +105,91 @@ AnimationState *AnimationStateSet::CreateAnimationState(const std::string &name,
 		return NULL;
 	}
 	AnimationState *newState = new AnimationState(name, length, this, timePos, enabled);
-	struct AnimationStateListNode *listNode = (struct AnimationStateListNode *)malloc(sizeof(struct AnimationStateListNode));
-	listNode->animationState = newState;
-	gd_list_add_tail(&(listNode->siblingList),&m_animationStateHead);
-	if(enabled){
-		gd_list_add_tail(&(listNode->siblingList),&m_enabledAnimationStateHead);
-	}
-	else{
-		gd_list_init_node(&(listNode->enabledSiblingList));
-	}
+	m_animationStateList.insert(std::make_pair(name, newState));
+	if(enabled) m_enabledAnimationStateList.insert(newState);
 	return newState;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 AnimationState *AnimationStateSet::GetAnimationState(const std::string &name)
 {
-	GD_LIST *pos;
-	struct AnimationStateListNode *listNode;
-
-	gd_list_for_each(pos,&m_animationStateHead){
-		listNode = (struct AnimationStateListNode *)GD_ENTRY(pos,struct AnimationStateListNode,siblingList);
-		if(name == listNode->animationState->GetName())
-			return listNode->animationState;
+	AnimationStateIterator iter = m_animationStateList.find(name);
+	if(iter != m_animationStateList.end())
+	{
+		return iter->second;
 	}
-	return NULL;
+	else
+	{
+		return NULL;
+	}
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 bool AnimationStateSet::HasAnimationState(const std::string &name) const
 {
-	GD_LIST *pos;
-	struct AnimationStateListNode *listNode;
-
-	gd_list_for_each(pos,&m_animationStateHead){
-		listNode = (struct AnimationStateListNode *)GD_ENTRY(pos,struct AnimationStateListNode,siblingList);
-		if(name == listNode->animationState->GetName()) return true;
-	}
-	return false;
+	return m_animationStateList.count(name) > 0;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void AnimationStateSet::RemoveAnimationState(const std::string &name)
 {
-	GD_LIST *pos;
-	struct AnimationStateListNode *listNode;
-
-	gd_list_for_each(pos, &m_animationStateHead){
-		listNode = (struct AnimationStateListNode *)GD_ENTRY(pos,struct AnimationStateListNode,siblingList);
-		if(name == listNode->animationState->GetName()){
-			gd_list_del(&(listNode->siblingList));
-			if(listNode->animationState->GetEnabled())
-				gd_list_del(&(listNode->enabledSiblingList));
-			delete listNode->animationState;
-			free(listNode);
-			break;
-		}//if
-	}//gd_list_for_each
+	AnimationStateIterator iter = m_animationStateList.find(name);
+	if(iter != m_animationStateList.end())
+	{
+		AnimationState *pState = iter->second;
+		if(pState->GetEnabled())
+		{
+			EnabledAnimationStateIterator iter1 = m_enabledAnimationStateList.find(pState);
+			if(iter1 != m_enabledAnimationStateList.end())
+			{
+				m_enabledAnimationStateList.erase(iter1);
+			}
+		}
+		delete pState;
+		m_animationStateList.erase(iter);
+	}
 	return;
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void AnimationStateSet::RemoveAllAnimationStates(void)
 {
-	GD_LIST *pos, *temp;
-	struct AnimationStateListNode *listNode;
-
-	gd_list_for_each_safe(pos,temp,&m_animationStateHead){
-		listNode = (struct AnimationStateListNode *)GD_ENTRY(pos,struct AnimationStateListNode,siblingList);
-		gd_list_del(&(listNode->siblingList));
-		if(listNode->animationState->GetEnabled())
-			gd_list_del(&(listNode->enabledSiblingList));
-		delete listNode->animationState;
-		free(listNode);
+	for(AnimationStateIterator iter = m_animationStateList.begin();
+		iter != m_animationStateList.end(); ++iter)
+	{
+		delete iter->second;
 	}
+	m_animationStateList.clear();
+	m_enabledAnimationStateList.clear();
 	return;
 }
-//-----------------------------------------------------------------------
-bool AnimationStateSet::HasEnabledAnimationState(void) const
+//-----------------------------------------------------------------------------
+AnimationStateSet::EnabledAnimationStateIterator 
+	AnimationStateSet::_GetEnabledAnimationIteratorBegin(void)
 {
-	return gd_list_empty(&m_enabledAnimationStateHead);
+	return m_enabledAnimationStateList.begin();
 }
-//-----------------------------------------------------------------------
-int AnimationStateSet::GetEnabledAnimationStateNum(void) const
+//-----------------------------------------------------------------------------
+AnimationStateSet::EnabledAnimationStateIterator 
+	AnimationStateSet::_GetEnabledAnimationIeratorEnd(void)
 {
-	GD_LIST *pos;
-	int n = 0;
-
-	gd_list_for_each(pos,&m_enabledAnimationStateHead)  ++n;
-	return n;
+	return m_enabledAnimationStateList.end();
 }
-//-----------------------------------------------------------------------
-AnimationState *AnimationStateSet::GetEnabledAnimationState(int index)
-{
-	GD_LIST *pos;
-	struct AnimationStateListNode *listNode;
-	int i=0;
-
-	gd_list_for_each(pos, &m_enabledAnimationStateHead){
-		if(i==index){
-			listNode = (struct AnimationStateListNode *)GD_ENTRY(pos,struct AnimationStateListNode,enabledSiblingList);
-			return listNode->animationState;
-		}
-		++i;
-	}
-	fprintf(stderr, "AnimationState::GetEnabledAnimationState : index out of bound\n");
-	return NULL;
-}
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void AnimationStateSet::_NotifyAnimationStateEnabled(AnimationState *target, bool enabled)
 {
-	GD_LIST *pos;
-	struct AnimationStateListNode *listNode;
-
-	gd_list_for_each(pos, &m_animationStateHead){
-		listNode = (struct AnimationStateListNode *)GD_ENTRY(pos,struct AnimationStateListNode,siblingList);
-		if(target == listNode->animationState){
-			if(enabled != listNode->animationState->GetEnabled()){
-				if(enabled)
-					gd_list_add_tail(&(listNode->enabledSiblingList),&m_enabledAnimationStateHead);
-				else
-					gd_list_del(&(listNode->enabledSiblingList));
-			}//if(enabled
-		}//if(target
+	if(target==NULL) return;
+	
+	if(target->GetEnabled() != enabled)
+	{
+		if(enabled)
+		{
+			m_enabledAnimationStateList.insert(target);
+		}
+		else
+		{
+			EnabledAnimationStateIterator iter = m_enabledAnimationStateList.find(target);
+			if(iter != m_enabledAnimationStateList.end())
+			{
+				m_enabledAnimationStateList.erase(iter);
+			}
+		}
 	}
 	return;
 }

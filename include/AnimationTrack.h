@@ -3,9 +3,8 @@
 #include "Export.h"
 #include "KeyFrame.h"
 #include "Node.h"
-#include "struct.h"
 #include <string>
-
+#include <vector>
 /*
 	AnimationTrack类的作用:
 	1. 对Track中的时间相关的操作进行封装；
@@ -14,6 +13,10 @@
 class Animation;
 class ENGINE_EXPORT AnimationTrack{
 public:
+	typedef std::vector<KeyFrame*> KeyFrameList;
+	typedef KeyFrameList::iterator KeyFrameIterator;
+	typedef KeyFrameList::reverse_iterator KeyFrameReverseIterator;
+	
 	AnimationTrack(Animation *parent);
 	~AnimationTrack();
 	virtual unsigned short GetNumKeyFrames(void) const;
@@ -43,11 +46,11 @@ public:
 	*/
 	virtual void GetInterpolatedKeyFrame(float timePos, KeyFrame *kf) = 0;
 	virtual void Apply(float timePos, float weight = 1.0, float scale = 1.0) = 0;
-	Animation *GetParent() const { return mp_parent;};
+	Animation *GetParent() const { return mp_parent;}
 protected:
-	GD_ARRAY m_keyFrameArray;
 	Animation *mp_parent;
-
+	KeyFrameList m_keyFrameList;
+	
 	virtual KeyFrame *_CreateKeyFrameImpl(float timePos) = 0;
 };
 /*

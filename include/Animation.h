@@ -3,8 +3,8 @@
 #include "Export.h"
 #include "AnimationTrack.h"
 #include "Node.h"
-#include "struct.h"
 #include <string>
+#include <map>
 
 /*
 	Animation类存在的作用:对多个Animation Track进行统一管理
@@ -36,11 +36,10 @@ class ENGINE_EXPORT Animation{
 			*/
 			RIM_SPHERICAL
 		};
-		struct NodeTrackListNode{
-			unsigned short handle;
-			NodeAnimationTrack *track;
-			GD_LIST siblingList;
-		};
+		typedef std::map<unsigned short, NodeAnimationTrack*> NodeTrackList;
+		typedef NodeTrackList::iterator NodeTrackIterator;
+		typedef NodeTrackList::const_iterator NodeTrackConstIterator;
+		
 		Animation(const std::string &name, float length);
 		virtual ~Animation();
 		const std::string &GetName(void) const;
@@ -49,6 +48,12 @@ class ENGINE_EXPORT Animation{
 		InterpolationMode GetInterpolationMode(void);
 		void SetRotationInterpolationMode(RotationInterpolationMode rim);
 		RotationInterpolationMode GetRotationInterpolationMode(void);
+
+		unsigned short GetNumNodeTracks(void) const;
+		bool HasNodeTrack(unsigned short handle) const;
+		NodeAnimationTrack *GetNodeTrack(unsigned short handle) const;
+		NodeTrackIterator GetNodeTrackBegin(void);
+		const NodeTrackIterator GetNodeTrackEnd(void);
 		/*
 			创建一个可驱动一个SceneNode的NodeAnimationTrack
 			@param handle是用来检索该track在Animation中的位置；
@@ -56,19 +61,17 @@ class ENGINE_EXPORT Animation{
 		*/
 		NodeAnimationTrack *CreateNodeTrack(unsigned short handle, const std::string &name="");
 		NodeAnimationTrack *CreateNodeTrack(unsigned short handle, Node *node);
-		unsigned short GetNumNodeTracks(void) const;
-		bool HasNodeTrack(unsigned short handle) const;
-		NodeAnimationTrack *GetNodeTrack(unsigned short handle) const;
 		void DestoryNodeTrack(unsigned short handle);
 		void DestroyAllNodeTracks(void);
 		void Apply(float timePos, float weight = 1.0, float scale=1.0);
 		void ApplyToNode(Node *node, float timePos, float weight = 1.0, float scale = 1.0);
 	private:
-		GD_LIST m_nodeTrackListHead;
 		std::string m_name;
 		float m_length;
 		enum InterpolationMode m_interpolationMode;
 		enum RotationInterpolationMode m_rotateInterpolationMode;
+
+		NodeTrackList m_nodeTrackList;
 };
 
 #endif
