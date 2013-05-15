@@ -27,6 +27,16 @@ Quaternion::Quaternion(const Vector3f &axis, float angle)
 	z = fSin*axis.z;
 }
 //-----------------------------------------------------------------------
+bool Quaternion::operator==(const Quaternion &r) const
+{
+	return x==r.x && y==r.y && z==r.z && w==r.w;
+}
+//-----------------------------------------------------------------------
+bool Quaternion::operator!=(const Quaternion &r) const
+{
+	return !operator==(r);
+}
+//-----------------------------------------------------------------------
 Quaternion& Quaternion::operator+=(const Quaternion &r)
 {
 	w += r.w;
@@ -123,6 +133,65 @@ Quaternion Quaternion::Inverse () const
   }
 }
 //-----------------------------------------------------------------------
+Quaternion Quaternion::Exp () const
+{
+	 // If q = A*(x*i+y*j+z*k) where (x,y,z) is unit length, then
+        // exp(q) = cos(A)+sin(A)*(x*i+y*j+z*k).  If sin(A) is near zero,
+        // use exp(q) = cos(A)+A*(x*i+y*j+z*k) since A/sin(A) has limit 1.
+
+        float fAngle ( sqrtf(x*x+y*y+z*z) );
+        float fSin = sinf(fAngle);
+
+        Quaternion kResult;
+        kResult.w = cosf(fAngle);
+
+        if (fabs(fSin) >= msEpsilon )
+        {
+            float fCoeff = fSin/(fAngle);
+            kResult.x = fCoeff*x;
+            kResult.y = fCoeff*y;
+            kResult.z = fCoeff*z;
+        }
+        else
+        {
+            kResult.x = x;
+            kResult.y = y;
+            kResult.z = z;
+        }
+
+        return kResult;
+}
+//-----------------------------------------------------------------------
+Quaternion Quaternion::Log () const
+{
+	// If q = cos(A)+sin(A)*(x*i+y*j+z*k) where (x,y,z) is unit length, then
+	// log(q) = A*(x*i+y*j+z*k).  If sin(A) is near zero, use log(q) =
+	// sin(A)*(x*i+y*j+z*k) since sin(A)/A has limit 1.
+
+	Quaternion kResult;
+	kResult.w = 0.0;
+
+	if ( fabs(w) < 1.0 )
+	{
+	    float fAngle ( acosf(w) );
+	    float fSin = sinf(fAngle);
+	    if ( fabs(fSin) >= msEpsilon )
+	    {
+	        float fCoeff = fAngle/fSin;
+	        kResult.x = fCoeff*x;
+	        kResult.y = fCoeff*y;
+	        kResult.z = fCoeff*z;
+	        return kResult;
+	    }
+	}
+
+	kResult.x = x;
+	kResult.y = y;
+	kResult.z = z;
+
+	return kResult;
+}
+//-----------------------------------------------------------------------
 float Quaternion::Dot (const Quaternion& rkQ) const
 {
    return w*rkQ.w+x*rkQ.x+y*rkQ.y+z*rkQ.z;
@@ -201,6 +270,15 @@ Quaternion Quaternion::slerp (float fT, const Quaternion& rkP,
 		  return t;
 	  }
   }
+Quaternion Quaternion::squad (float fT,
+	const Quaternion& rkP, const Quaternion& rkA,
+	const Quaternion& rkB, const Quaternion& rkQ, bool shortestPath)
+{
+	float fSlerpT = 2.0f*fT*(1.0f-fT);
+	Quaternion kSlerpP = slerp(fT, rkP, rkQ, shortestPath);
+	Quaternion kSlerpQ = slerp(fT, rkA, rkB);
+	return slerp(fSlerpT, kSlerpP ,kSlerpQ);
+}
 
 //-----------------------------------------------------------------------
 void Quaternion::ToRotationMatrix (Matrix3f& kRot) const

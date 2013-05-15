@@ -108,6 +108,8 @@ void DemoApp::CreateScene(void)
 
 	//create one scenenode animation(×óºó»Ø)
 	Animation *animation = mp_sceneManager->CreateAnimation("transAnim1-1",9);
+	animation->SetInterpolationMode(Animation::IM_SPLINE);
+	animation->SetRotationInterpolationMode(Animation::RIM_SPHERICAL);
 	NodeAnimationTrack *track = animation->CreateNodeTrack(0, node1);
 	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(3);
 	keyFrame->SetTranslate(Vector3f(-100, 0,0));
@@ -142,7 +144,6 @@ void DemoApp::CreateScene(void)
 	
 	//another scenenode animation
 	animation = mp_sceneManager->CreateAnimation("transAnim2",5.792);
-	animation->SetRotationInterpolationMode(Animation::RIM_SPHERICAL);
 	track = animation->CreateNodeTrack(0, node2);
 	keyFrame = track->CreateNodeKeyFrame(1.448);
 	keyFrame->SetTranslate(Vector3f(0, 0, 250));

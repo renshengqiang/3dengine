@@ -53,6 +53,7 @@ KeyFrame *AnimationTrack::CreateKeyFrame(float timePos)
 	{
 		*iter = kf;
 	}
+	_KeyFrameDataChanged();
 	return kf;	
 }
 //-----------------------------------------------------------------------
@@ -65,6 +66,7 @@ void AnimationTrack::RemoveKeyFrame(unsigned short index)
 		delete *iter;
 		m_keyFrameList.erase(iter);
 	}
+	_KeyFrameDataChanged();
 	return;
 }
 //-----------------------------------------------------------------------
@@ -76,6 +78,7 @@ void AnimationTrack::RemoveAllKeyFrames(void)
 		delete pKeyFrame;
 	}
 	m_keyFrameList.clear();
+	_KeyFrameDataChanged();
 	return;
 }
 //-----------------------------------------------------------------------
@@ -86,7 +89,7 @@ void AnimationTrack::RemoveAllKeyFrames(void)
 	第一种情况，需要在首尾两帧之间进行插值；比例系数为(timePos - lastFrame.time)/(animation.time - firstFrame.time)
 	一般而言，第一帧的时间是0，因此上述比例即为(timePos - lastFrame.time)/animation.time
 */
-float AnimationTrack::GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, KeyFrame **keyFrame2)
+float AnimationTrack::GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, KeyFrame **keyFrame2, int *index)
 {
 	float totalAnimationLength = mp_parent->GetLength();
 	float t1,t2;
@@ -109,10 +112,12 @@ float AnimationTrack::GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, Key
 			*keyFrame2 = m_keyFrameList[0];
 			t1 = (*keyFrame1)->GetTime();
 			t2 = mp_parent->GetLength() + (*keyFrame2)->GetTime();
+			*index = m_keyFrameList.size() - 1;
 		}
 		else
 		{
 			*keyFrame1 = *keyFrame2 = NULL;
+			*index = 0;
 			return 0;
 		}
 	}
@@ -123,6 +128,7 @@ float AnimationTrack::GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, Key
 		if(i!=0)--i;//防止第一帧不存在的情况，一般不会出现
 		*keyFrame1 = m_keyFrameList[i];
 		t1=(*keyFrame1)->GetTime();
+		*index = i;
 	}
 	if(t1==t2) return timePos/t2;
 	else return (timePos-t1)/(t2-t1);
@@ -134,7 +140,9 @@ NodeAnimationTrack::NodeAnimationTrack(Animation *parent, const std::string &nam
 	:AnimationTrack(parent),
 	m_name(name),
 	mp_targetNode(0),
-	m_useShortestRotationPath(false)
+	mp_splines(0),
+	m_useShortestRotationPath(false),
+	m_splineBuildNeeded(false)
 {
 }
 //-----------------------------------------------------------------------------
@@ -142,7 +150,13 @@ NodeAnimationTrack::NodeAnimationTrack(Animation *parent, Node *targetNode, cons
 	:AnimationTrack(parent),
 	m_name(name),
 	mp_targetNode(targetNode),
-	m_useShortestRotationPath(false)
+	mp_splines(0),
+	m_useShortestRotationPath(false),
+	m_splineBuildNeeded(false)
+{
+}
+//-----------------------------------------------------------------------------
+NodeAnimationTrack::~NodeAnimationTrack()
 {
 }
 //-----------------------------------------------------------------------------
@@ -178,6 +192,11 @@ KeyFrame *NodeAnimationTrack::_CreateKeyFrameImpl(float timePos)
 	return keyFrame;
 }	
 //-----------------------------------------------------------------------------
+void NodeAnimationTrack::_KeyFrameDataChanged(void) const
+{
+	m_splineBuildNeeded = true;
+}
+//-----------------------------------------------------------------------------
 /*
 	调用GetKeyFrameAtTime得到两个KeyFrame,并根据这两个keyFrame进行插值
 	注意 : 若调用GetKeyFrameAtTime得到的两个KeyFrame相同，则将KeyFrame1的各个变量设置为"单位" KeyFrame
@@ -187,7 +206,8 @@ void NodeAnimationTrack::GetInterpolatedKeyFrame(float timePos, KeyFrame *kf)
 {
 	TransformKeyFrame *keyFrameRet = static_cast<TransformKeyFrame*>(kf);
 	KeyFrame *kBase1,*kBase2;
-	float rate2 = this->GetKeyFrameAtTime(timePos,&kBase1,&kBase2);
+	int index;
+	float rate2 = this->GetKeyFrameAtTime(timePos,&kBase1,&kBase2, &index);
 
 	if(kBase1 && kBase2)
 	{
@@ -210,17 +230,29 @@ void NodeAnimationTrack::GetInterpolatedKeyFrame(float timePos, KeyFrame *kf)
 			case Animation::IM_LINEAR:
 				if(rim == Animation::RIM_LINEAR)
 				{
-					keyFrameRet->SetRotation(Quaternion::slerp(rate2, k1Quaternion, k2->GetRotation(), m_useShortestRotationPath));
+					keyFrameRet->SetRotation(Quaternion::nlerp(rate2, k1Quaternion, k2->GetRotation(), m_useShortestRotationPath));
 				}
 				else
 				{
-					keyFrameRet->SetRotation(Quaternion::nlerp(rate2, k1Quaternion, k2->GetRotation(), m_useShortestRotationPath));
+					keyFrameRet->SetRotation(Quaternion::slerp(rate2, k1Quaternion, k2->GetRotation(), m_useShortestRotationPath));
 				}
 				keyFrameRet->SetTranslate(k1Translate*(1-rate2) + k2->GetTranslate()*rate2);
 				keyFrameRet->SetScale(k1Scale*(1-rate2) + k2->GetScale()*rate2);
 				break;
 			case Animation::IM_SPLINE:
-				//todo: add spline interpolation support
+				if(m_splineBuildNeeded)
+				{
+					_BuildInterpolationSplines();
+				}
+				// Rotation, take mUseShortestRotationPath into account
+				keyFrameRet->SetRotation( mp_splines->rotationSpline.interpolate(index, rate2,
+				m_useShortestRotationPath));
+
+				// Translation
+				keyFrameRet->SetTranslate( mp_splines->positionSpline.interpolate(index, rate2) );
+
+				// Scale
+				keyFrameRet->SetScale( mp_splines->scaleSpline.interpolate(index, rate2) );
 				break;
 		}
 	}
@@ -247,8 +279,19 @@ void NodeAnimationTrack::ApplyToNode(Node *node, float timePos, float weight, fl
 
 	Vector3f translate = kf.GetTranslate()*(weight*scl);
 	node->Translate(translate);
-	Quaternion rotate = Quaternion::nlerp(weight,Quaternion(0,0,0,1),kf.GetRotation(),m_useShortestRotationPath);
+	
+	Quaternion rotate;
+	Animation::RotationInterpolationMode rim = mp_parent->GetRotationInterpolationMode();
+	if(rim == Animation::RIM_LINEAR)
+	{
+		rotate = Quaternion::nlerp(weight,Quaternion(0,0,0,1),kf.GetRotation(),m_useShortestRotationPath);
+	}
+	else
+	{
+		rotate = Quaternion::slerp(weight,Quaternion(0,0,0,1),kf.GetRotation(),m_useShortestRotationPath);
+	}
 	node->Rotate(rotate);
+	
 	Vector3f scale = kf.GetScale();
 	if(!(scale==Vector3f(1,1,1))){
 		if(scl != 1.0f)
@@ -259,3 +302,40 @@ void NodeAnimationTrack::ApplyToNode(Node *node, float timePos, float weight, fl
 	node->Scale(scale);
 	return;
 }
+//-----------------------------------------------------------------------
+void NodeAnimationTrack::_BuildInterpolationSplines(void) const
+{
+	// Allocate splines if not exists
+	if (!mp_splines)
+	{
+		mp_splines = new Splines();
+	}
+	// Cache to register for optimisation
+	Splines* splines = mp_splines;
+
+	// Don't calc automatically, do it on request at the end
+	splines->positionSpline.setAutoCalculate(false);
+	splines->rotationSpline.setAutoCalculate(false);
+	splines->scaleSpline.setAutoCalculate(false);
+
+	splines->positionSpline.clear();
+	splines->rotationSpline.clear();
+	splines->scaleSpline.clear();
+
+	KeyFrameList::const_iterator i, iend;
+	iend = m_keyFrameList.end(); // precall to avoid overhead
+	for (i = m_keyFrameList.begin(); i != iend; ++i)
+	{
+		TransformKeyFrame* kf = static_cast<TransformKeyFrame*>(*i);
+		splines->positionSpline.addPoint(kf->GetTranslate());
+		splines->rotationSpline.addPoint(kf->GetRotation());
+		splines->scaleSpline.addPoint(kf->GetScale());
+	}
+
+	splines->positionSpline.recalcTangents();
+	splines->rotationSpline.recalcTangents();
+	splines->scaleSpline.recalcTangents();
+
+	m_splineBuildNeeded = false;
+}
+

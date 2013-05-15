@@ -3,6 +3,8 @@
 #include "Export.h"
 #include "KeyFrame.h"
 #include "Node.h"
+#include "SimpleSpline.h"
+#include "RotationalSpline.h"
 #include <string>
 #include <vector>
 /*
@@ -37,7 +39,7 @@ public:
 		例如:如果返回0表示，该时间正好对应keyFrame1,0.5则表示在kerFrame1和keyFrame2之间,即返回的数表示keyFrame2所占的比例
 		
 	*/
-	virtual float GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, KeyFrame **keyFrame2);
+	virtual float GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, KeyFrame **keyFrame2, int *index);
 	/*
 		获取timePos时间处的KeyFrame信息，该KeyFrame中保存了timePos处应该保存的trans信息
 	@param
@@ -52,6 +54,7 @@ protected:
 	KeyFrameList m_keyFrameList;
 	
 	virtual KeyFrame *_CreateKeyFrameImpl(float timePos) = 0;
+	virtual void _KeyFrameDataChanged(void) const {}
 };
 /*
 	NodeAnimationTrack类的作用: 对属于NodeAnimation的属性(位移，旋转，缩放)进行封装和管理
@@ -61,6 +64,7 @@ class ENGINE_EXPORT NodeAnimationTrack : public AnimationTrack
 public:
 	NodeAnimationTrack(Animation *parent, const std::string &name="");
 	NodeAnimationTrack(Animation *parent, Node *targetNode, const std::string &name="");
+	~NodeAnimationTrack();
 	virtual Node *GetAssociatedNode(void) const;
 	virtual void SetAssociatedNode(Node *node);
 	virtual bool GetUseShortestPath(void) const;
@@ -71,9 +75,21 @@ public:
 	virtual void ApplyToNode(Node *node, float timePos, float weight=1.0, float scale=1.0);
 private:
 	std::string m_name;
+	// Struct for store splines, allocate on demand for better memory footprint
+        struct Splines
+        {
+	    SimpleSpline positionSpline;
+	    SimpleSpline scaleSpline;
+	    RotationalSpline rotationSpline;
+        };
 	Node *mp_targetNode;
-	bool m_useShortestRotationPath;
+	// Prebuilt splines, must be mutable since lazy-update in const method
+	mutable Splines* mp_splines;
+	mutable bool m_useShortestRotationPath;
+	mutable bool m_splineBuildNeeded;
 
 	KeyFrame *_CreateKeyFrameImpl(float timePos);
+	virtual void _KeyFrameDataChanged(void) const;
+	void _BuildInterpolationSplines(void) const;
 };
 #endif

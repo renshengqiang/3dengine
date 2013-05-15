@@ -45,6 +45,7 @@ class ENGINE_EXPORT Animation{
 		const std::string &GetName(void) const;
 		float GetLength(void) const;
 		void SetLength(float len);
+		void SetInterpolationMode(InterpolationMode im);
 		InterpolationMode GetInterpolationMode(void);
 		void SetRotationInterpolationMode(RotationInterpolationMode rim);
 		RotationInterpolationMode GetRotationInterpolationMode(void);

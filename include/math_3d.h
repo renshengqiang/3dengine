@@ -11,6 +11,7 @@
 #define ToDegree(x) ((x) * 180.0f / M_PI)
 struct Quaternion;
 struct Matrix3f;
+struct Matrix4f;
 //---------------------------------------------------------------------
 struct Vector2i
 {
@@ -55,6 +56,14 @@ Vector3f operator*(const Vector3f& v, const Quaternion &q);
 Vector3f operator/(const Vector3f &l, const Vector3f &r);
 bool operator==(const Vector3f &l, const Vector3f &r);
 
+struct Vector4f
+{
+	float x,y,z,w;
+	Vector4f(float _x, float _y, float _z, float _w);
+
+	Vector4f& operator*=(const Matrix4f& r);
+};
+Vector4f operator*(const Vector4f& l, const Matrix4f &r);
 //------------------------------------------------------------------------------------------------------
 struct Quaternion
 {
@@ -63,22 +72,59 @@ struct Quaternion
 	    Quaternion(float _x, float _y, float _z, float _w);
 		Quaternion(const Vector3f &axis, float angle);
 
+		bool operator==(const Quaternion &r) const;
+		bool operator!=(const Quaternion &r) const;
 		Quaternion &operator+=(const Quaternion &r);
 		Quaternion &operator-=(const Quaternion &r);
 		Quaternion &operator*=(const Quaternion &r);
 		Quaternion &operator*=(const Vector3f &v);
 		Quaternion &operator*=(float t);
 		Quaternion operator-() const;
-
-	    void Normalize();
+		
+		/// Normalises this quaternion
+		void Normalize();
+		Quaternion Inverse () const;// apply to non-zero quaternion
+		Quaternion Exp () const;
+		Quaternion Log () const;
+	    	Quaternion Conjugate();  
+		/// translate the quaternion to transform matrix
 		void ToRotationMatrix (Matrix3f& kRot) const;
+		// functions of a quaternion
+        	/// Returns the dot product of the quaternion
 		float Dot (const Quaternion& rkQ) const;
-		static Quaternion nlerp(float fT, const Quaternion& rkP,const Quaternion& rkQ, bool shortestPath);
-		static Quaternion slerp(float fT, const Quaternion& rkP,const Quaternion& rkQ, bool shortestPath);
-		Quaternion Inverse () const;
-	    Quaternion Conjugate();  
-	/// Cutoff for sine near zero
-        static const float msEpsilon;
+		/** Performs Normalised linear interpolation between two quaternions, and returns the result.
+			nlerp ( 0.0f, A, B ) = A
+			nlerp ( 1.0f, A, B ) = B
+			@remarks
+			Nlerp is faster than Slerp.
+			Nlerp has the proprieties of being commutative (@see Slerp;
+			commutativity is desired in certain places, like IK animation), and
+			being torque-minimal (unless shortestPath=false). However, it's performing
+			the interpolation at non-constant velocity; sometimes this is desired,
+			sometimes it is not. Having a non-constant velocity can produce a more
+			natural rotation feeling without the need of tweaking the weights; however
+			if your scene relies on the timing of the rotation or assumes it will point
+			at a specific angle at a specific weight value, Slerp is a better choice.
+		*/
+		static Quaternion nlerp(float fT, const Quaternion& rkP,const Quaternion& rkQ, bool shortestPath = false);
+		/** Performs Spherical linear interpolation between two quaternions, and returns the result.
+			Slerp ( 0.0f, A, B ) = A
+			Slerp ( 1.0f, A, B ) = B
+			@return Interpolated quaternion
+			@remarks
+			Slerp has the proprieties of performing the interpolation at constant
+			velocity, and being torque-minimal (unless shortestPath=false).
+			However, it's NOT commutative, which means
+			Slerp ( 0.75f, A, B ) != Slerp ( 0.25f, B, A );
+			therefore be careful if your code relies in the order of the operands.
+			This is specially important in IK animation.
+		*/
+		static Quaternion slerp(float fT, const Quaternion& rkP,const Quaternion& rkQ, bool shortestPath = false);
+		static Quaternion squad (float fT,	const Quaternion& rkP, const Quaternion& rkA,
+								const Quaternion& rkB, const Quaternion& rkQ, bool shortestPath = false);
+		
+		/// Cutoff for sine near zero
+        	static const float msEpsilon;
 		
  };
 
@@ -94,7 +140,7 @@ struct Matrix3f
 	float m[3][3];
 };
 struct Matrix4f
-	{
+{
 	float m[4][4];
 
 	Matrix4f();
@@ -105,6 +151,16 @@ struct Matrix4f
 	         float a20, float a21, float a22, float a23,
 	         float a30, float a31, float a32, float a33);
 
+	inline float* operator [] (int  iRow)
+        {
+            assert( iRow < 4 );
+            return m[iRow];
+        }
+        inline const float *operator [] (int iRow ) const
+        {
+            assert( iRow < 4 );
+            return m[iRow];
+        }
 	Matrix4f &operator+=(const Matrix4f &r);
 	Matrix4f &operator*=(float weight);
 
