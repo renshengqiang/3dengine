@@ -631,8 +631,6 @@ void ClearBuffer(void)
 }
 void DrawSkyBox(GLuint *textures, float horizon_angle, float verticle_angle)
 {
-	UseFixedPipeline();
-
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
@@ -707,13 +705,10 @@ void DrawSkyBox(GLuint *textures, float horizon_angle, float verticle_angle)
 	glTexCoord2f(0.0f, 0.0f); glVertex3f(  2.0f,   2.0f, -2.0f);	// Bottom Left Of The Texture and Quad
 	glEnd();
 
-	
-
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glClear(GL_DEPTH_BUFFER_BIT);
-	UseShaderToRender();
 }
 //-----------------------------------------------------------------------
 void DrawOverlay(int fps)
@@ -722,16 +717,13 @@ void DrawOverlay(int fps)
 	if(fps && fps<worst) worst = fps;
 	if(fps>best) best = fps;
 	
-	UseFixedPipeline();
-
-	//glMatrixMode(GL_PROJECTION);
-	//glPushMatrix();
-	//glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
 	glClear(GL_DEPTH_BUFFER_BIT);
 	
 	glColor3f(0.0, 1.0, 0.0);
 	freetype::print(our_font, 0, 120, "F  P  S:%d\nWorst:%d\nBest  :%d\n", fps, worst, best);
 
-	//glPopMatrix();
-	UseShaderToRender();
+	glPopMatrix();
 }

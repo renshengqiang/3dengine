@@ -158,6 +158,7 @@ NodeAnimationTrack::NodeAnimationTrack(Animation *parent, Node *targetNode, cons
 //-----------------------------------------------------------------------------
 NodeAnimationTrack::~NodeAnimationTrack()
 {
+	if(mp_splines) delete mp_splines;
 }
 //-----------------------------------------------------------------------------
 Node *NodeAnimationTrack::GetAssociatedNode(void) const
@@ -168,7 +169,7 @@ Node *NodeAnimationTrack::GetAssociatedNode(void) const
 void NodeAnimationTrack::SetAssociatedNode(Node *node)
 {
 	mp_targetNode = node;
-	return;	
+	return;
 }
 //-----------------------------------------------------------------------------
 bool NodeAnimationTrack::GetUseShortestPath(void) const

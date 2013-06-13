@@ -243,11 +243,14 @@ bool SceneManager::RenderOneFrame(void)
 {   
 	ClearBuffer();
 	//render skybox
+	UseFixedPipeline();
 	DrawSkyBox(texture_obj, mp_cameraInUse->m_angleHorizontal, mp_cameraInUse->m_angleVertical);
 	//render scene
 	_ApplySceneAnimations();
+	UseShaderToRender();
 	if(mp_cameraInUse!=NULL) mp_cameraInUse->Render(mp_rootNode, m_ifUseShader);
 	//render overlay
+	UseFixedPipeline();
 	DrawOverlay(sceceFps);
 	if(mp_frameListener) {
 		if(mp_frameListener->FrameQueued(GetElapsedTime()) == false)
