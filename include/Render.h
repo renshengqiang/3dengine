@@ -85,6 +85,7 @@ bool InitGlew(void);
 void GetGLInfo(void);
 bool InitRenderState(void);
 void ClearBuffer(void);
+void DrawSkyBox(GLuint *textures, float horizon_angle, float verticle_angle);
 void DrawOverlay(int fps);
 void DrawObject(int type,const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj, struct context *contx);
 void DrawOjectUseShader(const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj);

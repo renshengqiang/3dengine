@@ -629,19 +629,109 @@ void ClearBuffer(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
-//-----------------------------------------------------------------------
-void DrawOverlay(int fps)
+void DrawSkyBox(GLuint *textures, float horizon_angle, float verticle_angle)
 {
 	UseFixedPipeline();
 
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
+	glOrtho(-1,1,-1,1,0,10);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	//gluLookAt(0,0,0,0,0,-1,0,1,0);
+
+	glRotatef(-10,  1,0,0);
+	glRotatef(horizon_angle-90, 0,1,0);
+	//glRotatef(10, 1, 0, 0);
+	//glRotatef(verticle_angle,  1,0,0);
+	
+	glEnable(GL_TEXTURE_2D);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glActiveTexture(GL_TEXTURE0);
+
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	// Front Face (note that the texture's corners have to match the quad's corners)
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(  2.0f, -2.0f,  2.0f);	// Bottom Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.0f, -2.0f,  2.0f);	// Bottom Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-2.0f,   2.0f,  2.0f);	// Top Right Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(  2.0f,   2.0f,  2.0f);	// Top Left Of The Texture and Quad
+	glEnd();
+	
+	glBindTexture(GL_TEXTURE_2D, textures[1]);
+	// Back Face
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.0f, -2.0f, -2.0f);	// Bottom Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(  2.0f, -2.0f, -2.0f);	// Top Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(  2.0f,   2.0f, -2.0f);	// Top Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.0f,   2.0f, -2.0f);	// Bottom Left Of The Texture and Quad
+	glEnd();
+
+	glBindTexture(GL_TEXTURE_2D, textures[2]);
+	// Top Face
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.0f,   2.0f, -2.0f);	// Top Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(  2.0f,   2.0f, -2.0f);	// Bottom Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(  2.0f,   2.0f,   2.0f);	// Bottom Right Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.0f,   2.0f,   2.0f);	// Top Right Of The Texture and Quad
+	glEnd();
+	
+	glBindTexture(GL_TEXTURE_2D, textures[3]);
+	// Bottom Face       
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.0f, -2.0f,   2.0f);	// Top Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(  2.0f, -2.0f,   2.0f);	// Top Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(  2.0f, -2.0f, -2.0f);	// Bottom Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.0f, -2.0f, -2.0f);	// Bottom Right Of The Texture and Quad
+	glEnd();
+
+	glBindTexture(GL_TEXTURE_2D, textures[4]);
+	// Left Face
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.0f, -2.0f,	 2.0f); // Bottom Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.0f, -2.0f, -2.0f);	// Bottom Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-2.0f,   2.0f, -2.0f); // Top Right Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.0f,   2.0f,   2.0f);	// Top Left Of The Texture and Quad
+	glEnd();
+
+	glBindTexture(GL_TEXTURE_2D, textures[5]);
+	// Right face
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(  2.0f, -2.0f, -2.0f);	// Bottom Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(  2.0f, -2.0f,   2.0f);	// Top Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(  2.0f,   2.0f,   2.0f);	// Top Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(  2.0f,   2.0f, -2.0f);	// Bottom Left Of The Texture and Quad
+	glEnd();
+
+	
+
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glClear(GL_DEPTH_BUFFER_BIT);
+	UseShaderToRender();
+}
+//-----------------------------------------------------------------------
+void DrawOverlay(int fps)
+{
+	static int worst = 100 ,best = 0;
+	if(fps && fps<worst) worst = fps;
+	if(fps>best) best = fps;
+	
+	UseFixedPipeline();
+
+	//glMatrixMode(GL_PROJECTION);
+	//glPushMatrix();
+	//glLoadIdentity();
 	glClear(GL_DEPTH_BUFFER_BIT);
 	
 	glColor3f(0.0, 1.0, 0.0);
-	freetype::print(our_font, 0, 0, "FPS: %d", fps);
+	freetype::print(our_font, 0, 120, "F  P  S:%d\nWorst:%d\nBest  :%d\n", fps, worst, best);
 
-	glPopMatrix();
+	//glPopMatrix();
 	UseShaderToRender();
 }

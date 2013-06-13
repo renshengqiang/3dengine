@@ -178,8 +178,25 @@ void SceneManager::_ApplySceneAnimations(void)
 	return;
 }
 //------------------------------Rendering Operation----------------------------
+#include "Texture.h"
+GLuint texture_obj[6];
+
+char texture_name[][100] = {
+	"./skybox/sp3front.jpg",
+	"./skybox/sp3back.jpg",
+	"./skybox/sp3top.jpg",
+	"./skybox/sp3bot.jpg",
+	"./skybox/sp3left.jpg",
+	"./skybox/sp3right.jpg"	
+};
 void SceneManager::StartRendering(bool m_ifUseShader)
 {
+	for(int i=0; i<6; ++i){
+		Texture *pTexture = new Texture(GL_TEXTURE_2D, texture_name[i]);
+		pTexture->Load();
+		texture_obj[i] = pTexture->GetTextureObj();
+		delete pTexture;
+	}
 	this->m_ifUseShader = m_ifUseShader;
 	if(InitRendering()==false && mp_renderWindow)
 		mp_renderWindow->Quit(-1);
@@ -187,9 +204,9 @@ void SceneManager::StartRendering(bool m_ifUseShader)
 	** 1. 处理用户输入；
 	** 2. 渲染一帧
 	*/
-	while( 1 ) {
-		if(mp_eventListener) mp_eventListener->ProcessEvents(); 
+	while( 1 ) {		
 		if(RenderOneFrame() == false) break;
+		if(mp_eventListener) mp_eventListener->ProcessEvents(); 
 	}
 }
 //-----------------------------------------------------------------------
@@ -225,8 +242,12 @@ void SceneManager::QuitFromRendering(void)
 bool SceneManager::RenderOneFrame(void)
 {   
 	ClearBuffer();
+	//render skybox
+	DrawSkyBox(texture_obj, mp_cameraInUse->m_angleHorizontal, mp_cameraInUse->m_angleVertical);
+	//render scene
 	_ApplySceneAnimations();
 	if(mp_cameraInUse!=NULL) mp_cameraInUse->Render(mp_rootNode, m_ifUseShader);
+	//render overlay
 	DrawOverlay(sceceFps);
 	if(mp_frameListener) {
 		if(mp_frameListener->FrameQueued(GetElapsedTime()) == false)
