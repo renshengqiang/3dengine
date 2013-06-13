@@ -656,55 +656,55 @@ void DrawSkyBox(GLuint *textures, float horizon_angle, float verticle_angle)
 	glBindTexture(GL_TEXTURE_2D, textures[0]);
 	// Front Face (note that the texture's corners have to match the quad's corners)
 	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(  1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f,   1.0f,  1.0f);	// Top Right Of The Texture and Quad
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(  1.0f,   1.0f,  1.0f);	// Top Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(  2.0f, -2.0f,  2.0f);	// Bottom Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.0f, -2.0f,  2.0f);	// Bottom Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-2.0f,   2.0f,  2.0f);	// Top Right Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(  2.0f,   2.0f,  2.0f);	// Top Left Of The Texture and Quad
 	glEnd();
 	
 	glBindTexture(GL_TEXTURE_2D, textures[1]);
 	// Back Face
 	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(  1.0f, -1.0f, -1.0f);	// Top Right Of The Texture and Quad
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(  1.0f,   1.0f, -1.0f);	// Top Left Of The Texture and Quad
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,   1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.0f, -2.0f, -2.0f);	// Bottom Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(  2.0f, -2.0f, -2.0f);	// Top Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(  2.0f,   2.0f, -2.0f);	// Top Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.0f,   2.0f, -2.0f);	// Bottom Left Of The Texture and Quad
 	glEnd();
 
 	glBindTexture(GL_TEXTURE_2D, textures[2]);
 	// Top Face
 	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,   1.0f, -1.0f);	// Top Left Of The Texture and Quad
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(  1.0f,   1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(  1.0f,   1.0f,   1.0f);	// Bottom Right Of The Texture and Quad
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,   1.0f,   1.0f);	// Top Right Of The Texture and Quad
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.0f,   2.0f, -2.0f);	// Top Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(  2.0f,   2.0f, -2.0f);	// Bottom Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(  2.0f,   2.0f,   2.0f);	// Bottom Right Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.0f,   2.0f,   2.0f);	// Top Right Of The Texture and Quad
 	glEnd();
 	
 	glBindTexture(GL_TEXTURE_2D, textures[3]);
 	// Bottom Face       
 	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, -1.0f,   1.0f);	// Top Right Of The Texture and Quad
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(  1.0f, -1.0f,   1.0f);	// Top Left Of The Texture and Quad
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(  1.0f, -1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.0f, -2.0f,   2.0f);	// Top Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(  2.0f, -2.0f,   2.0f);	// Top Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(  2.0f, -2.0f, -2.0f);	// Bottom Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.0f, -2.0f, -2.0f);	// Bottom Right Of The Texture and Quad
 	glEnd();
 
 	glBindTexture(GL_TEXTURE_2D, textures[4]);
 	// Left Face
 	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, -1.0f,	 1.0f); // Bottom Left Of The Texture and Quad
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f,   1.0f, -1.0f); // Top Right Of The Texture and Quad
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,   1.0f,   1.0f);	// Top Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.0f, -2.0f,	 2.0f); // Bottom Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.0f, -2.0f, -2.0f);	// Bottom Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-2.0f,   2.0f, -2.0f); // Top Right Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.0f,   2.0f,   2.0f);	// Top Left Of The Texture and Quad
 	glEnd();
 
 	glBindTexture(GL_TEXTURE_2D, textures[5]);
 	// Right face
 	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(  1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(  1.0f, -1.0f,   1.0f);	// Top Right Of The Texture and Quad
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(  1.0f,   1.0f,   1.0f);	// Top Left Of The Texture and Quad
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(  1.0f,   1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(  2.0f, -2.0f, -2.0f);	// Bottom Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(  2.0f, -2.0f,   2.0f);	// Top Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(  2.0f,   2.0f,   2.0f);	// Top Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(  2.0f,   2.0f, -2.0f);	// Bottom Left Of The Texture and Quad
 	glEnd();
 
 	
