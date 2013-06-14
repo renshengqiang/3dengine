@@ -10,6 +10,9 @@
 #include "EventListener.h"
 #include "MeshManager.h"
 #include <string>
+#include <map>
+#include <vector>
+#include <pthread.h>
 
 extern int sceceFps;
 class ENGINE_EXPORT SceneManager{
@@ -21,6 +24,8 @@ public:
 	typedef std::map<std::string, Animation*> AnimationList;
 	typedef AnimationList::iterator AnimationIterator;
 	typedef AnimationList::const_iterator AnimationConstIterator;
+	typedef std::vector<SceneNode*> RenderQueue;
+	typedef RenderQueue::iterator RenderQueueIterator;
 	
 	SceneManager(enum ManagerType=MANAGER_GENERAL);
 	~SceneManager();
@@ -109,6 +114,7 @@ public:
 	virtual void DestroyAllAnimationStates(void);
 protected:
 	void _ApplySceneAnimations(void);
+	static void* _RenderThreadFunc(void *);
 
 private:
 	enum ManagerType m_managerType;
@@ -122,6 +128,12 @@ private:
 	AnimationList m_animationList;
 	AnimationStateSet m_animationStateSet;
 
+	RenderQueue m_renderingQueue;
+	pthread_mutex_t m_renderingQueueMutex;
+	pthread_mutex_t m_contextMutex;
+	pthread_mutex_t m_sdlMutex;
+	pthread_t m_renderThread;
+	
 	MeshManager *mMeshManager;
 };
 

@@ -2,6 +2,7 @@
 #define _SUBMESH_H
 #include "math_3d.h"
 #include "Render.h"
+#include "Texture.h"
 #include <vector>
 
 
@@ -22,7 +23,7 @@ public:
 	~SubMesh();
 
 	void AddCoord(const Vector3f &coord);
-	void AddTexture(unsigned texture);
+	void AddTexture(Texture *pTexture);
 	void AddTextureCoord(const Vector2f &textureCoord);
 	void AddIndex(int index);
 	void AddBoneData(int index, unsigned short boneId, float weight);
@@ -47,6 +48,8 @@ private:
 	std::vector<unsigned> boneNumVec;
 	//vertex index vector
 	std::vector<int> indexVec;
+	//texture
+	Texture *mp_texture;
 
 	//该submesh创建的三个Buffer Object
 	VERTEX_OBJ *vertexObject;

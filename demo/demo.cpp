@@ -183,6 +183,8 @@ void DemoApp::ProcessEvents()
 				break;
 			case SDL_QUIT:            /* Handle quit requests (like Ctrl-c). */            
 				mp_sceneManager->QuitFromRendering();
+				printf("2\n");
+				exit(0);
 				break;        
 			}    
 	}
@@ -193,6 +195,8 @@ void DemoApp::HandleKeyDown( SDL_keysym* keysym )
 		switch( keysym->sym ) {    
 			case SDLK_ESCAPE:        
 				mp_sceneManager->QuitFromRendering();
+				printf("1\n");
+				exit(0);
 				break;    
 			case SDLK_DOWN:
 			case SDLK_s:

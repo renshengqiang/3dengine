@@ -4,6 +4,7 @@
 #include "Mesh.h"
 #include "Timer.h"
 #include <stdlib.h>
+#include <unistd.h>
 
 //-----------------------------------------------------------------------
 SceneManager::SceneManager(enum ManagerType type):
@@ -18,13 +19,89 @@ SceneManager::SceneManager(enum ManagerType type):
 	mp_rootNode = new SceneNode("rootNode");
 	//create a singleton MeshManager
 	mMeshManager = new MeshManager();
+	pthread_mutex_init(&m_renderingQueueMutex, NULL);
+	pthread_mutex_init(&m_contextMutex, NULL);
+	pthread_mutex_init(&m_sdlMutex, NULL);
+	m_renderThread = 0;
 }
 //-----------------------------------------------------------------------
 SceneManager::~SceneManager()
 {
+	if(m_renderThread > 0)
+	{
+		pthread_cancel(m_renderThread);
+	}
 	DestroyAllAnimationStates();
 	DestroyAllAnimations();
 	delete mMeshManager;
+	pthread_mutex_destroy(&m_renderingQueueMutex);
+	pthread_mutex_destroy(&m_contextMutex);
+	pthread_mutex_destroy(&m_sdlMutex);
+}
+//-----------------------------------------------------------------------
+#include "Texture.h"
+GLuint texture_obj[6];
+
+char texture_name[][100] = {
+	"./skybox/sp3front.jpg",
+	"./skybox/sp3back.jpg",
+	"./skybox/sp3top.jpg",
+	"./skybox/sp3bot.jpg",
+	"./skybox/sp3left.jpg",
+	"./skybox/sp3right.jpg"	
+};
+int sceceFps = 0;
+void* SceneManager::_RenderThreadFunc(void *p)
+{
+	SceneManager *pManager = static_cast<SceneManager*>(p);
+
+	pManager->mp_renderWindow->InitSDL();
+	pthread_mutex_lock(&(pManager->m_contextMutex));
+	pthread_mutex_unlock(&(pManager->m_contextMutex));
+	pthread_mutex_unlock(&(pManager->m_sdlMutex));
+	CreateShaders();
+	InitRenderState();
+
+	for(int i=0; i<6; ++i){
+		Texture *pTexture = new Texture(GL_TEXTURE_2D, texture_name[i]);
+		pTexture->Load();
+		texture_obj[i] = pTexture->GetTextureObj();
+		delete pTexture;
+	}
+	while(1)
+	{
+		Matrix4f projViewMatrix = pManager->mp_cameraInUse->GetProjViewMatrix();
+		Matrix4f perspectViewModelMatrix;
+		
+		ClearBuffer();
+		//render skybox
+		UseFixedPipeline();
+		DrawSkyBox(texture_obj, pManager->mp_cameraInUse->m_angleHorizontal, pManager->mp_cameraInUse->m_angleVertical);
+
+		UseShaderToRender();
+		
+		pthread_mutex_lock(&(pManager->m_renderingQueueMutex));
+		for(RenderQueueIterator iter = pManager->m_renderingQueue.begin(); iter != pManager->m_renderingQueue.end(); ++iter)
+		{
+			Entity *pEntity = (*iter)->GetAttachedEntity();
+			if(pEntity!= NULL){
+				const Matrix4f &modelMatrix = (*iter)->_GetFullTransform();
+				perspectViewModelMatrix = projViewMatrix * modelMatrix;
+				//set matrix
+				SetTranslateMatrix(g_PVMMatrixLocation,&perspectViewModelMatrix);
+				//render entity
+				pEntity->Render();
+			}
+		}
+		pManager->m_renderingQueue.clear();
+		pthread_mutex_unlock(&(pManager->m_renderingQueueMutex));
+		//render overlay
+		UseFixedPipeline();
+		DrawOverlay(sceceFps);
+
+		if(pManager->mp_renderWindow) pManager->mp_renderWindow->SwapBuffer();
+	}
+	return NULL;
 }
 //-----------------------------------------------------------------------
 Camera* SceneManager::CreateCamera(Vector3f pos, Vector3f target, Vector3f up)
@@ -38,6 +115,12 @@ Camera* SceneManager::CreateCamera(Vector3f pos, Vector3f target, Vector3f up)
 RenderWindow* SceneManager::CreateRenderWindow(int w, int h)
 {
 	mp_renderWindow = new RenderWindow(w,h);
+
+	//XInitThreads();
+	pthread_mutex_lock(&m_contextMutex);
+	pthread_mutex_lock(&m_sdlMutex);
+	pthread_create(&m_renderThread,  NULL, _RenderThreadFunc, (void *)this);
+	/*
 	if(NULL == mp_renderWindow){
 		fprintf(stderr, "SceneManager::CreateWindow : create a render window for OpenGL FAIL!");
 		exit(1);
@@ -48,6 +131,7 @@ RenderWindow* SceneManager::CreateRenderWindow(int w, int h)
 		mp_renderWindow->Quit(-1);
 	//show the OpenGL library version info , this is window-system specified
 	GetGLInfo();
+	*/
 	return mp_renderWindow;
 }
 //-----------------------------------------------------------------------
@@ -178,35 +262,44 @@ void SceneManager::_ApplySceneAnimations(void)
 	return;
 }
 //------------------------------Rendering Operation----------------------------
-#include "Texture.h"
-GLuint texture_obj[6];
-
-char texture_name[][100] = {
-	"./skybox/sp3front.jpg",
-	"./skybox/sp3back.jpg",
-	"./skybox/sp3top.jpg",
-	"./skybox/sp3bot.jpg",
-	"./skybox/sp3left.jpg",
-	"./skybox/sp3right.jpg"	
-};
+#include <queue>
 void SceneManager::StartRendering(bool m_ifUseShader)
 {
-	for(int i=0; i<6; ++i){
-		Texture *pTexture = new Texture(GL_TEXTURE_2D, texture_name[i]);
-		pTexture->Load();
-		texture_obj[i] = pTexture->GetTextureObj();
-		delete pTexture;
-	}
 	this->m_ifUseShader = m_ifUseShader;
-	if(InitRendering()==false && mp_renderWindow)
-		mp_renderWindow->Quit(-1);
+	//if(InitRendering()==false && mp_renderWindow)
+		//mp_renderWindow->Quit(-1);
+
+	pthread_mutex_unlock(&m_contextMutex);
+	pthread_mutex_lock(&m_sdlMutex);
 	/* rendering loop
 	** 1. 处理用户输入；
 	** 2. 渲染一帧
 	*/
-	while( 1 ) {		
-		if(RenderOneFrame() == false) break;
-		if(mp_eventListener) mp_eventListener->ProcessEvents(); 
+	std::queue<SceneNode*> IterQueue;
+	while( 1 ) 
+	{
+		//if(RenderOneFrame() == false) break;
+		pthread_mutex_lock(&m_renderingQueueMutex);
+		_ApplySceneAnimations();
+		if(m_renderingQueue.empty())
+		{			
+			IterQueue.push(mp_rootNode);
+			while(!IterQueue.empty())
+			{
+				SceneNode *PNode = IterQueue.front();
+				IterQueue.pop();
+				m_renderingQueue.push_back(PNode);
+				int n  = PNode->NumChildren();
+				for(int i=0; i<n; ++i)
+					IterQueue.push((SceneNode*)(PNode->GetChild(i)));		
+			}
+			if(mp_frameListener) {
+				if(mp_frameListener->FrameQueued(GetElapsedTime()) == false)
+					break;
+			}
+			if(mp_eventListener) mp_eventListener->ProcessEvents();
+		}		
+		pthread_mutex_unlock(&m_renderingQueueMutex);
 	}
 }
 //-----------------------------------------------------------------------
@@ -238,7 +331,6 @@ void SceneManager::QuitFromRendering(void)
  *3.执行FrameQueued函数；
  *4.交换缓冲区
  */
- int sceceFps = 0;
 bool SceneManager::RenderOneFrame(void)
 {   
 	ClearBuffer();

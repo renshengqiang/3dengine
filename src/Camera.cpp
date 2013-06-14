@@ -61,6 +61,21 @@ void Camera::Update()
 	return;
 }
 //-----------------------------------------------------------------------
+Matrix4f Camera::GetProjViewMatrix(void)
+{
+	if(m_projectionMatrixChanged){
+		m_perspectiveProjectionMatrix.InitPersProjTransform(m_FOV,m_aspectRadio,m_zNear,m_zFar);
+		m_projectionMatrixChanged = false;
+		SetProjectMatrix(&m_perspectiveProjectionMatrix);
+	}
+	if(m_viewMatrixChanged){
+		Update();
+		m_viewMatrix.InitCameraTransform(m_positionVector,m_targetVector,m_upVector);
+		m_viewMatrixChanged = false;
+	}
+	return m_perspectiveProjectionMatrix * m_viewMatrix;
+}
+//-----------------------------------------------------------------------
 void Camera::SetAspetcRadio(float aspectRadio)
 {
 	m_aspectRadio= aspectRadio;

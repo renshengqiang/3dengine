@@ -47,6 +47,8 @@ private:
 	unsigned m_numBones;
 	//skeleton node Animation
 	Skeleton *mp_skeleton;
+
+	bool m_finalized;
 };
 
 typedef std::shared_ptr<Mesh>  MeshPtr;

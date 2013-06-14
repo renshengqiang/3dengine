@@ -15,6 +15,7 @@ public:
 
 	void Bind(GLenum TextureUnit);
 
+
 private:
 	std::string m_fileName;
 	GLenum m_textureTarget;

@@ -1,8 +1,15 @@
 #include "RenderWindow.h"
+#include "Render.h"
 #include <SDL/SDL.h>
 
 //-----------------------------------------------------------------------
 RenderWindow::RenderWindow(int windowWidth,int windowHeight)
+{
+	m_WindowHeight=windowHeight;
+	m_WindowWidth=windowWidth;
+}
+//-----------------------------------------------------------------------
+void RenderWindow::InitSDL(void)
 {
 	/* Information about the current video settings. */    
 	const SDL_VideoInfo* info = NULL;    
@@ -33,12 +40,16 @@ RenderWindow::RenderWindow(int windowWidth,int windowHeight)
 	
 	flags = SDL_OPENGL;    
 	/*Set the video mode     */    
-	if( SDL_SetVideoMode( windowWidth, windowHeight, bpp, flags ) == 0 ) {        
+	if( SDL_SetVideoMode(m_WindowHeight, m_WindowWidth, bpp, flags ) == 0 ) {        
 		fprintf( stderr, "Video mode set failed: %s\n",SDL_GetError());        
 		Quit( 1 );    
 	}
-	m_WindowHeight=windowHeight;
-	m_WindowWidth=windowWidth;
+
+	//initial glew
+	if(InitGlew()==false)
+		Quit(1);
+	//show the OpenGL library version info , this is window-system specified
+	GetGLInfo();
 }
 //-----------------------------------------------------------------------
 void RenderWindow::Quit(int exit_code)

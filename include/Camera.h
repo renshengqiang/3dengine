@@ -8,7 +8,9 @@ class ENGINE_EXPORT Camera{
 friend class SceneManager;
 	public:
 		Camera(Vector3f pos=Vector3f(0,0,0),Vector3f target=Vector3f(0,0,-1), Vector3f up=Vector3f(0,1,0));
-		void Update();		
+		void Update();	
+
+		Matrix4f GetProjViewMatrix(void);
 		/*
 		void SetPos(Vector3f pos);
 		void SetPos(float x, float y, float z);

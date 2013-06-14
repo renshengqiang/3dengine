@@ -22,9 +22,10 @@ void SubMesh::AddCoord(const Vector3f &coord)
 	return;
 }
 //--------------------------------------------------------------------------------------
-void SubMesh::AddTexture(unsigned texture)
+void SubMesh::AddTexture(Texture *pTexture)
 {
-	pixelObject = CreatePixelObject2(texture,GL_TEXTURE0,GL_TEXTURE_2D);
+	//pixelObject = CreatePixelObject2(texture,GL_TEXTURE0,GL_TEXTURE_2D);
+	mp_texture = pTexture;
 }
 //--------------------------------------------------------------------------------------
 void SubMesh::AddTextureCoord(const Vector2f &textureCoord)
@@ -64,6 +65,7 @@ void SubMesh::Finalize()
 	VertexObjectEnd(vertexObject);
 	
 	indexObject = CreateIndexObject(indexVec.size(),(unsigned int *)&indexVec[0]);
+	pixelObject = CreatePixelObject2(mp_texture->GetTextureObj(),GL_TEXTURE0,GL_TEXTURE_2D);
 }
 //--------------------------------------------------------------------------------------
 unsigned SubMesh::GetVertexNum()

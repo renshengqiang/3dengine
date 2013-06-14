@@ -11,7 +11,8 @@
 //-----------------------------------------------------------------------
 Mesh::Mesh(const std::string &fileName):
 	mp_scene(NULL),
-	mp_skeleton(NULL)
+	mp_skeleton(NULL),
+	m_finalized(false)
 {
 	m_numBones = 0;
 	_LoadMesh(fileName);
@@ -121,7 +122,7 @@ bool Mesh::_InitMaterials(const std::string& filename)
 	        if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 	            std::string FullPath = Dir + "/" + Path.data;
 	            m_textures[i] = new Texture(GL_TEXTURE_2D, FullPath.c_str());
-
+		/*
 	            if (!m_textures[i]->Load()) {
 	                printf("Error loading texture '%s'\n", FullPath.c_str());
 	                delete m_textures[i];
@@ -131,14 +132,18 @@ bool Mesh::_InitMaterials(const std::string& filename)
 	            else {
 	                printf("Loaded texture '%s'\n", FullPath.c_str());
 	            }
+	         */
 	        }
 	    }
 
 	    // Load a white texture in case the model does not include its own texture
 	    if (!m_textures[i]) {
+		m_textures[i] = new Texture(GL_TEXTURE_2D, "./models/white.png");
+		/*
 	        m_textures[i] = new Texture(GL_TEXTURE_2D, "./white.png");
 
 	        Ret = m_textures[i]->Load();
+	        */
 	    }
 	}
     return Ret;
@@ -166,9 +171,9 @@ void Mesh::_InitSubMesh(unsigned int index, const aiMesh* paiMesh)
 		m_subMeshes[index]->AddIndex(Face.mIndices[2]);
 	}
 	_InitSubMeshAttachedBoneInfo(paiMesh, m_subMeshes[index]);
-	m_subMeshes[index]->AddTexture(m_textures[paiMesh->mMaterialIndex]->GetTextureObj());
+	m_subMeshes[index]->AddTexture(m_textures[paiMesh->mMaterialIndex]);
 
-	m_subMeshes[index]->Finalize();
+	//m_subMeshes[index]->Finalize();
 }
 //--------------------------------------------------------------------------------------
 void Mesh::_InitSubMeshAttachedBoneInfo(const aiMesh* pMesh, SubMesh *subMesh)
@@ -269,9 +274,26 @@ void Mesh::Render()
 //--------------------------------------------------------------------------------------
 void Mesh::RenderUseShader()
 {
+	if(m_finalized == false)
+	{
+		for(unsigned i=0; i < m_textures.size(); ++i)
+		{
+			m_textures[i]->Load();
+		}
+	}
 	for(unsigned int i=0;i < m_subMeshes.size();++i){
+		if(m_finalized == false)
+			m_subMeshes[i]->Finalize();
 		m_subMeshes[i]->RenderUseShader();
 	}
+	if(m_finalized == false)
+	{
+		for(unsigned i=0; i < m_textures.size(); ++i)
+		{
+			delete m_textures[i];
+		}
+	}
+	m_finalized = true;
 }
 //--------------------------------------------------------------------------------------
 /*
