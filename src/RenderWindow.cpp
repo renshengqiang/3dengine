@@ -9,7 +9,7 @@ RenderWindow::RenderWindow(int windowWidth,int windowHeight)
 	m_WindowWidth=windowWidth;
 }
 //-----------------------------------------------------------------------
-void RenderWindow::InitSDL(void)
+bool RenderWindow::InitSDL(void)
 {
 	/* Information about the current video settings. */    
 	const SDL_VideoInfo* info = NULL;    
@@ -21,14 +21,16 @@ void RenderWindow::InitSDL(void)
 	if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {        
 		/* Failed, exit. */        
 		fprintf( stderr, "Video initialization failed: %s\n",SDL_GetError());    
-		Quit( 1 );    
+		Quit();
+		return false;
 	}   
 	/* Let's get some video information. */    
 	info = SDL_GetVideoInfo( );    
 	if( !info ) {        
 		/* This should probably never happen. */        
 		fprintf( stderr, "Video query failed: %s\n",SDL_GetError());        
-		Quit(1);    
+		Quit();
+		return false;
 	}    
 	bpp = info->vfmt->BitsPerPixel;    
 	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8 );    
@@ -38,24 +40,36 @@ void RenderWindow::InitSDL(void)
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );    
 	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 0);
 	
-	flags = SDL_OPENGL;    
+	flags = SDL_OPENGL;
 	/*Set the video mode     */    
-	if( SDL_SetVideoMode(m_WindowHeight, m_WindowWidth, bpp, flags ) == 0 ) {        
+	if( SDL_SetVideoMode(m_WindowWidth, m_WindowHeight, bpp, flags ) == 0 ) {        
 		fprintf( stderr, "Video mode set failed: %s\n",SDL_GetError());        
-		Quit( 1 );    
+		Quit();
+		return false;
 	}
 
 	//initial glew
 	if(InitGlew()==false)
-		Quit(1);
+	{
+		Quit();
+		return false;
+	}
+
+	//initial rendering state
+	if(InitRenderState() == false)
+	{
+		Quit();
+		return false;
+	}
 	//show the OpenGL library version info , this is window-system specified
 	GetGLInfo();
+
+	return true;
 }
 //-----------------------------------------------------------------------
-void RenderWindow::Quit(int exit_code)
+void RenderWindow::Quit()
 {
-	SDL_Quit( );
-	exit(exit_code);
+	SDL_Quit();
 }
 //-----------------------------------------------------------------------
 void RenderWindow::SwapBuffer()

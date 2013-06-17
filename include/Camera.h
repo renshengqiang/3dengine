@@ -23,11 +23,6 @@ friend class SceneManager;
 		void Yaw(float angle);/*水平方向旋转*/
 		void Pitch(float angle);/*竖直方向旋转*/
 		void Translate(Vector3f movement);
-
-		//////////////////////////////////////////////////////
-		void Render(SceneNode *rootNode, bool ifUseShader=false);
-		void RenderNode(SceneNode *rootNode);
-		void RenderNodeUseShader(SceneNode *rootNode);
 		
 	private:
 		//相机位置和方向相关变量 gluLookAt函数的参数都在下面

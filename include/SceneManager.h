@@ -14,7 +14,7 @@
 #include <vector>
 #include <pthread.h>
 
-extern int sceceFps;
+extern int sceneFps;
 class ENGINE_EXPORT SceneManager{
 public:
 	enum ManagerType{
@@ -33,10 +33,7 @@ public:
 	RenderWindow* CreateRenderWindow(int w=800, int h=600);
 	void AddFrameListener(FrameListener *frameListener);
 	void AddEventListener(EventListener *eventListener);
-	bool InitRendering(void);
-	void StartRendering(bool use_shader);
-	void QuitFromRendering(void);
-	bool RenderOneFrame(void);
+	void StartRendering();
 	SceneNode *GetRootNode(void);
 	//////////////////////////////////////////////////////////////////////
 	/** Creates an animation which can be used to animate scene nodes.
@@ -123,16 +120,16 @@ private:
 	FrameListener *mp_frameListener;
 	EventListener *mp_eventListener;
 	SceneNode	*mp_rootNode;
-	bool m_ifUseShader;
+	bool m_windowInit, m_windowInitSucceed;
 	
 	AnimationList m_animationList;
 	AnimationStateSet m_animationStateSet;
 
-	RenderQueue m_renderingQueue;
-	pthread_mutex_t m_renderingQueueMutex;
-	pthread_mutex_t m_contextMutex;
-	pthread_mutex_t m_sdlMutex;
-	pthread_t m_renderThread;
+	pthread_t			m_renderThread;
+	RenderQueue		*mp_renderingQueue;
+	pthread_mutex_t	m_renderingQueueMutex;
+	pthread_mutex_t	m_sdlMutex;
+	pthread_cond_t	m_sdlCond;
 	
 	MeshManager *mMeshManager;
 };

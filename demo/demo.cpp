@@ -21,7 +21,7 @@ void* FpsThread(void*)
         select(1, NULL, NULL, NULL, &tv);
         printf("fps: %d\n", fps);
 		fflush(stdout);
-	sceceFps = fps;
+	sceneFps = fps;
 	fps = 0;
     }
 	return NULL;
@@ -30,7 +30,7 @@ void* FpsThread(void*)
 class DemoApp:public FrameListener, public EventListener
 {
 	public:
-		DemoApp(bool ifUseShader);
+		DemoApp();
 		~DemoApp();
 		bool FrameQueued(long timeSinceLastFrame);
 		void ProcessEvents();
@@ -48,9 +48,8 @@ class DemoApp:public FrameListener, public EventListener
 		Entity *pEntity1, *pEntity2, *pEntity3;
 		
 };
-DemoApp::DemoApp(bool ifUseShader)
+DemoApp::DemoApp()
 {
-	m_ifUseShader = ifUseShader;
 	mp_sceneManager = new SceneManager();
 	mp_renderWindow = mp_sceneManager->CreateRenderWindow(800,600);
 	mp_camera = mp_sceneManager->CreateCamera(Vector3f(0.0f,0.0f,0.0f),Vector3f(0, 0, -1.0f));
@@ -107,15 +106,15 @@ void DemoApp::CreateScene(void)
 	node3->AttachEntity(pEntity3);
 
 	//create one scenenode animation(×óºó»Ø)
-	Animation *animation = mp_sceneManager->CreateAnimation("transAnim1-1",9);
+	Animation *animation = mp_sceneManager->CreateAnimation("transAnim1-1",5.792);
 	//animation->SetInterpolationMode(Animation::IM_SPLINE);
 	animation->SetRotationInterpolationMode(Animation::RIM_SPHERICAL);
 	NodeAnimationTrack *track = animation->CreateNodeTrack(0, node1);
-	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(3);
+	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(1.448);
 	keyFrame->SetTranslate(Vector3f(-100, 0,0));
-	keyFrame = track->CreateNodeKeyFrame(9);
+	keyFrame = track->CreateNodeKeyFrame(5.792);
 	keyFrame->SetTranslate(Vector3f(0,0,0));
-	keyFrame = track->CreateNodeKeyFrame(6);
+	keyFrame = track->CreateNodeKeyFrame(2.896);
 	keyFrame->SetTranslate(Vector3f(-100, 0, -100));
 	keyFrame->SetRotation(Quaternion(Vector3f(0,1,0),-90));
 	keyFrame->SetScale(Vector3f(2,2,2));
@@ -167,7 +166,7 @@ void DemoApp::CreateScene(void)
 void DemoApp::Run()
 {
 	CreateScene();
-	mp_sceneManager->StartRendering(m_ifUseShader);
+	mp_sceneManager->StartRendering();
 }
 /************************ handle sdl events **********************************/
 void DemoApp::ProcessEvents()
@@ -181,9 +180,8 @@ void DemoApp::ProcessEvents()
 			case SDL_MOUSEMOTION:
 				HandleMouseMotion(event.motion);
 				break;
-			case SDL_QUIT:            /* Handle quit requests (like Ctrl-c). */            
-				mp_sceneManager->QuitFromRendering();
-				printf("2\n");
+			case SDL_QUIT:            /* Handle quit requests (like Ctrl-c). */        
+				//mp_sceneManager->QuitFromRendering();
 				exit(0);
 				break;        
 			}    
@@ -193,11 +191,10 @@ void DemoApp::HandleKeyDown( SDL_keysym* keysym )
 {    
 	if(mp_camera){
 		switch( keysym->sym ) {    
-			case SDLK_ESCAPE:        
-				mp_sceneManager->QuitFromRendering();
-				printf("1\n");
-				exit(0);
-				break;    
+			case SDLK_ESCAPE:
+				//mp_sceneManager->QuitFromRendering();	
+				exit(0);		
+				break; 
 			case SDLK_DOWN:
 			case SDLK_s:
 				mp_camera->Translate(Vector3f(0,0,STEPSIZE));
@@ -219,7 +216,8 @@ void DemoApp::HandleKeyDown( SDL_keysym* keysym )
 }
 void DemoApp::HandleMouseMotion(SDL_MouseMotionEvent event)
 {
-	if(mp_camera){
+	if(mp_camera)
+	{
 		//printf("rel : (%d %d)\n", event.xrel, event.yrel);
 		//0.225 = 180/800 0.3 = 180/600
 		mp_camera->Yaw(-2*event.xrel*HANGLESTEP);
@@ -229,8 +227,8 @@ void DemoApp::HandleMouseMotion(SDL_MouseMotionEvent event)
 /******************* main function ***************************/
 int main()
 {
-	DemoApp *app = new DemoApp(true);
+	DemoApp app;
 	pthread_create(&fpsThreadId, NULL, FpsThread, NULL);
-	app->Run();
+	app.Run();
 	return 0;
 }

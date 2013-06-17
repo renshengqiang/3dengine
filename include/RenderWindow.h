@@ -5,8 +5,8 @@
 class ENGINE_EXPORT RenderWindow{
 	public:
 		RenderWindow(int width, int height);
-		void InitSDL(void);
-		void Quit(int exit_code);
+		bool InitSDL(void);
+		void Quit();
 		void SwapBuffer();
 	private:
 		int m_WindowWidth,m_WindowHeight;
