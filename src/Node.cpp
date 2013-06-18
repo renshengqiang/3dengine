@@ -390,6 +390,9 @@ void Node::Scale(float x, float y, float z)
 	return;
 }
 //----------------------------------------------------------
+//如果用户希望保存动画之前的变换，可以通过这个函数保存
+//否则后面的动画函数会用单位的变换覆盖掉m_position, m_orientation, m_scale
+//就是说节点动画会将之前设置的变换消除，然后从原始点做动画
 void Node::SetInitialState(void)
 {
 	m_initialPosition = m_position;

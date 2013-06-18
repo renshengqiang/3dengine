@@ -9,6 +9,7 @@
 #include "FrameListener.h"
 #include "EventListener.h"
 #include "MeshManager.h"
+#include "math_3d.h"
 #include <string>
 #include <map>
 #include <vector>
@@ -24,7 +25,12 @@ public:
 	typedef std::map<std::string, Animation*> AnimationList;
 	typedef AnimationList::iterator AnimationIterator;
 	typedef AnimationList::const_iterator AnimationConstIterator;
-	typedef std::vector<SceneNode*> RenderQueue;
+
+	struct RenderItem{
+		SceneNode *pNode;
+		Matrix4f	transMatrix;
+	};
+	typedef std::vector<struct RenderItem> RenderQueue;
 	typedef RenderQueue::iterator RenderQueueIterator;
 	
 	SceneManager(enum ManagerType=MANAGER_GENERAL);
@@ -110,7 +116,7 @@ public:
 	virtual void DestroyAnimationState(const std::string &name);
 	virtual void DestroyAllAnimationStates(void);
 protected:
-	void _ApplySceneAnimations(void);
+	void _ApplySceneAnimations();
 	static void* _RenderThreadFunc(void *);
 
 private:
@@ -128,6 +134,7 @@ private:
 	pthread_t			m_renderThread;
 	RenderQueue		*mp_renderingQueue;
 	pthread_mutex_t	m_renderingQueueMutex;
+	pthread_cond_t	m_renderingQueueFullCond, m_renderingQueueEmptyCond;
 	pthread_mutex_t	m_sdlMutex;
 	pthread_cond_t	m_sdlCond;
 	

@@ -25,6 +25,8 @@ SceneManager::SceneManager(enum ManagerType type):
 	//create a singleton MeshManager
 	mMeshManager = new MeshManager();
 	pthread_mutex_init(&m_renderingQueueMutex, NULL);
+	pthread_cond_init(&m_renderingQueueFullCond, NULL);
+	pthread_cond_init(&m_renderingQueueEmptyCond, NULL);
 	pthread_mutex_init(&m_sdlMutex, NULL);
 	pthread_cond_init(&m_sdlCond, NULL);
 }
@@ -39,6 +41,8 @@ SceneManager::~SceneManager()
 	DestroyAllAnimations();
 	delete mMeshManager;
 	pthread_mutex_destroy(&m_renderingQueueMutex);
+	pthread_cond_destroy(&m_renderingQueueFullCond);
+	pthread_cond_destroy(&m_renderingQueueEmptyCond);
 	pthread_mutex_destroy(&m_sdlMutex);
 	pthread_cond_destroy(&m_sdlCond);
 }
@@ -177,7 +181,7 @@ void SceneManager::DestroyAllAnimationStates(void)
 	return;
 }
 //-----------------------------------------------------------------------
-void SceneManager::_ApplySceneAnimations(void)
+void SceneManager::_ApplySceneAnimations()
 {
 	AnimationStateSet::EnabledAnimationStateIterator iter = m_animationStateSet._GetEnabledAnimationIteratorBegin();
 	
@@ -192,6 +196,7 @@ void SceneManager::_ApplySceneAnimations(void)
 			Node *node = track->GetAssociatedNode();
 			node->ResetToInitialState();
 		}
+			
 		//use animation
 		animation->Apply(animationState->GetTimePosition());
 	}
@@ -202,48 +207,50 @@ void SceneManager::StartRendering()
 {
 	std::queue<SceneNode*> IterQueue;
 	RenderQueue *pQueue;
+	struct RenderItem renderItem;
+	Matrix4f transMatrix;
 	while( 1 ) 
 	{
 		pthread_mutex_lock(&m_renderingQueueMutex);
-		pQueue = mp_renderingQueue;
+		while(mp_renderingQueue != NULL)
+			pthread_cond_wait(&m_renderingQueueEmptyCond, &m_renderingQueueMutex);
 		pthread_mutex_unlock(&m_renderingQueueMutex);
 
-		if(pQueue == NULL)
+		pQueue= new RenderQueue();
+		IterQueue.push(mp_rootNode);
+		
+		_ApplySceneAnimations();
+		while(!IterQueue.empty())
 		{
-			pQueue= new RenderQueue();
-			IterQueue.push(mp_rootNode);
+			SceneNode *pNode = IterQueue.front();
+			IterQueue.pop();
+
+			renderItem.pNode = pNode;
+			renderItem.transMatrix = pNode->_GetFullTransform();
+			pQueue->push_back(renderItem);			
 			
-			//这个地方是闪烁的原因，前面的一帧在绘制，后面的一帧在更新导致的
-			//但是这个地方又不能对每个节点进行加锁控制，代价太大
-			//这里动画的原理:先复位，后计算关键帧的位置，然后应用关键帧
-			//暂时的策略是让渲染线程等待10毫秒，让主线程有时间更新
-			//下一步的改进应该让渲染节点中加入每个节点的变换矩阵，这样设计需要对节点模块进行重新设计
-			_ApplySceneAnimations();
-			while(!IterQueue.empty())
-			{
-				SceneNode *PNode = IterQueue.front();
-				IterQueue.pop();
-				pQueue->push_back(PNode);
-				int n  = PNode->NumChildren();
-				for(int i=0; i<n; ++i)
-					IterQueue.push((SceneNode*)(PNode->GetChild(i)));		
-			}
-			pthread_mutex_lock(&m_renderingQueueMutex);
-			mp_renderingQueue = pQueue;
-			pthread_mutex_unlock(&m_renderingQueueMutex);
-			if(mp_frameListener)
-			{
-				if(mp_frameListener->FrameQueued(GetElapsedTime()) == false)
-					break;
-			}
-			if(mp_eventListener) 
-			{	
-				mp_eventListener->ProcessEvents();
-			}
+			int n  = pNode->NumChildren();
+			for(int i=0; i<n; ++i)
+				IterQueue.push((SceneNode*)(pNode->GetChild(i)));		
+		}		
+		
+		pthread_mutex_lock(&m_renderingQueueMutex);
+		mp_renderingQueue = pQueue;
+		pthread_mutex_unlock(&m_renderingQueueMutex);
+		pthread_cond_signal(&m_renderingQueueFullCond);
+		if(mp_frameListener)
+		{
+			if(mp_frameListener->FrameQueued(GetElapsedTime()) == false)
+				break;
+		}
+		if(mp_eventListener) 
+		{	
+			mp_eventListener->ProcessEvents();
 		}
 	}
 }
 //-----------------------------------------------------------------------
+//-----------------------  Rendering Thread Func ----------------------------
 //-----------------------------------------------------------------------
 #include "Texture.h"
 GLuint texture_obj[6];
@@ -260,6 +267,7 @@ int sceneFps = 0;
 void* SceneManager::_RenderThreadFunc(void *p)
 {
 	SceneManager *pManager = static_cast<SceneManager*>(p);
+	RenderQueue *pQueue;
 
 	if(pManager->mp_renderWindow->InitSDL() == false)
 	{
@@ -282,47 +290,48 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		texture_obj[i] = pTexture->GetTextureObj();
 		delete pTexture;
 	}
+	
 	while(1)
 	{
 		Matrix4f projViewMatrix = pManager->mp_cameraInUse->GetProjViewMatrix();
 		Matrix4f perspectViewModelMatrix;
 		
 		ClearBuffer();
+		
 		//render skybox
 		UseFixedPipeline();
 		DrawSkyBox(texture_obj, pManager->mp_cameraInUse->m_angleHorizontal, pManager->mp_cameraInUse->m_angleVertical);
 
 		pthread_mutex_lock(&(pManager->m_renderingQueueMutex));
-		RenderQueue *pQueue = pManager->mp_renderingQueue;
+		while(pManager->mp_renderingQueue == NULL)
+			pthread_cond_wait(&(pManager->m_renderingQueueFullCond), &(pManager->m_renderingQueueMutex));
+		pQueue = pManager->mp_renderingQueue;
 		pManager->mp_renderingQueue = NULL;
+		pthread_cond_signal(&(pManager->m_renderingQueueEmptyCond));
 		pthread_mutex_unlock(&(pManager->m_renderingQueueMutex));
 
-		usleep(10);//休眠10毫秒是为了让主线程更新渲染线程用
-		if(pQueue != NULL)
+		//render scene
+		UseShaderToRender();
+		for(RenderQueueIterator iter = pQueue->begin(); iter != pQueue->end(); ++iter)
 		{
-			//render scene
-			UseShaderToRender();
-			for(RenderQueueIterator iter = pQueue->begin(); iter != pQueue->end(); ++iter)
+			Entity *pEntity = (iter->pNode)->GetAttachedEntity();
+			if(pEntity!= NULL)
 			{
-				Entity *pEntity = (*iter)->GetAttachedEntity();
-				if(pEntity!= NULL){
-					const Matrix4f &modelMatrix = (*iter)->_GetFullTransform();
-					perspectViewModelMatrix = projViewMatrix * modelMatrix;
-					//set matrix
-					SetTranslateMatrix(g_PVMMatrixLocation,&perspectViewModelMatrix);
-					//render entity
-					pEntity->Render();
-				}
+				perspectViewModelMatrix = projViewMatrix * iter->transMatrix;
+				//set matrix
+				SetTranslateMatrix(g_PVMMatrixLocation,&perspectViewModelMatrix);
+				//render entity
+				pEntity->Render();
 			}
-			delete pQueue;
 		}
+		delete pQueue;
 		
 		//render overlay
 		UseFixedPipeline();
 		DrawOverlay(sceneFps);
 
-		if(pManager->mp_renderWindow) pManager->mp_renderWindow->SwapBuffer();
+		//swap buffer
+		pManager->mp_renderWindow->SwapBuffer();
 	}
 	return NULL;
 }
-
