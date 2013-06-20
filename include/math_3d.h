@@ -30,22 +30,61 @@ struct Vector2f
 
 struct Vector3f
 {
-    float x;
-    float y;
-    float z;
+	float x;
+	float y;
+	float z;
 
-    Vector3f();
-    Vector3f(float _x, float _y, float _z);
+	Vector3f();
+	Vector3f(float _x, float _y, float _z);
 	Vector3f(const Vector3f &vector);
-	
-    Vector3f &operator+=(const Vector3f &r);
-    Vector3f &operator-=(const Vector3f &r);
+	inline float operator [] ( unsigned i ) const
+	{
+		return *(&x+i);
+	}
+	inline float& operator [] ( unsigned i )
+	{
+		return *(&x+i);
+	}
+	inline float length () const
+	{
+		return (float)sqrt( x * x + y * y + z * z );
+	}
+
+	Vector3f &operator+=(const Vector3f &r);
+	Vector3f &operator-=(const Vector3f &r);
 	Vector3f &operator*=(const Vector3f &r);
 	Vector3f &operator/=(const Vector3f &r);
-    Vector3f& operator*=(float f);
-    Vector3f Cross(const Vector3f& v) const;
-    Vector3f& Normalize();
-    void Rotate(float Angle, const Vector3f& Axis);
+	Vector3f& operator*=(float f);
+	inline float dotProduct(const Vector3f& v) const
+	{
+		return x * v.x + y * v.y + z * v.z;
+	}
+	 inline float absDotProduct(const Vector3f& vec) const
+        {
+            return fabs(x * vec.x) + fabs(y * vec.y) + fabs(z * vec.z);
+        }
+	Vector3f Cross(const Vector3f& v) const;
+	Vector3f& Normalize();
+	void Rotate(float Angle, const Vector3f& Axis);
+	inline void makeFloor( const Vector3f& v )
+	{
+		if( v.x < x ) x = v.x;
+		if( v.y < y ) y = v.y;
+		if( v.z < z ) z = v.z;
+	}	
+	inline void makeCeil( const Vector3f& v )
+	{
+		if( v.x > x ) x = v.x;
+		if( v.y > y ) y = v.y;
+		if( v.z > z ) z = v.z;
+	}
+
+	// special points
+	static const Vector3f ZERO;
+	static const Vector3f UNIT_X;
+	static const Vector3f UNIT_Y;
+	static const Vector3f UNIT_Z;
+	static const Vector3f UNIT_SCALE;
 };
 
 Vector3f operator+(const Vector3f& l, const Vector3f& r);
@@ -55,6 +94,7 @@ Vector3f operator*(const Vector3f &l, const Vector3f &r);
 Vector3f operator*(const Vector3f& v, const Quaternion &q);
 Vector3f operator/(const Vector3f &l, const Vector3f &r);
 bool operator==(const Vector3f &l, const Vector3f &r);
+bool operator!=(const Vector3f &l, const Vector3f &r);
 
 struct Vector4f
 {
@@ -138,6 +178,12 @@ Quaternion operator-(const Quaternion& l, const Quaternion& r);
 struct Matrix3f
 {
 	float m[3][3];
+	inline float* operator [] (int  iRow)
+        {
+           return (float*)m[iRow];
+        }
+	/// Matrix * vector [3x3 * 3x1 = 3x1]
+        Vector3f operator* (const Vector3f& rkVector) const;
 };
 struct Matrix4f
 {
@@ -174,7 +220,41 @@ struct Matrix4f
 	Matrix4f& Inverse();
 	//计算对应行列式的值
 	float Determinant() const; 
+	inline bool isAffine(void) const
+        {
+            return m[3][0] == 0 && m[3][1] == 0 && m[3][2] == 0 && m[3][3] == 1;
+        }
+	/** 3-D Vector transformation specially for an affine matrix.
+            @remarks
+                Transforms the given 3-D vector by the matrix, projecting the 
+                result back into <i>w</i> = 1.
+            @note
+                The matrix must be an affine matrix. @see Matrix4::isAffine.
+        */
+        inline Vector3f transformAffine(const Vector3f& v) const
+        {
+            assert(isAffine());
 
+            return Vector3f(
+                    m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z + m[0][3], 
+                    m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z + m[1][3],
+                    m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z + m[2][3]);
+        }
+
+        /** 4-D Vector transformation specially for an affine matrix.
+            @note
+                The matrix must be an affine matrix. @see Matrix4::isAffine.
+        */
+        inline Vector4f transformAffine(const Vector4f& v) const
+        {
+            assert(isAffine());
+
+            return Vector4f(
+                m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z + m[0][3] * v.w, 
+                m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z + m[1][3] * v.w,
+                m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z + m[2][3] * v.w,
+                v.w);
+        }
 	Matrix4f operator*(const Matrix4f& Right) const;
 	void InitScaleTransform(float ScaleX, float ScaleY, float ScaleZ);
 	void InitRotateTransform(float RotateX, float RotateY, float RotateZ);

@@ -30,4 +30,30 @@ void SceneNode::DetachEntity(void)
 Entity *SceneNode::GetAttachedEntity(void)
 {
 	return mp_attachedEntity;
+}       
+//-----------------------------------------------------------------------
+void SceneNode::_Update(bool updateChildren, bool parentHasChanged)
+{
+	Node::_Update(updateChildren, parentHasChanged);
+	_UpdateBounds();
+}
+//-----------------------------------------------------------------------
+void SceneNode::_UpdateBounds(void)
+{
+    // Reset bounds first
+    m_worldAABB.setNull();
+
+    // Update bounds from own attached objects
+    if(mp_attachedEntity)
+    {
+    	m_worldAABB = mp_attachedEntity->GetWorldBoundingBox();
+    }
+
+    // Merge with children
+    ChildNodeIterator child;
+    for (child =m_childVec.begin(); child != m_childVec.end(); ++child)
+    {
+        SceneNode* sceneChild = static_cast<SceneNode*>(*child);
+        m_worldAABB.merge(sceneChild->m_worldAABB);
+    }
 }

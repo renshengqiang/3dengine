@@ -15,6 +15,8 @@ Mesh::Mesh(const std::string &fileName):
 	m_finalized(false)
 {
 	m_numBones = 0;
+	
+	m_AABB = AxisAlignedBox(AxisAlignedBox::EXTENT_FINITE);
 	_LoadMesh(fileName);
 }
 //--------------------------------------------------------------------------------------
@@ -48,9 +50,12 @@ bool Mesh::_LoadMesh(const std::string& filename)
 {
 	// Release the previously loaded mesh (if it exists)
 	_Clear();
+
+	//begin parse
 	mp_scene = m_importer.ReadFile(filename.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs);
 
-	if (mp_scene) {
+	if (mp_scene) 
+	{
 		Matrix4f globalInverseTransform;
 		globalInverseTransform = mp_scene->mRootNode->mTransformation;
 		globalInverseTransform.Inverse();
@@ -74,6 +79,9 @@ bool Mesh::_LoadMesh(const std::string& filename)
 			m_subMeshes[i] = new SubMesh();
 			_InitSubMesh(i, paiMesh);
 		}
+		Vector3f min = m_AABB.getMinimum();
+		Vector3f max = m_AABB.getMaximum();
+		printf("Mesh AABB min(%f %f %f), max(%f %f %f)\n", min.x, min.y, min.z, max.x, max.y, max.z);
 		if(mp_skeleton){
 			mp_skeleton->SetGloabalInverseMatrix(globalInverseTransform);
 			m_numBones = mp_skeleton->GetBoneNum();
@@ -161,6 +169,7 @@ void Mesh::_InitSubMesh(unsigned int index, const aiMesh* paiMesh)
 
 		m_subMeshes[index]->AddCoord(Vector3f(pPos->x, pPos->y, pPos->z));
 		m_subMeshes[index]->AddTextureCoord(Vector2f(pTexCoord->x, pTexCoord->y));
+		m_AABB.merge(Vector3f(pPos->x, pPos->y, pPos->z));
 	}
 	for (unsigned int i = 0 ; i < paiMesh->mNumFaces ; i++) {
 		const aiFace& Face = paiMesh->mFaces[i];
@@ -263,15 +272,6 @@ void Mesh::_InitSkeletonAnimation(void)
 	}
 }
 //--------------------------------------------------------------------------------------
-void Mesh::Render()
-{
-	for(unsigned int i=0; i < m_subMeshes.size(); ++i){
-		//UpdateSubMesh(meshEntry);
-		//UpdateVertexObject(meshEntry.vertexObject,(float*)&meshEntry.finalVertexVector[0]);
-		m_subMeshes[i]->Render();
-	}
-}
-//--------------------------------------------------------------------------------------
 void Mesh::RenderUseShader()
 {
 	if(m_finalized == false)
@@ -281,7 +281,8 @@ void Mesh::RenderUseShader()
 			m_textures[i]->Load();
 		}
 	}
-	for(unsigned int i=0;i < m_subMeshes.size();++i){
+	for(unsigned int i=0;i < m_subMeshes.size();++i)
+	{
 		if(m_finalized == false)
 			m_subMeshes[i]->Finalize();
 		m_subMeshes[i]->RenderUseShader();
@@ -294,25 +295,4 @@ void Mesh::RenderUseShader()
 		}
 	}
 	m_finalized = true;
-}
-//--------------------------------------------------------------------------------------
-/*
-	@remarks: for software animation use(skeleton animation & vertex animation)
-*/
-void Mesh::UpdateSubMesh(SubMesh &subMesh)
-{
-	Matrix4f finalMatrix;
-	for(unsigned i=0; i<subMesh.GetVertexNum();++i){
-		if(subMesh.GetVertexAttachedBoneNum(i)> 0){
-			finalMatrix.InitZero();
-			for(unsigned j=0; j<4;++j){
-				//struct AttachedBone *pBone = subMesh.GetVertexAttachedBones(i);
-				//finalMatrix += ( m_boneInfo[pBone->boneId[j]].m_finalTransformation * pBone->weight[j]);
-			}
-		}
-		else
-			finalMatrix.InitIdentity();
-		subMesh.CoordTransform(i,finalMatrix);
-	}
-	return;
 }

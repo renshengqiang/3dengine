@@ -1,9 +1,10 @@
 #ifndef _ENTITY_H
 #define _ENTITY_H
-#include "Mesh.h"
-#include "Skeleton.h"
-#include "AnimationState.h"
-#include "SkeletonAnimation.h"
+#include <Mesh.h>
+#include <Skeleton.h>
+#include <AnimationState.h>
+#include <SkeletonAnimation.h>
+#include <AxisAlignedBox.h>
 #include <map>
 #include <vector>
 #include <string>
@@ -18,6 +19,10 @@ public:
 	Entity(const std::string& meshFile);
 	~Entity();
 	AnimationState *GetAnimationState(const std::string &name);
+	 const AxisAlignedBox& GetWorldBoundingBox() const
+	{
+	    return m_fullBoundingBox;
+	}
 	void Render(void);//use shader to render
 private:
 	void _updateAnimation(void);
@@ -31,6 +36,7 @@ private:
 	//Entity对应的骨骼动画
 	AnimationStateSet m_animationStateSet;
 	SkeletonAnimationMap m_animationMap;
+	AxisAlignedBox m_fullBoundingBox;
 };
 
 #endif

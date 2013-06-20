@@ -14,6 +14,12 @@ Vector2f::Vector2f(float _x, float _y)
 }
 
 //-------------vector3f --------------------------------
+const Vector3f Vector3f::ZERO( 0, 0, 0 );
+const Vector3f Vector3f::UNIT_X( 1, 0, 0 );
+const Vector3f Vector3f::UNIT_Y( 0, 1, 0 );
+const Vector3f Vector3f::UNIT_Z( 0, 0, 1 );
+const Vector3f Vector3f::UNIT_SCALE(1, 1, 1);
+
 Vector3f::Vector3f()
 {
 	x = 0;
@@ -174,6 +180,10 @@ Vector3f operator*(const Vector3f& v, const Quaternion &q)
 bool operator==(const Vector3f &l, const Vector3f &r)
 {
 	return l.x==r.x && l.y==r.y && l.z==r.z;
+}
+bool operator!=(const Vector3f &l, const Vector3f &r)
+{
+	return l.x!=r.x || l.y !=r.y || l.z != r.z;
 }
 
 //-----------------------------------------------------------------------------

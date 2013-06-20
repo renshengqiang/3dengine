@@ -6,6 +6,8 @@ COMPILE_FILES:=	util/Timer.c\
 				math/Vector.cpp \
 				math/Quaternion.cpp \
 				math/Matrix.cpp \
+				math/Plane.cpp \
+				math/AxisAlignedBox.cpp \
 				SceneManager.cpp \
 				RenderWindow.cpp \
 				Camera.cpp \

@@ -49,7 +49,7 @@ public:
                 Applications using Ogre should just use the relative transforms.
         */
 	const Matrix4f &_GetFullTransform(void);
-	void _Update(bool updateChildren, bool parentHasChanged);
+	virtual void _Update(bool updateChildren, bool parentHasChanged);
 	void _needUpdate(void);
 	
 	void AddChild(Node *child);

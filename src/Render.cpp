@@ -542,6 +542,8 @@ void DrawOjectUseShader(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, 
 
 	glDisableVertexAttribArray(g_vertexPostionLocation);
 	glDisableVertexAttribArray(g_vertexTexCoordLocation);
+	glDisableVertexAttribArray(g_vertexBoneIdLocation);
+	glDisableVertexAttribArray(g_vertexBoneWeightLocation);
 }
 //-----------------------------------------------------------------------
 void SetModelViewMatrix(const Matrix4f * modelviewMatrix)

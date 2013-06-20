@@ -1,6 +1,21 @@
 #include "math_3d.h"
 
 //-----------------------------------------------------------------------
+Vector3f Matrix3f::operator* (const Vector3f& rkPoint) const
+{
+	Vector3f kProd;
+	for (size_t iRow = 0; iRow < 3; iRow++)
+	{
+		kProd[iRow] =
+			m[iRow][0]*rkPoint[0] +
+			m[iRow][1]*rkPoint[1] +
+			m[iRow][2]*rkPoint[2];
+	}
+	return kProd;
+}
+
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 Matrix4f::Matrix4f()
 {
 	InitIdentity();

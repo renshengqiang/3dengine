@@ -1,8 +1,8 @@
 #ifndef _SCENE_NODE_H
 #define _SCENE_NODE_H
-#include "Node.h"
-#include "Export.h"
-#include "Entity.h"
+#include <Node.h>
+#include <Export.h>
+#include <Entity.h>
 #include <string>
 
 class ENGINE_EXPORT SceneNode : public Node{
@@ -12,12 +12,17 @@ public:
 
 	void AttachEntity(Entity *pEntity);
 	void DetachEntity(void);
-	Entity *GetAttachedEntity(void);
+	Entity *GetAttachedEntity(void);	
+	
+	virtual void _Update(bool updateChildren, bool parentHasChanged);	
+	/** Tells the SceneNode to update the world bound info it stores.
+	*/
+	virtual void _UpdateBounds(void);
 	
 private:
 	virtual SceneNode* CreateChildImpl(const std::string &name);
-private:
-	//Mesh *mp_attachedMesh;
+protected:
+	AxisAlignedBox m_worldAABB;
 	Entity *mp_attachedEntity;
 };
 
