@@ -40,20 +40,21 @@ void SceneNode::_Update(bool updateChildren, bool parentHasChanged)
 //-----------------------------------------------------------------------
 void SceneNode::_UpdateBounds(void)
 {
-    // Reset bounds first
-    m_worldAABB.setNull();
+	// Reset bounds first
+	m_worldAABB.setNull();
 
-    // Update bounds from own attached objects
-    if(mp_attachedEntity)
-    {
-    	m_worldAABB = mp_attachedEntity->GetWorldBoundingBox();
-    }
+	// Update bounds from own attached objects
+	if(mp_attachedEntity)
+	{
+		m_worldAABB = mp_attachedEntity->GetBoundingBox();
+		m_worldAABB.transformAffine(_GetFullTransform());
+	}
 
-    // Merge with children
-    ChildNodeIterator child;
-    for (child =m_childVec.begin(); child != m_childVec.end(); ++child)
-    {
-        SceneNode* sceneChild = static_cast<SceneNode*>(*child);
-        m_worldAABB.merge(sceneChild->m_worldAABB);
-    }
+	// Merge with children
+	ChildNodeIterator child;
+	for (child =m_childVec.begin(); child != m_childVec.end(); ++child)
+	{
+	    SceneNode* sceneChild = static_cast<SceneNode*>(*child);
+	    m_worldAABB.merge(sceneChild->m_worldAABB);
+	}
 }

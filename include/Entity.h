@@ -19,10 +19,8 @@ public:
 	Entity(const std::string& meshFile);
 	~Entity();
 	AnimationState *GetAnimationState(const std::string &name);
-	 const AxisAlignedBox& GetWorldBoundingBox() const
-	{
-	    return m_fullBoundingBox;
-	}
+	const AxisAlignedBox& GetBoundingBox() const;
+		
 	void Render(void);//use shader to render
 private:
 	void _updateAnimation(void);
@@ -36,6 +34,7 @@ private:
 	//Entity对应的骨骼动画
 	AnimationStateSet m_animationStateSet;
 	SkeletonAnimationMap m_animationMap;
+	//local space 静态包围盒
 	AxisAlignedBox m_fullBoundingBox;
 };
 

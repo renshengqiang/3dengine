@@ -13,6 +13,10 @@ public:
 	void AttachEntity(Entity *pEntity);
 	void DetachEntity(void);
 	Entity *GetAttachedEntity(void);	
+	const AxisAlignedBox& GetWorldBoundingBox() const
+	{
+		return m_worldAABB;
+	}
 	
 	virtual void _Update(bool updateChildren, bool parentHasChanged);	
 	/** Tells the SceneNode to update the world bound info it stores.

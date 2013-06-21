@@ -218,22 +218,29 @@ void SceneManager::StartRendering()
 
 		pQueue= new RenderQueue();
 		IterQueue.push(mp_rootNode);
-		
+
+		//apply animation
 		_ApplySceneAnimations();
+		//update sceneGraph
+		mp_rootNode->_Update(true, false);
 		while(!IterQueue.empty())
 		{
 			SceneNode *pNode = IterQueue.front();
 			IterQueue.pop();
 
-			renderItem.pNode = pNode;
-			renderItem.transMatrix = pNode->_GetFullTransform();
-			pQueue->push_back(renderItem);			
+			if(mp_cameraInUse->IsVisible(pNode->GetWorldBoundingBox(), NULL))
+			{
+				renderItem.pNode = pNode;
+				renderItem.transMatrix = pNode->_GetFullTransform();
+				pQueue->push_back(renderItem);			
+			}
 			
 			int n  = pNode->NumChildren();
 			for(int i=0; i<n; ++i)
 				IterQueue.push((SceneNode*)(pNode->GetChild(i)));		
 		}		
-		
+
+		//printf("queue num: %d\n", pQueue->size());
 		pthread_mutex_lock(&m_renderingQueueMutex);
 		mp_renderingQueue = pQueue;
 		pthread_mutex_unlock(&m_renderingQueueMutex);
@@ -323,6 +330,7 @@ void* SceneManager::_RenderThreadFunc(void *p)
 				//render entity
 				pEntity->Render();
 			}
+			//DrawAABB(iter->pNode->GetWorldBoundingBox());
 		}
 		delete pQueue;
 		

@@ -8,6 +8,7 @@ COMPILE_FILES:=	util/Timer.c\
 				math/Matrix.cpp \
 				math/Plane.cpp \
 				math/AxisAlignedBox.cpp \
+				math/Frustum.cpp \
 				SceneManager.cpp \
 				RenderWindow.cpp \
 				Camera.cpp \

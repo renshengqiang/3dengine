@@ -22,6 +22,7 @@ public:
 	Mesh(const std::string& Filename);
 	~Mesh();
 	Skeleton *GetSkeleton(void);
+	const AxisAlignedBox& GetBoundingBox(void) const;
 	void RenderUseShader(void);
 	unsigned GetRelatedBoneNum(void);
 private:

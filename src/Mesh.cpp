@@ -30,6 +30,11 @@ Skeleton *Mesh::GetSkeleton(void)
 	return mp_skeleton;
 }
 //--------------------------------------------------------------------------------------
+const AxisAlignedBox& Mesh::GetBoundingBox(void) const
+{
+	return m_AABB;
+}
+//--------------------------------------------------------------------------------------
 unsigned Mesh::GetRelatedBoneNum(void)
 {
 	return m_numBones;

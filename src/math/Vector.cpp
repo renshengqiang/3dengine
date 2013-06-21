@@ -93,7 +93,7 @@ Vector3f Vector3f::Cross(const Vector3f& v) const
 	return Vector3f(_x, _y, _z);
 }
 //-----------------------------------------------------------------------------
-Vector3f& Vector3f::Normalize()
+float Vector3f::Normalize()
 {
 	const float length = sqrtf(x * x + y * y + z * z);
 	assert(length!=0);
@@ -101,7 +101,7 @@ Vector3f& Vector3f::Normalize()
 	y /= length;
 	z /= length;
 
-	return *this;
+	return length;
 }
 //-----------------------------------------------------------------------------
 void Vector3f::Rotate(float Angle, const Vector3f& Axe)

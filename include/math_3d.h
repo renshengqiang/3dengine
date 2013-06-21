@@ -64,7 +64,7 @@ struct Vector3f
             return fabs(x * vec.x) + fabs(y * vec.y) + fabs(z * vec.z);
         }
 	Vector3f Cross(const Vector3f& v) const;
-	Vector3f& Normalize();
+	float Normalize();
 	void Rotate(float Angle, const Vector3f& Axis);
 	inline void makeFloor( const Vector3f& v )
 	{

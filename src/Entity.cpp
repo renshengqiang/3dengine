@@ -32,6 +32,11 @@ AnimationState *Entity::GetAnimationState(const std::string &name)
 	return m_animationStateSet.GetAnimationState(name);
 }
 //--------------------------------------------------------------------------------------
+const AxisAlignedBox& Entity::GetBoundingBox() const
+{
+	return m_mesh->GetBoundingBox();
+}
+//--------------------------------------------------------------------------------------
 void Entity::_updateAnimation(void)
 {
 	for(unsigned i = 0; i<m_numBoneMatrices; ++i){
