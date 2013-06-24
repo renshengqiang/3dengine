@@ -50,7 +50,8 @@ class DemoApp:public FrameListener, public EventListener
 };
 DemoApp::DemoApp()
 {
-	mp_sceneManager = new SceneManager();
+	//mp_sceneManager = new SceneManager();
+	mp_sceneManager = new OctreeSceneManager();
 	mp_renderWindow = mp_sceneManager->CreateRenderWindow(800,600);
 	mp_camera = mp_sceneManager->CreateCamera(Vector3f(0.0f,0.0f,0.0f),Vector3f(0, 0, -1.0f));
 	mp_sceneManager->AddFrameListener(this);

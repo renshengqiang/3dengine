@@ -49,11 +49,22 @@ struct Vector3f
 	{
 		return (float)sqrt( x * x + y * y + z * z );
 	}
+	/** Returns a vector at a point half way between this and the passed
+		  in vector.
+	  */
+	  inline Vector3f midPoint( const Vector3f& vec ) const
+	  {
+		  return Vector3f(
+			  ( x + vec.x ) * 0.5f,
+			  ( y + vec.y ) * 0.5f,
+			  ( z + vec.z ) * 0.5f );
+	  }
 
 	Vector3f &operator+=(const Vector3f &r);
 	Vector3f &operator-=(const Vector3f &r);
 	Vector3f &operator*=(const Vector3f &r);
 	Vector3f &operator/=(const Vector3f &r);
+	Vector3f &operator/=(float scale);
 	Vector3f& operator*=(float f);
 	inline float dotProduct(const Vector3f& v) const
 	{
@@ -93,8 +104,11 @@ Vector3f operator*(const Vector3f& l, float f);
 Vector3f operator*(const Vector3f &l, const Vector3f &r);
 Vector3f operator*(const Vector3f& v, const Quaternion &q);
 Vector3f operator/(const Vector3f &l, const Vector3f &r);
+Vector3f operator/(const Vector3f &l, float scale);
 bool operator==(const Vector3f &l, const Vector3f &r);
 bool operator!=(const Vector3f &l, const Vector3f &r);
+bool operator>(const Vector3f &l, const Vector3f &r);
+bool operator<(const Vector3f &l, const Vector3f &r);
 
 struct Vector4f
 {
@@ -254,6 +268,14 @@ struct Matrix4f
                 m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z + m[1][3] * v.w,
                 m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z + m[2][3] * v.w,
                 v.w);
+        }
+	/** Sets the scale part of the matrix.
+        */
+        inline void setScale( const Vector3f& v )
+        {
+            m[0][0] = v.x;
+            m[1][1] = v.y;
+            m[2][2] = v.z;
         }
 	Matrix4f operator*(const Matrix4f& Right) const;
 	void InitScaleTransform(float ScaleX, float ScaleY, float ScaleZ);

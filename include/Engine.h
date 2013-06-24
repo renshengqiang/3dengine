@@ -2,6 +2,7 @@
 #define _ENGINE_H
 
 #include <SceneManager.h>
+#include <OctreeSceneManager.h>
 #include <RenderWindow.h>
 #include <Camera.h>
 #include <Mesh.h>

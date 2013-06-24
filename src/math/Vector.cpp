@@ -75,6 +75,14 @@ Vector3f& Vector3f::operator/=(const Vector3f &r)
 	return *this;
 }
 //-----------------------------------------------------------------------------
+Vector3f& Vector3f::operator/=(float scale)
+{
+	x/=scale;
+	y/=scale;
+	z/=scale;
+	return *this;
+}
+//-----------------------------------------------------------------------------
 Vector3f& Vector3f::operator*=(float f)
 {
 	x *= f;
@@ -164,6 +172,14 @@ Vector3f operator/(const Vector3f &l, const Vector3f &r)
 	return ret;
 }
 //-----------------------------------------------------------------------------
+Vector3f operator/(const Vector3f &l, float scale)
+{
+	Vector3f ret(l);
+
+	ret/=scale;
+	return ret;
+}
+//-----------------------------------------------------------------------------
 Vector3f operator*(const Vector3f& v, const Quaternion &q)
 {
 	// nVidia SDK implementation
@@ -184,6 +200,14 @@ bool operator==(const Vector3f &l, const Vector3f &r)
 bool operator!=(const Vector3f &l, const Vector3f &r)
 {
 	return l.x!=r.x || l.y !=r.y || l.z != r.z;
+}
+bool operator>(const Vector3f &l, const Vector3f &r)
+{
+	return l.x > r.x && l.y > r.y && l.z >r.z;
+}
+bool operator<(const Vector3f &l, const Vector3f &r)
+{
+	return l.x < r.x && l.y < r.y && l.z < r.z;
 }
 
 //-----------------------------------------------------------------------------

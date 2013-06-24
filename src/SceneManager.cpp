@@ -202,13 +202,42 @@ void SceneManager::_ApplySceneAnimations()
 	}
 	return;
 }
+//-----------------------------------------------------------------------
+void SceneManager::_updateSceneGraph( Camera * cam )
+{
+	mp_rootNode->_Update(true, false);
+}
+//-----------------------------------------------------------------------
+void SceneManager::_findVisibleObjects(Camera * cam, SceneManager::RenderQueue& renderQueue)
+{
+	std::queue<SceneNode*> IterQueue;
+	struct RenderItem renderItem;
+	
+    	renderQueue.clear();
+	IterQueue.push(mp_rootNode);
+	while(!IterQueue.empty())
+	{
+		SceneNode *pNode = IterQueue.front();
+		IterQueue.pop();
+
+		if(cam->IsVisible(pNode->GetWorldBoundingBox(), NULL))
+		{
+			renderItem.pNode = pNode;
+			renderItem.transMatrix = pNode->_GetFullTransform();
+			renderQueue.push_back(renderItem);			
+		}
+		
+		int n  = pNode->NumChildren();
+		for(int i=0; i<n; ++i)
+			IterQueue.push((SceneNode*)(pNode->GetChild(i)));		
+	}	
+}
+
 //------------------------------Rendering Operation----------------------------
 void SceneManager::StartRendering()
 {
-	std::queue<SceneNode*> IterQueue;
 	RenderQueue *pQueue;
-	struct RenderItem renderItem;
-	Matrix4f transMatrix;
+	
 	while( 1 ) 
 	{
 		pthread_mutex_lock(&m_renderingQueueMutex);
@@ -217,28 +246,13 @@ void SceneManager::StartRendering()
 		pthread_mutex_unlock(&m_renderingQueueMutex);
 
 		pQueue= new RenderQueue();
-		IterQueue.push(mp_rootNode);
 
 		//apply animation
 		_ApplySceneAnimations();
 		//update sceneGraph
-		mp_rootNode->_Update(true, false);
-		while(!IterQueue.empty())
-		{
-			SceneNode *pNode = IterQueue.front();
-			IterQueue.pop();
-
-			if(mp_cameraInUse->IsVisible(pNode->GetWorldBoundingBox(), NULL))
-			{
-				renderItem.pNode = pNode;
-				renderItem.transMatrix = pNode->_GetFullTransform();
-				pQueue->push_back(renderItem);			
-			}
-			
-			int n  = pNode->NumChildren();
-			for(int i=0; i<n; ++i)
-				IterQueue.push((SceneNode*)(pNode->GetChild(i)));		
-		}		
+		_updateSceneGraph(mp_cameraInUse);
+		//find visible scenenodes
+		_findVisibleObjects(mp_cameraInUse, *pQueue);
 
 		//printf("queue num: %d\n", pQueue->size());
 		pthread_mutex_lock(&m_renderingQueueMutex);

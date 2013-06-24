@@ -35,7 +35,7 @@ public:
 	
 	SceneManager(enum ManagerType=MANAGER_GENERAL);
 	~SceneManager();
-	Camera* CreateCamera(Vector3f pos= Vector3f(0,0,0), Vector3f target=Vector3f(0,0,-1), Vector3f up=Vector3f(0,1,0));
+	virtual Camera* CreateCamera(Vector3f pos= Vector3f(0,0,0), Vector3f target=Vector3f(0,0,-1), Vector3f up=Vector3f(0,1,0));
 	RenderWindow* CreateRenderWindow(int w=800, int h=600);
 	void AddFrameListener(FrameListener *frameListener);
 	void AddEventListener(EventListener *eventListener);
@@ -115,11 +115,16 @@ public:
 	virtual bool HasAnimationState(const std::string &name) const;
 	virtual void DestroyAnimationState(const std::string &name);
 	virtual void DestroyAllAnimationStates(void);
+	
+	/** Does nothing more */
+	virtual void _updateSceneGraph( Camera * cam );
+	/** Recurses through the octree determining which nodes are visible. */
+	virtual void _findVisibleObjects(Camera * cam, SceneManager::RenderQueue& renderQueue);
 protected:
 	void _ApplySceneAnimations();
 	static void* _RenderThreadFunc(void *);
 
-private:
+protected:
 	enum ManagerType m_managerType;
 	Camera *mp_cameraInUse;
 	RenderWindow *mp_renderWindow;

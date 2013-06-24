@@ -31,5 +31,9 @@ COMPILE_FILES:=	util/Timer.c\
 				SkeletonAnimation.cpp \
 				Entity.cpp \
 				MeshManager.cpp \
+				Octree.cpp \
+				OctreeCamera.cpp \
+				OctreeNode.cpp \
+				OctreeSceneManager.cpp \
 				FreeType.cpp
 include ../Makefile-so
