@@ -89,10 +89,12 @@ void SubMesh::CoordTransform(unsigned vertexIndex, const Matrix4f & transMatrix)
 	return;
 }
 //--------------------------------------------------------------------------------------
+/*
 void SubMesh::Render()
 {
 	DrawObject(0,indexObject,vertexObject,pixelObject,NULL);	
 }
+*/
 //--------------------------------------------------------------------------------------
 void SubMesh::RenderUseShader()
 {

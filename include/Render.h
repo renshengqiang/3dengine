@@ -89,7 +89,7 @@ void ClearBuffer(void);
 void DrawSkyBox(GLuint *textures, float horizon_angle, float verticle_angle);
 void DrawOverlay(int fps);
 void DrawAABB(AxisAlignedBox aabb);
-void DrawObject(int type,const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj, struct context *contx);
+//void DrawObject(int type,const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj, struct context *contx);
 void DrawOjectUseShader(const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj);
 void SetModelViewMatrix(const Matrix4f *modelviewMatrix);
 void SetProjectMatrix(const Matrix4f *projectMatrix);

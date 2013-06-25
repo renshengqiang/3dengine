@@ -466,6 +466,7 @@ PIXEL_OBJ *CreatePixelObject2(GLuint object, GLenum textureUnit, GLenum textureT
  * 3. 使用顶点数组函数绘制渲染
  * 4. 禁止使能顶点数组相关客户端状态
  */
+ /*
 void DrawObject(int type, const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, const PIXEL_OBJ *pixelObj, struct context *contx)
 {	
 	//texture 
@@ -517,6 +518,7 @@ void DrawObject(int type, const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj
 	}	
 	return ;
 }
+*/
 //-----------------------------------------------------------------------
 void DrawOjectUseShader(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, const PIXEL_OBJ *pixelObj)
 {

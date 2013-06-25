@@ -28,7 +28,7 @@ public:
 	void AddIndex(int index);
 	void AddBoneData(int index, unsigned short boneId, float weight);
 	void Finalize();
-	void Render();
+	//void Render();
 	void RenderUseShader();
 	unsigned GetVertexNum();
 	unsigned GetVertexAttachedBoneNum(unsigned vertexIndex);
