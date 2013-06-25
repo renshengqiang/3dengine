@@ -16,86 +16,46 @@ class OctreeCamera;
 class  OctreeSceneManager : public SceneManager
 {
 public:
-    /** Standard Constructor.  Initializes the octree to -10000,-10000,-10000 to 10000,10000,10000 with a depth of 8. */
-    OctreeSceneManager();
-    /** Standard Constructor */
-    OctreeSceneManager(AxisAlignedBox &box, int max_depth );
-    /** Standard destructor */
-    ~OctreeSceneManager();
+	// Standard Constructor.  Initializes the octree to -10000,-10000,-10000 to 10000,10000,10000 with a depth of 8. 
+	OctreeSceneManager();
+	// Standard Constructor 
+	OctreeSceneManager(AxisAlignedBox &box, int max_depth );
+	// Standard destructor
+	~OctreeSceneManager();
 
-    /** Initializes the manager to the given box and depth.
-    */
-    void init( AxisAlignedBox &box, int d );
+	//Initializes the manager to the given box and depth.
+	void Init( AxisAlignedBox &box, int d );
 
-    /** Creates a specialized OctreeNode */
-    virtual SceneNode * createSceneNodeImpl ( void );
-    /** Creates a specialized OctreeNode */
-    virtual SceneNode * createSceneNodeImpl ( const std::string &name );
+	 // Creates a specialized OctreeCamera    
+	virtual Camera* CreateCamera(Vector3f pos= Vector3f(0,0,0), Vector3f target=Vector3f(0,0,-1), Vector3f up=Vector3f(0,1,0));
 
-    /** Creates a specialized OctreeCamera */    
-    virtual Camera* CreateCamera(Vector3f pos= Vector3f(0,0,0), Vector3f target=Vector3f(0,0,-1), Vector3f up=Vector3f(0,1,0));
-    
-    /** Deletes a scene node */
-    virtual void destroySceneNode( const std::string &name );
-
-    /** Does nothing more */
-    virtual void _updateSceneGraph( Camera * cam );
-    /** Recurses through the octree determining which nodes are visible. */
-    virtual void _findVisibleObjects(Camera * cam, SceneManager::RenderQueue& renderQueue);
-
-    /** Walks through the octree, adding any visible objects to the render queue.
-    @remarks
-    If any octant in the octree if completely within the view frustum,
-    all subchildren are automatically added with no visibility tests.
-    */
-    void walkOctree( OctreeCamera*, RenderQueue&, Octree *,  bool);
-
-    /** Checks the given OctreeNode, and determines if it needs to be moved
-    * to a different octant.
-    */
-    void _updateOctreeNode( OctreeNode * );
-    /** Removes the given octree node */
-    void _removeOctreeNode( OctreeNode * );
-    /** Adds the Octree Node, starting at the given octree, and recursing at max to the specified depth.
-    */
-    void _addOctreeNode( OctreeNode *, Octree *octree, int depth = 0 );
-
-    /** Recurses the octree, adding any nodes intersecting with the box into the given list.
-    It ignores the exclude scene node.
-    */
-    //void findNodesIn( const AxisAlignedBox &box, list< SceneNode * >::type &list, SceneNode *exclude = 0 );
-
-    void setLooseOctree( bool b )
-    {
-        mLoose = b;
-    };
-
-
-    /** Resizes the octree to the given size */
-    //void resize( const AxisAlignedBox &box );
-
-
-    /** Overridden from SceneManager */
-   // void clearScene(void);
-protected:
+	// Does nothing more 
+	virtual void _UpdateSceneGraph( Camera * cam );
 	
-    Octree::NodeList mVisible;
+	// Recurses through the octree determining which nodes are visible. 
+	virtual void _FindVisibleObjects(Camera * cam, SceneManager::RenderQueue& renderQueue);
 
-    /// The root octree
-    Octree *mOctree;
+	/** Walks through the octree, adding any visible objects to the render queue.
+	@remarks
+	If any octant in the octree if completely within the view frustum,
+	all subchildren are automatically added with no visibility tests.
+	*/
+	void WalkOctree( OctreeCamera*, RenderQueue&, Octree *,  bool);
 
-    /// Number of rendered objs
-    int mNumObjects;
+	//Checks the given OctreeNode, and determines if it needs to be moved to a different octant.
+	void _UpdateOctreeNode( OctreeNode * );
+	
+	//Removes the given octree node 
+	void _RemoveOctreeNode( OctreeNode * );
+	
+	//Adds the Octree Node, starting at the given octree, and recursing at max to the specified depth.
+	void _AddOctreeNode( OctreeNode *, Octree *octree, int depth = 0 );
 
-    /// Max depth for the tree
-    int mMaxDepth;
+protected:
+	/// The root octree
+	Octree *mp_octree;
 
-    /// Size of the octree
-    AxisAlignedBox mBox;
-
-    bool mLoose;
-
-    Matrix4f mScaleFactor;
-
+	/// Max depth for the tree
+	int m_maxDepth;
 };
 #endif

@@ -203,12 +203,12 @@ void SceneManager::_ApplySceneAnimations()
 	return;
 }
 //-----------------------------------------------------------------------
-void SceneManager::_updateSceneGraph( Camera * cam )
+void SceneManager::_UpdateSceneGraph( Camera * cam )
 {
 	mp_rootNode->_Update(true, false);
 }
 //-----------------------------------------------------------------------
-void SceneManager::_findVisibleObjects(Camera * cam, SceneManager::RenderQueue& renderQueue)
+void SceneManager::_FindVisibleObjects(Camera * cam, SceneManager::RenderQueue& renderQueue)
 {
 	std::queue<SceneNode*> IterQueue;
 	struct RenderItem renderItem;
@@ -250,9 +250,9 @@ void SceneManager::StartRendering()
 		//apply animation
 		_ApplySceneAnimations();
 		//update sceneGraph
-		_updateSceneGraph(mp_cameraInUse);
+		_UpdateSceneGraph(mp_cameraInUse);
 		//find visible scenenodes
-		_findVisibleObjects(mp_cameraInUse, *pQueue);
+		_FindVisibleObjects(mp_cameraInUse, *pQueue);
 
 		//printf("queue num: %d\n", pQueue->size());
 		pthread_mutex_lock(&m_renderingQueueMutex);

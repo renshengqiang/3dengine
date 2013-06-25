@@ -2,58 +2,52 @@
 #include <OctreeNode.h>
 #include <OctreeCamera.h>
 
+//-----------------------------------------------------------------------------
 OctreeSceneManager::OctreeSceneManager() 
 {
-    AxisAlignedBox b( -10000, -10000, -10000, 10000, 10000, 10000 );
-    int depth = 8; 
-    mOctree = 0;
-    init( b, depth );
+	AxisAlignedBox b( -10000, -10000, -10000, 10000, 10000, 10000 );
+	int depth = 8; 
+	mp_octree = 0;
+	Init( b, depth );
+	delete mp_rootNode;
+	mp_rootNode = new OctreeNode(this);
 }
-
+//-----------------------------------------------------------------------------
 OctreeSceneManager::OctreeSceneManager(AxisAlignedBox &box, int max_depth ) 
 {
-    mOctree = 0;
-    init( box, max_depth );
+    mp_octree = 0;
+    Init( box, max_depth );
 }
-
-void OctreeSceneManager::init( AxisAlignedBox &box, int depth )
+//-----------------------------------------------------------------------------
+void OctreeSceneManager::Init( AxisAlignedBox &box, int depth )
 {
 
-    if ( mOctree != 0 )
-        delete mOctree;
+    if ( mp_octree != 0 )
+        delete mp_octree;
 
-    mOctree = new Octree( 0 );
+    mp_octree = new Octree( 0 );
 
-    mMaxDepth = depth;
-    mBox = box;
+    m_maxDepth = depth;
 
-    mOctree ->mBox = box;
+    mp_octree ->m_box = box;
 
     Vector3f min = box.getMinimum();
 
     Vector3f max = box.getMaximum();
 
-    mOctree ->mHalfSize = ( max - min ) / 2;
-
-    mNumObjects = 0;
-
-    Vector3f v( 1.5, 1.5, 1.5 );
-
-    mScaleFactor.setScale( v );
-
-    //mSceneRoot isn't put into the octree since it has no volume.
+    mp_octree ->m_halfSize = ( max - min ) / 2;
 }
-
+//-----------------------------------------------------------------------------
 OctreeSceneManager::~OctreeSceneManager()
 {
 
-    if ( mOctree )
+    if ( mp_octree )
 	{
-	        delete mOctree;
-		mOctree = 0;
+	        delete mp_octree;
+		mp_octree = 0;
 	}
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 Camera* OctreeSceneManager::CreateCamera(Vector3f pos, Vector3f target, Vector3f up)
 {
 	if(mp_cameraInUse!=NULL)
@@ -61,251 +55,222 @@ Camera* OctreeSceneManager::CreateCamera(Vector3f pos, Vector3f target, Vector3f
 	mp_cameraInUse = new OctreeCamera(pos, target, up);
 	return mp_cameraInUse;
 }
-void OctreeSceneManager::destroySceneNode( const std::string &name )
-{
+//-----------------------------------------------------------------------------
 /*
-    OctreeNode * on = static_cast < OctreeNode* > ( getSceneNode( name ) );
-
-    if ( on != 0 )
-        _removeOctreeNode( on );
-
-    SceneManager::destroySceneNode( name );
-   */
-}
-
-void OctreeSceneManager::_updateOctreeNode( OctreeNode * onode )
+对八叉树进行更新操作
+节点进行了松散处理，松散处理见_AddOctreeNode
+*/
+void OctreeSceneManager::_UpdateOctreeNode( OctreeNode * onode )
 {
-    const AxisAlignedBox& box = onode ->GetWorldBoundingBox();
+	const AxisAlignedBox& box = onode ->GetWorldBoundingBox();
 
-    if ( box.isNull() )
-        return ;
+	if ( box.isNull() )
+		return ;
 
 	// Skip if octree has been destroyed (shutdown conditions)
-	if (!mOctree)
+	if (!mp_octree)
 		return;
 
-    if ( onode ->getOctant() == 0 )
-    {
-        //if outside the octree, force into the root node.
-        if ( ! onode ->_isIn( mOctree ->mBox ) )
-            mOctree->_addNode( onode );
-        else
-            _addOctreeNode( onode, mOctree );
-        return ;
-    }
+	if ( onode->GetOctant() == 0 )
+	{
+		//if outside the octree, force into the root node.
+		if ( ! onode->_IsIn( mp_octree->m_box ) )
+		    mp_octree->_AddNode( onode );
+		else
+		    _AddOctreeNode( onode, mp_octree );
+		return ;
+	}
 
-    if ( ! onode ->_isIn( onode ->getOctant() -> mBox ) )
-    {
-        _removeOctreeNode( onode );
+	if ( ! onode->_IsIn( onode ->GetOctant()->m_box ) )
+	{
+		_RemoveOctreeNode( onode );
 
-        //if outside the octree, force into the root node.
-        if ( ! onode ->_isIn( mOctree->mBox ) )
-            mOctree->_addNode( onode );
-        else
-            _addOctreeNode( onode, mOctree );
-    }
+		//if outside the octree, force into the root node.
+		if ( ! onode->_IsIn( mp_octree->m_box ) )
+			mp_octree->_AddNode( onode );
+		else
+			_AddOctreeNode( onode, mp_octree );
+	}
 }
-
+//-----------------------------------------------------------------------------
 /** Only removes the node from the octree.  It leaves the octree, even if it's empty.
 */
-void OctreeSceneManager::_removeOctreeNode( OctreeNode * n )
+void OctreeSceneManager::_RemoveOctreeNode( OctreeNode * n )
 {
 	// Skip if octree has been destroyed (shutdown conditions)
-	if (!mOctree)
+	if (!mp_octree)
 		return;
 
-    Octree * oct = n ->getOctant();
+	Octree * oct = n ->GetOctant();
 
-    if ( oct )
-    {
-        oct ->_removeNode( n );
-    }
+	if ( oct )
+	{
+		oct ->_RemoveNode( n );
+	}
 
-    n->setOctant(0);
+	n->SetOctant(0);
 }
-
-void OctreeSceneManager::_addOctreeNode( OctreeNode * n, Octree *octant, int depth )
+//-----------------------------------------------------------------------------
+void OctreeSceneManager::_AddOctreeNode( OctreeNode * n, Octree *octant, int depth )
 {
 
 	// Skip if octree has been destroyed (shutdown conditions)
-	if (!mOctree)
+	if (!mp_octree)
 		return;
 
 	const AxisAlignedBox& bx = n ->GetWorldBoundingBox();
 
 
-    //if the octree is twice as big as the scene node,
-    //we will add it to a child.
-    if ( ( depth < mMaxDepth ) && octant ->_isTwiceSize( bx ) )
-    {
-        int x, y, z;
-        octant ->_getChildIndexes( bx, &x, &y, &z );
+	//if the octree is twice as big as the scene node,
+	//we will add it to a child.
+	if ( ( depth < m_maxDepth ) && octant ->_IsTwiceSize( bx ) )
+	{
+		int x, y, z;
+		octant ->_GetChildIndexes( bx, &x, &y, &z );
 
-        if ( octant ->mChildren[ x ][ y ][ z ] == 0 )
-        {
-            octant ->mChildren[ x ][ y ][ z ] = new Octree( octant );
-            const Vector3f& octantMin = octant ->mBox.getMinimum();
-            const Vector3f& octantMax = octant ->mBox.getMaximum();
-            Vector3f min, max;
-	    //将原来的八叉树节点分成八块
-            if ( x == 0 )
-            {
-                min.x = octantMin.x;
-                max.x = ( octantMin.x + octantMax.x ) / 2;
-            }
+		if ( octant ->m_children[ x ][ y ][ z ] == 0 )
+		{
+		    octant ->m_children[ x ][ y ][ z ] = new Octree( octant );
+		    const Vector3f& octantMin = octant ->m_box.getMinimum();
+		    const Vector3f& octantMax = octant ->m_box.getMaximum();
+		    Vector3f min, max;
+		//将原来的八叉树节点分成八块
+		    if ( x == 0 )
+		    {
+		        min.x = octantMin.x;
+		        max.x = ( octantMin.x + octantMax.x ) / 2;
+		    }
+		    else
+		    {
+		        min.x = ( octantMin.x + octantMax.x ) / 2;
+		        max.x = octantMax.x;
+		    }
 
-            else
-            {
-                min.x = ( octantMin.x + octantMax.x ) / 2;
-                max.x = octantMax.x;
-            }
+		    if ( y == 0 )
+		    {
+		        min.y = octantMin.y;
+		        max.y = ( octantMin.y + octantMax.y ) / 2;
+		    }
+		    else
+		    {
+		        min.y = ( octantMin.y + octantMax.y ) / 2;
+		        max.y = octantMax.y;
+		    }
 
-            if ( y == 0 )
-            {
-                min.y = octantMin.y;
-                max.y = ( octantMin.y + octantMax.y ) / 2;
-            }
+		    if ( z == 0 )
+		    {
+		        min.z = octantMin.z;
+		        max.z = ( octantMin.z + octantMax.z ) / 2;
+		    }
+		    else
+		    {
+		        min.z = ( octantMin.z + octantMax.z ) / 2;
+		        max.z = octantMax.z;
+		    }
 
-            else
-            {
-                min.y = ( octantMin.y + octantMax.y ) / 2;
-                max.y = octantMax.y;
-            }
+		    octant ->m_children[ x ][ y ][ z ] ->m_box.setExtents( min, max );
+		    octant ->m_children[ x ][ y ][ z ] ->m_halfSize = ( max - min ) / 2;
+		}
 
-            if ( z == 0 )
-            {
-                min.z = octantMin.z;
-                max.z = ( octantMin.z + octantMax.z ) / 2;
-            }
-
-            else
-            {
-                min.z = ( octantMin.z + octantMax.z ) / 2;
-                max.z = octantMax.z;
-            }
-
-            octant ->mChildren[ x ][ y ][ z ] ->mBox.setExtents( min, max );
-            octant ->mChildren[ x ][ y ][ z ] ->mHalfSize = ( max - min ) / 2;
-        }
-
-        _addOctreeNode( n, octant ->mChildren[ x ][ y ][ z ], ++depth );
-
-    }
-
-    else
-    {
-        octant ->_addNode( n );
-    }
+		_AddOctreeNode( n, octant ->m_children[ x ][ y ][ z ], ++depth );
+	}
+	else
+	{
+	    octant ->_AddNode( n );
+	}
 }
-
-
-SceneNode * OctreeSceneManager::createSceneNodeImpl( void )
+//-----------------------------------------------------------------------------
+void OctreeSceneManager::_UpdateSceneGraph( Camera * cam )
 {
-    return new OctreeNode( this );
+	SceneManager::_UpdateSceneGraph( cam );
 }
-
-SceneNode * OctreeSceneManager::createSceneNodeImpl( const std::string &name )
+//-----------------------------------------------------------------------------
+void OctreeSceneManager::_FindVisibleObjects(Camera * cam, SceneManager::RenderQueue& renderQueue)
 {
-    return new OctreeNode( this, name );
+	renderQueue.clear();
+
+	//walk the octree, adding all visible Octreenodes nodes to the render queue.
+	WalkOctree( static_cast < OctreeCamera * > ( cam ),  renderQueue, mp_octree, false);
+	
+	//printf("renderQueue size: %d\n", renderQueue.size());
 }
-
-void OctreeSceneManager::_updateSceneGraph( Camera * cam )
+//-----------------------------------------------------------------------------
+void OctreeSceneManager::WalkOctree( OctreeCamera *camera, SceneManager::RenderQueue& renderQueue,Octree *octant , bool foundvisible)
 {
-    SceneManager::_updateSceneGraph( cam );
-}
+	//return immediately if nothing is in the node.
+	if ( octant ->NumNodes() == 0 )
+		return ;
+	OctreeCamera::Visibility v = OctreeCamera::NONE;
 
-void OctreeSceneManager::_findVisibleObjects(Camera * cam, SceneManager::RenderQueue& renderQueue)
-{
-    renderQueue.clear();
-    mVisible.clear();
-
-    mNumObjects = 0;
-
-    //walk the octree, adding all visible Octreenodes nodes to the render queue.
-    walkOctree( static_cast < OctreeCamera * > ( cam ),  renderQueue, mOctree, false);
-}
-
-void OctreeSceneManager::walkOctree( OctreeCamera *camera, SceneManager::RenderQueue& renderQueue,Octree *octant , bool foundvisible)
-{
-    //return immediately if nothing is in the node.
-    if ( octant ->numNodes() == 0 )
-        return ;
-
-    OctreeCamera::Visibility v = OctreeCamera::NONE;
-
-    if ( foundvisible )
-    {
-        v = OctreeCamera::FULL;
-    }
-    else if ( octant == mOctree )
-    {
-        v = OctreeCamera::PARTIAL;
-    }
-    else
-    {
-        AxisAlignedBox box;
-        octant ->_getCullBounds( &box );
-        v = camera->getVisibility( box );
-    }
+	if ( foundvisible )
+	{
+		v = OctreeCamera::FULL;
+	}
+	else if ( octant == mp_octree )
+	{
+		v = OctreeCamera::PARTIAL;
+	}
+	else
+	{
+		AxisAlignedBox box;
+		octant ->_GetCullBounds( &box );
+		v = camera->GetVisibility( box );
+	}
 
 
-    // if the octant is visible, or if it's the root node...
-    if ( v != OctreeCamera::NONE )
-    {
+	// if the octant is visible, or if it's the root node...
+	if ( v != OctreeCamera::NONE )
+	{
 
-        //Add stuff to be rendered;
-        Octree::NodeList::iterator it = octant ->mNodes.begin();
-	RenderItem item;
-        bool vis = true;
+		//Add stuff to be rendered;
+		Octree::NodeList::iterator it = octant ->mNodes.begin();
+		RenderItem item;
+		bool vis = true;
 
-        while ( it != octant ->mNodes.end() )
-        {
-            OctreeNode * sn = *it;
+		while ( it != octant ->mNodes.end() )
+		{
+		    OctreeNode * sn = *it;
 
-            // if this octree is partially visible, manually cull all
-            // scene nodes attached directly to this level.
+		    // if this octree is partially visible, manually cull all
+		    // scene nodes attached directly to this level.
 
-            if ( v == OctreeCamera::PARTIAL )
-                vis = camera ->IsVisible( sn->GetWorldBoundingBox(), NULL);
+		    if ( v == OctreeCamera::PARTIAL )
+			vis = camera ->IsVisible( sn->GetWorldBoundingBox(), NULL);
 
-            if (vis)
-            {
-                mNumObjects++;
-		
-		item.pNode = sn;
-		item.transMatrix = sn->_GetFullTransform();
-                renderQueue.push_back(item);
+		    if (vis)
+		    {
+			item.pNode = sn;
+			item.transMatrix = sn->_GetFullTransform();
+		        renderQueue.push_back(item);
+		    }
 
-                mVisible.push_back( sn );
-            }
+		    ++it;
+		}
 
-            ++it;
-        }
+		Octree* child;
+		bool childfoundvisible = (v == OctreeCamera::FULL);
+		if ( (child = octant->m_children[ 0 ][ 0 ][ 0 ]) != 0 )
+		    WalkOctree( camera, renderQueue, child, childfoundvisible);
 
-        Octree* child;
-        bool childfoundvisible = (v == OctreeCamera::FULL);
-        if ( (child = octant->mChildren[ 0 ][ 0 ][ 0 ]) != 0 )
-            walkOctree( camera, renderQueue, child, childfoundvisible);
+		if ( (child = octant->m_children[ 1 ][ 0 ][ 0 ]) != 0 )
+		WalkOctree( camera, renderQueue, child, childfoundvisible);
 
-        if ( (child = octant->mChildren[ 1 ][ 0 ][ 0 ]) != 0 )
-	    walkOctree( camera, renderQueue, child, childfoundvisible);
+		if ( (child = octant->m_children[ 0 ][ 1 ][ 0 ]) != 0 )
+		    WalkOctree( camera, renderQueue, child, childfoundvisible);
 
-        if ( (child = octant->mChildren[ 0 ][ 1 ][ 0 ]) != 0 )
-            walkOctree( camera, renderQueue, child, childfoundvisible);
+		if ( (child = octant->m_children[ 1 ][ 1 ][ 0 ]) != 0 )
+		    WalkOctree( camera, renderQueue, child, childfoundvisible);
 
-        if ( (child = octant->mChildren[ 1 ][ 1 ][ 0 ]) != 0 )
-            walkOctree( camera, renderQueue, child, childfoundvisible);
+		if ( (child = octant->m_children[ 0 ][ 0 ][ 1 ]) != 0 )
+		    WalkOctree( camera, renderQueue, child, childfoundvisible);
 
-        if ( (child = octant->mChildren[ 0 ][ 0 ][ 1 ]) != 0 )
-            walkOctree( camera, renderQueue, child, childfoundvisible);
+		if ( (child = octant->m_children[ 1 ][ 0 ][ 1 ]) != 0 )
+		    WalkOctree( camera, renderQueue, child, childfoundvisible);
 
-        if ( (child = octant->mChildren[ 1 ][ 0 ][ 1 ]) != 0 )
-            walkOctree( camera, renderQueue, child, childfoundvisible);
+		if ( (child = octant->m_children[ 0 ][ 1 ][ 1 ]) != 0 )
+		    WalkOctree( camera, renderQueue, child, childfoundvisible);
 
-        if ( (child = octant->mChildren[ 0 ][ 1 ][ 1 ]) != 0 )
-            walkOctree( camera, renderQueue, child, childfoundvisible);
-
-        if ( (child = octant->mChildren[ 1 ][ 1 ][ 1 ]) != 0 )
-            walkOctree( camera, renderQueue, child, childfoundvisible);
-    }
+		if ( (child = octant->m_children[ 1 ][ 1 ][ 1 ]) != 0 )
+		    WalkOctree( camera, renderQueue, child, childfoundvisible);
+	}
 }

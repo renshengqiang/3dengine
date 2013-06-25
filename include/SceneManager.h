@@ -116,10 +116,10 @@ public:
 	virtual void DestroyAnimationState(const std::string &name);
 	virtual void DestroyAllAnimationStates(void);
 	
-	/** Does nothing more */
-	virtual void _updateSceneGraph( Camera * cam );
+	/** update the scene node graph and spatial graph */
+	virtual void _UpdateSceneGraph( Camera * cam );
 	/** Recurses through the octree determining which nodes are visible. */
-	virtual void _findVisibleObjects(Camera * cam, SceneManager::RenderQueue& renderQueue);
+	virtual void _FindVisibleObjects(Camera * cam, SceneManager::RenderQueue& renderQueue);
 protected:
 	void _ApplySceneAnimations();
 	static void* _RenderThreadFunc(void *);

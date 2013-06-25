@@ -1,72 +1,32 @@
 #include <OctreeNode.h>
 #include <OctreeSceneManager.h>
 
+//-----------------------------------------------------------------------
 OctreeNode::OctreeNode( SceneManager* creator ) : SceneNode(""), mp_creator(creator)
 {
-    mOctant = 0;
+	m_octant = 0;
 }
-
+//-----------------------------------------------------------------------
 OctreeNode::OctreeNode( SceneManager* creator, const std::string& name ) : SceneNode(name ), mp_creator(creator)
 {
-    mOctant = 0;
+	m_octant = 0;
 }
-
+//-----------------------------------------------------------------------
 OctreeNode::~OctreeNode()
-{}
-void OctreeNode::_removeNodeAndChildren( )
 {
-    static_cast< OctreeSceneManager * > ( mp_creator ) ->_removeOctreeNode( this ); 
-    //remove all the children nodes as well from the octree.
-    
-    for(ChildNodeIterator it = m_childVec.begin(); it != m_childVec.end(); ++it)
-    {
-        static_cast<OctreeNode *>(*it) ->_removeNodeAndChildren();
-    }
 }
-Node * OctreeNode::removeChild( unsigned short index )
+//-----------------------------------------------------------------------
+OctreeNode *OctreeNode::CreateChildImpl(const  std::string& name)
 {
-/*
-    OctreeNode *on = static_cast<OctreeNode* >( SceneNode::removeChild( index ) );
-    on -> _removeNodeAndChildren(); 
-    return on; 
-*/
-	return NULL;
+	OctreeNode *newNode = new OctreeNode(mp_creator, name);
+	
+	return newNode;
 }
-Node * OctreeNode::removeChild( Node* child )
-{
-/*
-    OctreeNode *on = static_cast<OctreeNode* >( SceneNode::removeChild( child ) );
-    on -> _removeNodeAndChildren(); 
-    return on; 
-*/
-	return child;
-}
-void OctreeNode::removeAllChildren()
-{
-	for(ChildNodeIterator it = m_childVec.begin(); it !=m_childVec.end(); ++it)
-	{
-		OctreeNode *on = static_cast<OctreeNode*>(*it);
-		on->SetParent(0);
-		on->_removeNodeAndChildren();
-	}
-	m_childVec.clear();
-}
-    
-Node * OctreeNode::removeChild( const std::string & name )
-{
-/*
-    OctreeNode *on = static_cast< OctreeNode * >( SceneNode::removeChild(  name ) );
-    on -> _removeNodeAndChildren( ); 
-    return on; 
-*/
-	return NULL;
-}
-
+//-----------------------------------------------------------------------
 //same as SceneNode, only it doesn't care about children...
-void OctreeNode::_updateBounds( void )
+void OctreeNode::_UpdateBounds( void )
 {
 	m_worldAABB.setNull();
-	mLocalAABB.setNull();
 
 	// Update bounds from own attached objects
 	if(mp_attachedEntity)
@@ -80,13 +40,13 @@ void OctreeNode::_updateBounds( void )
 	// enough to leave it's current node, we'll update it.
 	if(!m_worldAABB.isNull())
 	{
-		static_cast< OctreeSceneManager* > (mp_creator) ->_updateOctreeNode(this);
+		static_cast< OctreeSceneManager* > (mp_creator) ->_UpdateOctreeNode(this);
 	}
 }
-
+//-----------------------------------------------------------------------
 /** Since we are loose, only check the center.
 */
-bool OctreeNode::_isIn( AxisAlignedBox &box )
+bool OctreeNode::_IsIn( AxisAlignedBox &box )
 {
 	// Always fail if not in the scene graph or box is null
 	if (box.isNull()) return false;
@@ -100,32 +60,14 @@ bool OctreeNode::_isIn( AxisAlignedBox &box )
 	Vector3f bmax = box.getMaximum();
 
 	bool centre = (bmax > center && bmin < center);
-	if(!centre) return false;
+	if(!centre) return false;/*此处返回表示该节点需要放到孩子结点中去*/
 
   	// Even if covering the centre line, need to make sure this BB is not large
 	// enough to require being moved up into parent. When added, bboxes would
 	// end up in parent due to cascade but when updating need to deal with
 	// bbox growing too large for this child
+	//此处返回false表示需要放到父亲节点中去，因为此空间节点已经无法保证它的体积
 	Vector3f octreeSize = bmax - bmin;
 	Vector3f nodeSize = m_worldAABB.getMaximum() - m_worldAABB.getMinimum();
 	return nodeSize < octreeSize;
 }
-
-/** Addes the attached objects of this OctreeScene node into the queue. */
-/*
-void OctreeNode::_addToRenderQueue( Camera* cam, RenderQueue *queue, 
-	bool onlyShadowCasters, VisibleObjectsBoundsInfo* visibleBounds )
-{
-    ObjectMap::iterator mit = mObjectsByName.begin();
-
-    while ( mit != mObjectsByName.end() )
-    {
-        MovableObject * mo = mit->second;
-		
-		queue->processVisibleObject(mo, cam, onlyShadowCasters, visibleBounds);
-
-        ++mit;
-    }
-
-}
-*/

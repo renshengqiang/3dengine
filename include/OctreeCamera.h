@@ -17,22 +17,22 @@ class   OctreeCamera : public Camera
 {
 public:
 
-    /** Visibility types */
-    enum Visibility
-    {
-        NONE,
-        PARTIAL,
-        FULL
-    };
+	/** Visibility types */
+	enum Visibility
+	{
+	    NONE,
+	    PARTIAL,
+	    FULL
+	};
 
-    /* Standard constructor */
-    OctreeCamera(Vector3f pos=Vector3f(0,0,0),Vector3f target=Vector3f(0,0,-1), Vector3f up=Vector3f(0,1,0));
-    /* Standard destructor */
-    ~OctreeCamera();
+	/* Standard constructor */
+	OctreeCamera(Vector3f pos=Vector3f(0,0,0),Vector3f target=Vector3f(0,0,-1), Vector3f up=Vector3f(0,1,0));
+	/* Standard destructor */
+	~OctreeCamera();
 
-    /** Returns the visiblity of the box
-    */
-    OctreeCamera::Visibility getVisibility( const AxisAlignedBox &bound );
+	/** Returns the visiblity of the box
+	*/
+	OctreeCamera::Visibility GetVisibility( const AxisAlignedBox &bound );
 
 };
 

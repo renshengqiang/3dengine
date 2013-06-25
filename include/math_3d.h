@@ -269,14 +269,6 @@ struct Matrix4f
                 m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z + m[2][3] * v.w,
                 v.w);
         }
-	/** Sets the scale part of the matrix.
-        */
-        inline void setScale( const Vector3f& v )
-        {
-            m[0][0] = v.x;
-            m[1][1] = v.y;
-            m[2][2] = v.z;
-        }
 	Matrix4f operator*(const Matrix4f& Right) const;
 	void InitScaleTransform(float ScaleX, float ScaleY, float ScaleZ);
 	void InitRotateTransform(float RotateX, float RotateY, float RotateZ);
