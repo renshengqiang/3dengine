@@ -93,12 +93,12 @@ SceneNode * SceneManager::GetRootNode(void)
 }
 //-----------------------------------------------------------------------
 RaySceneQuery* 
-SceneManager::createRayQuery(const Ray& ray)
+SceneManager::CreateRayQuery(const Ray& ray)
 {
-    RaySceneQuery* q = new RaySceneQuery(this);
-    q->setRay(ray);
-    //q->setQueryMask(mask);
-    return q;
+	RaySceneQuery* q = new RaySceneQuery(this);
+	q->setRay(ray);
+	//q->setQueryMask(mask);
+	return q;
 }
 //-----------------------------------------------------------------------
 bool SceneManager::HasAnimation(const  std::string & name) const

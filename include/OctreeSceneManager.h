@@ -3,9 +3,6 @@
 
 #include <SceneManager.h>
 #include <Octree.h>
-#include <list>
-#include <algorithm>
-#include <string>
 
 class OctreeNode;
 class OctreeCamera;
@@ -23,6 +20,7 @@ public:
 	// Standard destructor
 	~OctreeSceneManager();
 
+	virtual RaySceneQuery* CreateRayQuery(const Ray& ray);
 	//Initializes the manager to the given box and depth.
 	void Init( AxisAlignedBox &box, int d );
 
@@ -50,6 +48,11 @@ public:
 	
 	//Adds the Octree Node, starting at the given octree, and recursing at max to the specified depth.
 	void _AddOctreeNode( OctreeNode *, Octree *octree, int depth = 0 );
+
+	/** Recurses the octree, adding any nodes intersecting with the ray into the given list.
+	It ignores the exclude scene node.
+	*/
+	void FindNodesIn( const Ray &ray, std::vector<SceneNode*>& list, SceneNode *exclude=0 );
 
 protected:
 	/// The root octree

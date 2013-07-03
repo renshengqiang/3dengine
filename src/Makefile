@@ -37,5 +37,6 @@ COMPILE_FILES:=	util/Timer.c\
 				OctreeCamera.cpp \
 				OctreeNode.cpp \
 				OctreeSceneManager.cpp \
+				OctreeRaySceneQuery.cpp \
 				FreeType.cpp
 include ../Makefile-so

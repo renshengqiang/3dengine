@@ -55,8 +55,8 @@ class DemoApp:public FrameListener, public EventListener
 };
 DemoApp::DemoApp()
 {
-	mp_sceneManager = new SceneManager();
-	//mp_sceneManager = new OctreeSceneManager();
+	//mp_sceneManager = new SceneManager();
+	mp_sceneManager = new OctreeSceneManager();
 	mp_renderWindow = mp_sceneManager->CreateRenderWindow(WINDOW_WIDTH, WINDOW_HEIGHT);
 	mp_camera = mp_sceneManager->CreateCamera(Vector3f(0.0f,0.0f,0.0f),Vector3f(0, 0, -1.0f));
 	mp_sceneManager->AddFrameListener(this);
@@ -64,7 +64,7 @@ DemoApp::DemoApp()
 	pEntity1=pEntity2=NULL;
 	mp_animationState1 = NULL;
 	mp_animationState2 = NULL;
-	mp_raySceneQuery = mp_sceneManager->createRayQuery(Ray());
+	mp_raySceneQuery = mp_sceneManager->CreateRayQuery(Ray());
 	mp_raySceneQuery->setSortByDistance(true);
 }
 DemoApp::~DemoApp()

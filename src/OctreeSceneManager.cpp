@@ -1,7 +1,147 @@
 #include <OctreeSceneManager.h>
 #include <OctreeNode.h>
 #include <OctreeCamera.h>
+#include <OctreeRaySceneQuery.h>
+#include <algorithm>
 
+enum Intersection
+{
+	OUTSIDE=0,
+	INSIDE=1,
+	INTERSECT=2
+};
+Intersection intersect( const Ray &one, const AxisAlignedBox &two )
+{
+	// Null box?
+	if (two.isNull()) return OUTSIDE;
+	// Infinite box?
+	if (two.isInfinite()) return INTERSECT;
+
+	bool inside = true;
+	const Vector3f& twoMin = two.getMinimum();
+	const Vector3f& twoMax = two.getMaximum();
+	Vector3f origin = one.getOrigin();
+	Vector3f dir = one.getDirection();
+
+	Vector3f maxT(-1, -1, -1);
+
+	int i = 0;
+	for(i=0; i<3; i++ )
+	{
+		if( origin[i] < twoMin[i] )
+		{
+			inside = false;
+			if( dir[i] > 0 )
+			{
+				maxT[i] = (twoMin[i] - origin[i])/ dir[i];
+			}
+		}
+		else if( origin[i] > twoMax[i] )
+		{
+			inside = false;
+			if( dir[i] < 0 )
+			{
+				maxT[i] = (twoMax[i] - origin[i]) / dir[i];
+			}
+		}
+	}
+
+	if( inside )
+	{
+		return INTERSECT;
+	}
+	int whichPlane = 0;
+	if( maxT[1] > maxT[whichPlane])
+	whichPlane = 1;
+	if( maxT[2] > maxT[whichPlane])
+	whichPlane = 2;
+
+	if( ((int)maxT[whichPlane]) & 0x80000000 )
+	{
+		return OUTSIDE;
+	}
+	for(i=0; i<3; i++ )
+	{
+		if( i!= whichPlane )
+		{
+			float f = origin[i] + maxT[whichPlane] * dir[i];
+			if ( f < (twoMin[i] - 0.00001f) ||
+				f > (twoMax[i] +0.00001f ) )
+			{
+				return OUTSIDE;
+			}
+		}
+	}
+	return INTERSECT;
+}
+//-----------------------------------------------------------------------------
+void _findNodes( const Ray &t, std::vector<SceneNode*>& list, SceneNode *exclude, bool full, Octree *octant )
+{
+
+	if ( !full )
+	{
+		AxisAlignedBox obox;
+		octant->_GetCullBounds( &obox );
+
+		Intersection isect = intersect( t, obox );
+
+		if ( isect == OUTSIDE )
+			return ;
+
+		full = ( isect == INSIDE );
+	}
+
+	Octree::NodeList::iterator it = octant->mNodes.begin();
+
+	while ( it != octant->mNodes.end())
+	{
+		OctreeNode * on = ( *it );
+
+		if ( on != exclude )
+		{
+			if ( full )
+			{
+				list.push_back( on );
+			}
+			else
+			{
+				Intersection nsect = intersect( t, on->GetWorldBoundingBox() );
+
+				if ( nsect != OUTSIDE )
+				{
+					list.push_back( on );
+				}
+			}
+		}
+		++it;
+	}
+
+	Octree* child;
+
+	if ( (child=octant->m_children[ 0 ][ 0 ][ 0 ]) != 0 )
+		_findNodes( t, list, exclude, full, child );
+
+	if ( (child=octant->m_children[ 1 ][ 0 ][ 0 ]) != 0 )
+		_findNodes( t, list, exclude, full, child );
+
+	if ( (child=octant->m_children[ 0 ][ 1 ][ 0 ]) != 0 )
+		_findNodes( t, list, exclude, full, child );
+
+	if ( (child=octant->m_children[ 1 ][ 1 ][ 0 ]) != 0 )
+		_findNodes( t, list, exclude, full, child );
+
+	if ( (child=octant->m_children[ 0 ][ 0 ][ 1 ]) != 0 )
+		_findNodes( t, list, exclude, full, child );
+
+	if ( (child=octant->m_children[ 1 ][ 0 ][ 1 ]) != 0 )
+		_findNodes( t, list, exclude, full, child );
+
+	if ( (child=octant->m_children[ 0 ][ 1 ][ 1 ]) != 0 )
+		_findNodes( t, list, exclude, full, child );
+
+	if ( (child=octant->m_children[ 1 ][ 1 ][ 1 ]) != 0 )
+		_findNodes( t, list, exclude, full, child );
+}
 //-----------------------------------------------------------------------------
 OctreeSceneManager::OctreeSceneManager() 
 {
@@ -15,27 +155,34 @@ OctreeSceneManager::OctreeSceneManager()
 //-----------------------------------------------------------------------------
 OctreeSceneManager::OctreeSceneManager(AxisAlignedBox &box, int max_depth ) 
 {
-    mp_octree = 0;
-    Init( box, max_depth );
+	mp_octree = 0;
+	Init( box, max_depth );
+}
+//-----------------------------------------------------------------------------
+RaySceneQuery* OctreeSceneManager::CreateRayQuery(const Ray& ray)
+{
+	RaySceneQuery* q = new OctreeRaySceneQuery(this);
+	q->setRay(ray);
+	return q;
 }
 //-----------------------------------------------------------------------------
 void OctreeSceneManager::Init( AxisAlignedBox &box, int depth )
 {
 
-    if ( mp_octree != 0 )
-        delete mp_octree;
+	if ( mp_octree != 0 )
+	    delete mp_octree;
 
-    mp_octree = new Octree( 0 );
+	mp_octree = new Octree( 0 );
 
-    m_maxDepth = depth;
+	m_maxDepth = depth;
 
-    mp_octree ->m_box = box;
+	mp_octree ->m_box = box;
 
-    Vector3f min = box.getMinimum();
+	Vector3f min = box.getMinimum();
 
-    Vector3f max = box.getMaximum();
+	Vector3f max = box.getMaximum();
 
-    mp_octree ->m_halfSize = ( max - min ) / 2;
+	mp_octree ->m_halfSize = ( max - min ) / 2;
 }
 //-----------------------------------------------------------------------------
 OctreeSceneManager::~OctreeSceneManager()
@@ -130,46 +277,46 @@ void OctreeSceneManager::_AddOctreeNode( OctreeNode * n, Octree *octant, int dep
 
 		if ( octant ->m_children[ x ][ y ][ z ] == 0 )
 		{
-		    octant ->m_children[ x ][ y ][ z ] = new Octree( octant );
-		    const Vector3f& octantMin = octant ->m_box.getMinimum();
-		    const Vector3f& octantMax = octant ->m_box.getMaximum();
-		    Vector3f min, max;
-		//将原来的八叉树节点分成八块
-		    if ( x == 0 )
-		    {
-		        min.x = octantMin.x;
-		        max.x = ( octantMin.x + octantMax.x ) / 2;
-		    }
-		    else
-		    {
-		        min.x = ( octantMin.x + octantMax.x ) / 2;
-		        max.x = octantMax.x;
-		    }
+			octant ->m_children[ x ][ y ][ z ] = new Octree( octant );
+			const Vector3f& octantMin = octant ->m_box.getMinimum();
+			const Vector3f& octantMax = octant ->m_box.getMaximum();
+			Vector3f min, max;
+			//将原来的八叉树节点分成八块
+			if ( x == 0 )
+			{
+			    min.x = octantMin.x;
+			    max.x = ( octantMin.x + octantMax.x ) / 2;
+			}
+			else
+			{
+			    min.x = ( octantMin.x + octantMax.x ) / 2;
+			    max.x = octantMax.x;
+			}
 
-		    if ( y == 0 )
-		    {
-		        min.y = octantMin.y;
-		        max.y = ( octantMin.y + octantMax.y ) / 2;
-		    }
-		    else
-		    {
-		        min.y = ( octantMin.y + octantMax.y ) / 2;
-		        max.y = octantMax.y;
-		    }
+			if ( y == 0 )
+			{
+			    min.y = octantMin.y;
+			    max.y = ( octantMin.y + octantMax.y ) / 2;
+			}
+			else
+			{
+			    min.y = ( octantMin.y + octantMax.y ) / 2;
+			    max.y = octantMax.y;
+			}
 
-		    if ( z == 0 )
-		    {
-		        min.z = octantMin.z;
-		        max.z = ( octantMin.z + octantMax.z ) / 2;
-		    }
-		    else
-		    {
-		        min.z = ( octantMin.z + octantMax.z ) / 2;
-		        max.z = octantMax.z;
-		    }
+			if ( z == 0 )
+			{
+			    min.z = octantMin.z;
+			    max.z = ( octantMin.z + octantMax.z ) / 2;
+			}
+			else
+			{
+			    min.z = ( octantMin.z + octantMax.z ) / 2;
+			    max.z = octantMax.z;
+			}
 
-		    octant ->m_children[ x ][ y ][ z ] ->m_box.setExtents( min, max );
-		    octant ->m_children[ x ][ y ][ z ] ->m_halfSize = ( max - min ) / 2;
+			octant ->m_children[ x ][ y ][ z ] ->m_box.setExtents( min, max );
+			octant ->m_children[ x ][ y ][ z ] ->m_halfSize = ( max - min ) / 2;
 		}
 
 		_AddOctreeNode( n, octant ->m_children[ x ][ y ][ z ], ++depth );
@@ -178,6 +325,11 @@ void OctreeSceneManager::_AddOctreeNode( OctreeNode * n, Octree *octant, int dep
 	{
 	    octant ->_AddNode( n );
 	}
+}
+//-----------------------------------------------------------------------------
+void OctreeSceneManager::FindNodesIn( const Ray &ray, std::vector<SceneNode*>& list, SceneNode *exclude)
+{
+	_findNodes(ray, list, exclude, false, mp_octree);
 }
 //-----------------------------------------------------------------------------
 void OctreeSceneManager::_UpdateSceneGraph( Camera * cam )

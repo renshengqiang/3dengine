@@ -43,7 +43,7 @@ public:
 	void AddEventListener(EventListener *eventListener);
 	void StartRendering();
 	SceneNode *GetRootNode(void);
-	virtual RaySceneQuery* createRayQuery(const Ray& ray);
+	virtual RaySceneQuery* CreateRayQuery(const Ray& ray);
 	//////////////////////////////////////////////////////////////////////
 	/** Creates an animation which can be used to animate scene nodes.
 	@remarks
