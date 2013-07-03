@@ -48,8 +48,9 @@ void SceneNode::_UpdateBounds(void)
 	{
 		m_worldAABB = mp_attachedEntity->GetBoundingBox();
 		m_worldAABB.transformAffine(_GetFullTransform());
+		//printf("update bounds\n");
 	}
-
+/*
 	// Merge with children
 	ChildNodeIterator child;
 	for (child =m_childVec.begin(); child != m_childVec.end(); ++child)
@@ -57,4 +58,5 @@ void SceneNode::_UpdateBounds(void)
 	    SceneNode* sceneChild = static_cast<SceneNode*>(*child);
 	    m_worldAABB.merge(sceneChild->m_worldAABB);
 	}
+*/
 }

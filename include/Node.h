@@ -50,7 +50,8 @@ public:
         */
 	const Matrix4f &_GetFullTransform(void);
 	virtual void _Update(bool updateChildren, bool parentHasChanged);
-	void _needUpdate(void);
+	void _NeedUpdate(bool forceParentUpdate = false);
+	void _RequestUpdate(Node* child, bool forceParentUpdate = false);
 	
 	void AddChild(Node *child);
 	Node *CreateChild(const std::string &name);
@@ -98,13 +99,16 @@ protected:
 	Node *mp_parent;
 	//ChildrenMap m_childMap;	
 	ChildNodeVector m_childVec;
+	ChildNodeVector m_childUpdateVec;
 
 	//Flag to indicate own transform from parent is out of date
-	bool m_needSelfUpdate;
+	mutable bool m_needSelfUpdate;
 	// Flag indicating that all children need to be updated
-	bool m_needChildUpdate;
+	mutable bool m_needChildUpdate;
+	/// Flag indicating that parent has been notified about update request
+	mutable bool m_parentNotified;
 	// Flag indicating that transform matrix need to be recompute
-	bool m_cachedTransformOutOfDate;
+	mutable bool m_cachedTransformOutOfDate;
 	// Stores the orientation of the node relative to it's parent.
         Quaternion m_orientation;
         // Stores the position/translation of the node relative to its parent.

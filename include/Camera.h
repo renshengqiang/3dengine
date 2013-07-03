@@ -4,6 +4,7 @@
 #include <SceneNode.h>
 #include <Export.h>
 #include <Frustum.h>
+#include <Ray.h>
 
 class ENGINE_EXPORT Camera : public Frustum
 {
@@ -15,5 +16,6 @@ class ENGINE_EXPORT Camera : public Frustum
 		void Yaw(float angle);/*水平方向旋转*/
 		void Pitch(float angle);/*竖直方向旋转*/
 		void Translate(Vector3f movement);
+		Ray GetCameraToViewportRay(float screenX, float screenY);
 };
 #endif

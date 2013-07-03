@@ -9,11 +9,13 @@ COMPILE_FILES:=	util/Timer.c\
 				math/Plane.cpp \
 				math/AxisAlignedBox.cpp \
 				math/Frustum.cpp \
-				SceneManager.cpp \
+				math/Ray.cpp \
 				RenderWindow.cpp \
-				Camera.cpp \
 				Node.cpp \
+				SceneManager.cpp \
+				Camera.cpp \
 				SceneNode.cpp \
+				RaySceneQuery.cpp \
 				SimpleSpline.cpp \
 				RotationalSpline.cpp \
 				Shader.cpp \

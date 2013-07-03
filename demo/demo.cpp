@@ -1,10 +1,14 @@
 #include "Engine.h"
 #include <SDL/SDL.h>
 #include <pthread.h>
+#include <map>
+using namespace std;
 
 #define STEPSIZE 10
 #define HANGLESTEP (180/(float)800)
 #define VANGLESTEP (180/(float)600)
+#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 600
 
 /**************** fps info ******************/
 pthread_t fpsThreadId = 0;
@@ -46,19 +50,22 @@ class DemoApp:public FrameListener, public EventListener
 		AnimationState *mp_animationState1,*mp_animationState2, *mp_animationState3;
 		AnimationState *mp_skeletonAnimationState;
 		Entity *pEntity1, *pEntity2, *pEntity3;
-		
+		RaySceneQuery *mp_raySceneQuery;
+		std::map<SceneNode*, AnimationState*> m_nodeAnimStateMap;
 };
 DemoApp::DemoApp()
 {
-	//mp_sceneManager = new SceneManager();
-	mp_sceneManager = new OctreeSceneManager();
-	mp_renderWindow = mp_sceneManager->CreateRenderWindow(800,600);
+	mp_sceneManager = new SceneManager();
+	//mp_sceneManager = new OctreeSceneManager();
+	mp_renderWindow = mp_sceneManager->CreateRenderWindow(WINDOW_WIDTH, WINDOW_HEIGHT);
 	mp_camera = mp_sceneManager->CreateCamera(Vector3f(0.0f,0.0f,0.0f),Vector3f(0, 0, -1.0f));
 	mp_sceneManager->AddFrameListener(this);
 	mp_sceneManager->AddEventListener(this);
 	pEntity1=pEntity2=NULL;
 	mp_animationState1 = NULL;
 	mp_animationState2 = NULL;
+	mp_raySceneQuery = mp_sceneManager->createRayQuery(Ray());
+	mp_raySceneQuery->setSortByDistance(true);
 }
 DemoApp::~DemoApp()
 {
@@ -119,7 +126,7 @@ void DemoApp::CreateScene(void)
 	keyFrame->SetTranslate(Vector3f(-100, 0, -100));
 	keyFrame->SetRotation(Quaternion(Vector3f(0,1,0),-90));
 	keyFrame->SetScale(Vector3f(2,2,2));
-
+/*
 	//同一个节点上的另一个动画(后左回)
 	animation = mp_sceneManager->CreateAnimation("transAnim1-2", 9);
 	track = animation->CreateNodeTrack(0, node1);
@@ -131,16 +138,20 @@ void DemoApp::CreateScene(void)
 	keyFrame->SetTranslate(Vector3f(-100, 0, 0));
 	keyFrame = track->CreateNodeKeyFrame(9);
 	keyFrame->SetTranslate(Vector3f(0,0,0));
-	
+*/
 	//根据节点当前位置做节点动画，否则是根据节点创建时的位置进行动画
 	node1->SetInitialState();
 	mp_animationState1= mp_sceneManager->CreateAnimationState("transAnim1-1");
 	mp_animationState1->SetEnabled(true);
 	mp_animationState1->SetLoop(true);
 
+	m_nodeAnimStateMap.insert(make_pair(node1, mp_animationState1));
+/*
 	mp_animationState2 = mp_sceneManager->CreateAnimationState("transAnim1-2");
 	mp_animationState2->SetEnabled(true);
 	mp_animationState2->SetLoop(true);
+*/
+	
 	
 	//another scenenode animation
 	animation = mp_sceneManager->CreateAnimation("transAnim2",5.792);
@@ -159,7 +170,9 @@ void DemoApp::CreateScene(void)
 	mp_animationState3= mp_sceneManager->CreateAnimationState("transAnim2");
 	mp_animationState3->SetEnabled(true);
 	mp_animationState3->SetLoop(true);
-
+	
+	m_nodeAnimStateMap.insert(make_pair(node2, mp_animationState3));
+	
 	mp_skeletonAnimationState = pEntity2->GetAnimationState("");
 	mp_skeletonAnimationState->SetEnabled(true);
 	mp_skeletonAnimationState->SetLoop(true);
@@ -172,20 +185,65 @@ void DemoApp::Run()
 /************************ handle sdl events **********************************/
 void DemoApp::ProcessEvents()
 {
-	SDL_Event event;    /* Grab all the events off the queue. */    
+	SDL_Event event;    /* Grab all the events off the queue. */ 
+	static bool mousedown = false;
 	while( SDL_PollEvent( &event ) ) {        
 		switch( event.type ) {        
 			case SDL_KEYDOWN:            /* Handle key presses. */            
 				HandleKeyDown( &event.key.keysym );            
-				break;     
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				{
+					Ray mouseRay = mp_camera->GetCameraToViewportRay((float)event.button.x/WINDOW_WIDTH, (float)event.button.y/WINDOW_HEIGHT);
+					mp_raySceneQuery->setRay(mouseRay);
+					RaySceneQueryResult &result = mp_raySceneQuery->execute();
+					RaySceneQueryResult::iterator iter;
+					for(iter=result.begin(); iter!=result.end(); iter++)
+					{
+						if(m_nodeAnimStateMap.find(iter->movable) !=m_nodeAnimStateMap.end() )
+						{
+							AnimationState *pState  = m_nodeAnimStateMap.find(iter->movable)->second;
+							pState->SetEnabled(false);
+						}
+						else
+						{
+							iter->movable->Translate(Vector3f(0,0,-100));
+						}
+					}
+					mousedown = true;
+					break;
+				}
+			case SDL_MOUSEBUTTONUP:
+				{
+					Ray mouseRay = mp_camera->GetCameraToViewportRay((float)event.button.x/WINDOW_WIDTH, (float)event.button.y/WINDOW_HEIGHT);
+					mp_raySceneQuery->setRay(mouseRay);
+					RaySceneQueryResult &result = mp_raySceneQuery->execute();
+					RaySceneQueryResult::iterator iter;
+					for(iter=result.begin(); iter!=result.end(); iter++)
+					{
+
+						if(m_nodeAnimStateMap.find(iter->movable) != m_nodeAnimStateMap.end())
+						{
+							AnimationState *pState  = m_nodeAnimStateMap.find(iter->movable)->second;
+							pState->SetEnabled(true);
+						}
+						else
+						{
+							iter->movable->Translate(Vector3f(0,0,100));
+						}
+					}
+					mousedown = false;
+					break;
+				}
 			case SDL_MOUSEMOTION:
-				HandleMouseMotion(event.motion);
+				if(mousedown)
+					HandleMouseMotion(event.motion);
 				break;
 			case SDL_QUIT:            /* Handle quit requests (like Ctrl-c). */        
 				//mp_sceneManager->QuitFromRendering();
 				exit(0);
 				break;        
-			}    
+			}
 	}
 }
 void DemoApp::HandleKeyDown( SDL_keysym* keysym )

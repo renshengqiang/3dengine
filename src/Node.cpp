@@ -6,6 +6,7 @@ Node::Node():
 	mp_parent(0),
 	m_needSelfUpdate(false),
 	m_needChildUpdate(false),
+	m_parentNotified(false),
 	m_cachedTransformOutOfDate(false),
 	m_orientation(0,0,0,1),
 	m_position(0,0,0),
@@ -17,7 +18,7 @@ Node::Node():
 	m_derivedPosition(0,0,0),
 	m_derivedScale(1,1,1)
 {
-	_needUpdate();
+	_NeedUpdate();
 }
 //----------------------------------------------------------
 Node::Node(const std::string  &name):
@@ -36,7 +37,7 @@ Node::Node(const std::string  &name):
 		m_derivedScale(1,1,1)
 {
 	m_name = name;
-	_needUpdate();
+	_NeedUpdate();
 }
 //----------------------------------------------------------
 Node::~Node()
@@ -61,7 +62,7 @@ void Node::SetParent(Node * parent)
 {
 	if(mp_parent != parent){
 		mp_parent = parent;
-		_needUpdate();
+		_NeedUpdate();
 	}
 	return;
 }
@@ -116,24 +117,41 @@ const Matrix4f& Node::_GetFullTransform(void)
 	return m_cachedTransform;
 }
 //----------------------------------------------------------
-void Node::_Update(bool updateChildren,bool parentHasChanged)
+void Node::_Update(bool updateChildren, bool parentHasChanged)
 {
+	
+	// always clear information about parent notification
+	m_parentNotified = false;
+
 	// See if we should process everyone
 	if (m_needSelfUpdate || parentHasChanged)
 	{
-	    // Update transforms from parent
-	    _UpdateFromParent();
+		// Update transforms from parent
+		_UpdateFromParent();
 	}
 
 	if(updateChildren)
 	{
-	    if (m_needChildUpdate || parentHasChanged)
-	    {
-	    	for(ChildNodeIterator iter = m_childVec.begin(); iter != m_childVec.end(); ++iter){
+		if (m_needChildUpdate || parentHasChanged)
+		{
+			for(ChildNodeIterator iter = m_childVec.begin(); iter != m_childVec.end(); ++iter){
 				(*iter)->_Update(true, true);
-	    	}
-	    }
-	    m_needChildUpdate = false;
+			}
+		}
+		else
+		{
+			// Just update selected children
+			ChildNodeIterator it, itend;
+			itend =m_childUpdateVec.end();
+			for(it = m_childUpdateVec.begin(); it != itend; ++it)
+			{
+				Node* child = *it;
+				child->_Update(true, false);
+			}
+		}
+		
+		m_childUpdateVec.clear();
+		m_needChildUpdate = false;
 	}
 }
 //----------------------------------------------------------
@@ -161,25 +179,53 @@ void Node::updateFromParentImpl(void)
 	}
 	else
 	{
-	    // Root node, no parent
-	    m_derivedOrientation = m_orientation;
-	    m_derivedPosition = m_position;
-	    m_derivedScale = m_scale;
+		// Root node, no parent
+		m_derivedOrientation = m_orientation;
+		m_derivedPosition = m_position;
+		m_derivedScale = m_scale;
 	}
 	m_cachedTransformOutOfDate = true;
 	m_needSelfUpdate = false;
 }
 //----------------------------------------------------------
-void Node::_needUpdate(void)
+void Node::_NeedUpdate(bool forceParentUpdate)
 {
 	m_needSelfUpdate = true;
 	m_needChildUpdate = true;
 	m_cachedTransformOutOfDate = true;
+	
+	// Make sure we're not root and parent hasn't been notified before
+        if (mp_parent && (!m_parentNotified || forceParentUpdate))
+        {
+		mp_parent->_RequestUpdate(this, forceParentUpdate);
+		m_parentNotified = true ;
+        }
+
+        // all children will be updated
+        m_childUpdateVec.clear();
+}
+//----------------------------------------------------------
+void Node::_RequestUpdate(Node* child, bool forceParentUpdate)
+{        
+	// If we're already going to update everything this doesn't matter
+	if (m_needChildUpdate)
+	{
+		return;
+	}
+
+	m_childUpdateVec.push_back(child);
+        // Request selective update of me, if we didn't do it before
+        if (mp_parent && (!m_parentNotified || forceParentUpdate))
+	{
+           	mp_parent->_RequestUpdate(this, forceParentUpdate);
+		m_parentNotified = true ;/*防止多次通知父节点*/
+	}
 }
 //----------------------------------------------------------
 void Node::AddChild(Node * child)
 {
-	if(child->GetParent()){
+	if(child->GetParent())
+	{
 		fprintf(stderr, "Node::AddChild: child already has a parent, ADD FAILURE\n");
 		return;
 	}
@@ -245,7 +291,7 @@ void Node::SetOrientation(const Quaternion &q)
 {
 	m_orientation = q;
 	m_orientation.Normalize();
-	_needUpdate();
+	_NeedUpdate();
 	return;
 }
 //----------------------------------------------------------
@@ -258,7 +304,7 @@ void Node::SetOrientation(float w, float x, float y, float z)
 void Node::ResetOrientation(void)
 {
 	m_orientation = Quaternion(0,0,0,1);
-	_needUpdate();
+	_NeedUpdate();
 	return;
 }
 //----------------------------------------------------------
@@ -270,7 +316,7 @@ const Vector3f &Node::GetPosition(void)
 void Node::SetPosition(const Vector3f &v)
 {
 	m_position = v;
-	_needUpdate();
+	_NeedUpdate();
 	return;
 }
 //----------------------------------------------------------
@@ -288,7 +334,7 @@ const Vector3f &Node::GetScale(void)
 void Node::SetScale(const Vector3f &v)
 {
 	m_scale = v;
-	_needUpdate();
+	_NeedUpdate();
 	return;
 }
 //----------------------------------------------------------
@@ -322,7 +368,7 @@ void Node::Translate(const Vector3f &d, TransformSpace relativeTo)
         m_position += d;
         break;
     }
-    _needUpdate();
+    _NeedUpdate();
 }
 //----------------------------------------------------------
 void Node::Translate(float x, float y, float z, TransformSpace relativeTo)
@@ -353,7 +399,7 @@ void Node::Rotate(const Quaternion &q, TransformSpace relativeTo)
         m_orientation = m_orientation * qnorm;
         break;
     }
-    _needUpdate();
+    _NeedUpdate();
 }
 //----------------------------------------------------------
 void Node::Rotate(const Vector3f &axis, float angle, TransformSpace relativeTo)
@@ -381,7 +427,7 @@ void Node::Yaw(float angle, TransformSpace relativeTo)
 void Node::Scale(const Vector3f &v)
 {
 	m_scale *= v;
-	_needUpdate();
+	_NeedUpdate();
 }
 //----------------------------------------------------------
 void Node::Scale(float x, float y, float z)
@@ -406,5 +452,5 @@ void Node::ResetToInitialState(void)
 	m_orientation = m_initialOrientation;
 	m_scale = m_initialScale;
 
-	_needUpdate();
+	_NeedUpdate();
 }

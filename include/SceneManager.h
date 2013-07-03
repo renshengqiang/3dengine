@@ -9,6 +9,8 @@
 #include "FrameListener.h"
 #include "EventListener.h"
 #include "MeshManager.h"
+#include "Ray.h"
+#include "RaySceneQuery.h"
 #include "math_3d.h"
 #include <string>
 #include <map>
@@ -41,6 +43,7 @@ public:
 	void AddEventListener(EventListener *eventListener);
 	void StartRendering();
 	SceneNode *GetRootNode(void);
+	virtual RaySceneQuery* createRayQuery(const Ray& ray);
 	//////////////////////////////////////////////////////////////////////
 	/** Creates an animation which can be used to animate scene nodes.
 	@remarks

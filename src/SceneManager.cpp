@@ -91,7 +91,16 @@ SceneNode * SceneManager::GetRootNode(void)
 {
 	return mp_rootNode;
 }
-//-----------------------------------animation------------------------------------
+//-----------------------------------------------------------------------
+RaySceneQuery* 
+SceneManager::createRayQuery(const Ray& ray)
+{
+    RaySceneQuery* q = new RaySceneQuery(this);
+    q->setRay(ray);
+    //q->setQueryMask(mask);
+    return q;
+}
+//-----------------------------------------------------------------------
 bool SceneManager::HasAnimation(const  std::string & name) const
 {
 	return m_animationList.find(name) != m_animationList.end();
@@ -188,6 +197,7 @@ void SceneManager::_ApplySceneAnimations()
 	for(; iter!=m_animationStateSet._GetEnabledAnimationIeratorEnd(); ++iter){
 		AnimationState * animationState = *iter;
 		Animation *animation = GetAnimation(animationState->GetName());
+		
 		//reset
 		for(Animation::NodeTrackIterator iter1 = animation->GetNodeTrackBegin(); 
 			iter1 != animation->GetNodeTrackEnd(); ++iter1)
