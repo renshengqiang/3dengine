@@ -8,7 +8,15 @@
 #include "KeyFrame.h"
 #include <assert.h>
 
-//-----------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
+Mesh::Mesh():
+	mp_scene(NULL),
+	mp_skeleton(NULL),
+	m_finalized(false)
+{
+	m_AABB = AxisAlignedBox(AxisAlignedBox::EXTENT_FINITE);
+}
+//--------------------------------------------------------------------------------------
 Mesh::Mesh(const std::string &fileName):
 	mp_scene(NULL),
 	mp_skeleton(NULL),
@@ -25,6 +33,15 @@ Mesh::~Mesh()
 	_Clear();
 }
 //--------------------------------------------------------------------------------------
+SubMesh *Mesh::GetSubMesh(unsigned index)
+{
+	if(m_subMeshes.size()  > index)
+	{
+		return m_subMeshes[index];
+	}
+	return NULL;
+}
+//--------------------------------------------------------------------------------------
 Skeleton *Mesh::GetSkeleton(void)
 {
 	return mp_skeleton;
@@ -35,9 +52,27 @@ const AxisAlignedBox& Mesh::GetBoundingBox(void) const
 	return m_AABB;
 }
 //--------------------------------------------------------------------------------------
+void Mesh::SetBoundingBox(const Vector3f& min, const Vector3f& max)
+{
+	m_AABB.setMinimum(min);
+	m_AABB.setMaximum(max);
+	return;
+}
+//--------------------------------------------------------------------------------------
 unsigned Mesh::GetRelatedBoneNum(void)
 {
 	return m_numBones;
+}
+//--------------------------------------------------------------------------------------
+void Mesh::AddSubMesh(SubMesh *pSubMesh)
+{
+	m_subMeshes.push_back(pSubMesh);
+}
+//--------------------------------------------------------------------------------------
+void Mesh::AddTexture(Texture *pTexture)
+{
+	m_textures.push_back(pTexture);
+	return;
 }
 //--------------------------------------------------------------------------------------
 void Mesh::_Clear()
@@ -185,7 +220,7 @@ void Mesh::_InitSubMesh(unsigned int index, const aiMesh* paiMesh)
 		m_subMeshes[index]->AddIndex(Face.mIndices[2]);
 	}
 	_InitSubMeshAttachedBoneInfo(paiMesh, m_subMeshes[index]);
-	m_subMeshes[index]->AddTexture(m_textures[paiMesh->mMaterialIndex]);
+	m_subMeshes[index]->SetTexture(m_textures[paiMesh->mMaterialIndex]);
 
 	//m_subMeshes[index]->Finalize();
 }

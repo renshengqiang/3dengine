@@ -108,7 +108,7 @@ void DemoApp::CreateScene(void)
 	SceneNode *node3 = rootNode->CreateChildSceneNode("childnode3");
 	node3->Translate(Vector3f(100, -100, -250), SceneNode::TS_LOCAL);
 	node3->Rotate(Vector3f(1,0,0), -90, SceneNode::TS_LOCAL);
-	
+		
 	node1->AttachEntity(pEntity1);
 	node2->AttachEntity(pEntity2);
 	node3->AttachEntity(pEntity3);
@@ -150,9 +150,7 @@ void DemoApp::CreateScene(void)
 	mp_animationState2 = mp_sceneManager->CreateAnimationState("transAnim1-2");
 	mp_animationState2->SetEnabled(true);
 	mp_animationState2->SetLoop(true);
-*/
-	
-	
+*/	
 	//another scenenode animation
 	animation = mp_sceneManager->CreateAnimation("transAnim2",5.792);
 	track = animation->CreateNodeTrack(0, node2);
@@ -176,6 +174,20 @@ void DemoApp::CreateScene(void)
 	mp_skeletonAnimationState = pEntity2->GetAnimationState("");
 	mp_skeletonAnimationState->SetEnabled(true);
 	mp_skeletonAnimationState->SetLoop(true);
+
+	//create Plane
+	Plane plane(Vector3f(0,-1,0), 1);
+	MeshManager& meshManager = MeshManager::GetSingleton();
+	MeshPtr meshPtr = meshManager.CreatePlane("plane",plane,200,200,1,1,false,1,1,Vector3f(0,0,-1));
+	Texture *pTexture = new Texture(GL_TEXTURE_2D, "./textures/BeachStones.jpg");
+	meshPtr->AddTexture(pTexture);
+	SubMesh *pSubMesh = meshPtr->GetSubMesh(0);
+	pSubMesh->SetTexture(pTexture);
+	Entity *planeEntity = new Entity();
+	planeEntity->SetMeshPtr(meshPtr);
+
+	SceneNode *node4 = rootNode->CreateChildSceneNode("planeNode");
+	node4->AttachEntity(planeEntity);
 }
 void DemoApp::Run()
 {

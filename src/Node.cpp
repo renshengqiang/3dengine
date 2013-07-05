@@ -237,7 +237,7 @@ Node *Node::CreateChild(const std::string& name)
 {
 	Node* newNode = CreateChildImpl(name);
 	this->AddChild(newNode);
-	
+	newNode->_NeedUpdate();
 	return newNode;
 }
 //----------------------------------------------------------

@@ -16,11 +16,12 @@ typedef SkeletonAnimationMap::iterator SkeletonAnimationMapIterator;
 typedef SkeletonAnimationMap::value_type SkeletonAnimationMapValueType;
 
 public:
+	Entity();
 	Entity(const std::string& meshFile);
 	~Entity();
 	AnimationState *GetAnimationState(const std::string &name);
 	const AxisAlignedBox& GetBoundingBox() const;
-		
+	void SetMeshPtr(MeshPtr mesh);
 	void Render(void);//use shader to render
 private:
 	void _updateAnimation(void);

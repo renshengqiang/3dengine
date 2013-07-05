@@ -22,7 +22,7 @@ void SubMesh::AddCoord(const Vector3f &coord)
 	return;
 }
 //--------------------------------------------------------------------------------------
-void SubMesh::AddTexture(Texture *pTexture)
+void SubMesh::SetTexture(Texture *pTexture)
 {
 	//pixelObject = CreatePixelObject2(texture,GL_TEXTURE0,GL_TEXTURE_2D);
 	mp_texture = pTexture;

@@ -13,7 +13,12 @@ Vector3f Matrix3f::operator* (const Vector3f& rkPoint) const
 	}
 	return kProd;
 }
-
+void Matrix3f::FromAxes(const Vector3f& xAxis, const Vector3f& yAxis, const Vector3f& zAxis)
+{
+	m[0][0] = xAxis.x; m[1][0] = xAxis.y; m[2][0] = xAxis.z;
+	m[0][1] = yAxis.x; m[1][1] = yAxis.y; m[2][1] = yAxis.z;
+	m[0][2] = zAxis.x; m[1][2] = zAxis.y; m[2][2] = zAxis.z;
+}
 //-----------------------------------------------------------------------
 //-----------------------------------------------------------------------
 Matrix4f::Matrix4f()
@@ -46,6 +51,13 @@ Matrix4f::Matrix4f(float a00, float a01, float a02, float a03,
 	m[1][0] = a10; m[1][1] = a11; m[1][2] = a12; m[1][3] = a13;
 	m[2][0] = a20; m[2][1] = a21; m[2][2] = a22; m[2][3] = a23;
 	m[3][0] = a30; m[3][1] = a31; m[3][2] = a32; m[3][3] = a33; 	   
+}
+//-----------------------------------------------------------------------
+void Matrix4f::operator = ( const Matrix3f& mat3 )
+{
+	m[0][0] = mat3.m[0][0]; m[0][1] = mat3.m[0][1]; m[0][2] = mat3.m[0][2];
+	m[1][0] = mat3.m[1][0]; m[1][1] = mat3.m[1][1]; m[1][2] = mat3.m[1][2];
+	m[2][0] = mat3.m[2][0]; m[2][1] = mat3.m[2][1]; m[2][2] = mat3.m[2][2];
 }
 //-----------------------------------------------------------------------
 Matrix4f &Matrix4f::operator+=(const Matrix4f &Right)
@@ -203,6 +215,11 @@ void Matrix4f::InitTranslationTransform(float x, float y, float z)
     m[1][0] = 0.0f; m[1][1] = 1.0f; m[1][2] = 0.0f; m[1][3] = y;
     m[2][0] = 0.0f; m[2][1] = 0.0f; m[2][2] = 1.0f; m[2][3] = z;
     m[3][0] = 0.0f; m[3][1] = 0.0f; m[3][2] = 0.0f; m[3][3] = 1.0f;
+}
+//-----------------------------------------------------------------------
+void Matrix4f::InitTranslationTransform(Vector3f trans)
+{
+	InitTranslationTransform(trans.x, trans.y, trans.z);
 }
 //-----------------------------------------------------------------------
 void Matrix4f::InitCameraTransform(const Vector3f& Target, const Vector3f& Up)

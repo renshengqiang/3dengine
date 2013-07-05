@@ -19,14 +19,20 @@
 class ENGINE_EXPORT Mesh
 {
 public:
+	Mesh();
 	Mesh(const std::string& Filename);
 	~Mesh();
+	SubMesh *GetSubMesh(unsigned index);
 	Skeleton *GetSkeleton(void);
 	const AxisAlignedBox& GetBoundingBox(void) const;
-	void RenderUseShader(void);
+	void SetBoundingBox(const Vector3f& min, const Vector3f& max);
 	unsigned GetRelatedBoneNum(void);
+	void AddSubMesh(SubMesh *pSubMesh);
+	void AddTexture(Texture *pTexture);
+	void RenderUseShader(void);
+	
 private:
-	bool _LoadMesh(const std::string& filename);	
+	bool _LoadMesh(const std::string& filename);
 	bool _InitMaterials(const std::string& filename);
 	void _InitSubMesh(unsigned int index, const aiMesh* paiMesh);
 	void _InitSubMeshAttachedBoneInfo(const aiMesh* pMesh, SubMesh *submesh);

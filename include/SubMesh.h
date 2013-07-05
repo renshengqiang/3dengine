@@ -23,7 +23,7 @@ public:
 	~SubMesh();
 
 	void AddCoord(const Vector3f &coord);
-	void AddTexture(Texture *pTexture);
+	void SetTexture(Texture *pTexture);
 	void AddTextureCoord(const Vector2f &textureCoord);
 	void AddIndex(int index);
 	void AddBoneData(int index, unsigned short boneId, float weight);

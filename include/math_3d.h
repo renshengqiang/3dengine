@@ -198,6 +198,7 @@ struct Matrix3f
         }
 	/// Matrix * vector [3x3 * 3x1 = 3x1]
         Vector3f operator* (const Vector3f& rkVector) const;
+	void FromAxes(const Vector3f& xAxis, const Vector3f& yAxis, const Vector3f& zAxis);
 };
 struct Matrix4f
 {
@@ -210,6 +211,7 @@ struct Matrix4f
 	         float a10, float a11, float a12, float a13,
 	         float a20, float a21, float a22, float a23,
 	         float a30, float a31, float a32, float a33);
+	void operator = ( const Matrix3f& mat3 );
 
 	inline float* operator [] (int  iRow)
         {
@@ -273,6 +275,7 @@ struct Matrix4f
 	void InitScaleTransform(float ScaleX, float ScaleY, float ScaleZ);
 	void InitRotateTransform(float RotateX, float RotateY, float RotateZ);
 	void InitTranslationTransform(float x, float y, float z);
+	void InitTranslationTransform(Vector3f trans);
 	void InitCameraTransform(const Vector3f& Target, const Vector3f& Up);	
 	void InitCameraTransform(const Vector3f& Pos, const Vector3f& Target, const Vector3f& Up);
 	void InitPersProjTransform(float FOV, float Width, float Height, float zNear, float zFar);

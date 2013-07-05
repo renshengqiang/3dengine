@@ -3,6 +3,11 @@
 #include "MeshManager.h"
 
 //--------------------------------------------------------------------------------------
+Entity::Entity():
+	m_numBoneMatrices(0)
+{
+}
+//--------------------------------------------------------------------------------------
 Entity::Entity(const std::string& name):
 	m_numBoneMatrices(0)
 {
@@ -35,6 +40,11 @@ AnimationState *Entity::GetAnimationState(const std::string &name)
 const AxisAlignedBox& Entity::GetBoundingBox() const
 {
 	return m_mesh->GetBoundingBox();
+}
+//--------------------------------------------------------------------------------------
+void Entity::SetMeshPtr(MeshPtr mesh)
+{
+	m_mesh = mesh;
 }
 //--------------------------------------------------------------------------------------
 void Entity::_updateAnimation(void)
