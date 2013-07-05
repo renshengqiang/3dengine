@@ -176,7 +176,7 @@ void DemoApp::CreateScene(void)
 	mp_skeletonAnimationState->SetLoop(true);
 
 	//create Plane
-	Plane plane(Vector3f(0,-1,0), 1);
+	Plane plane(Vector3f(0,-1,0), 10);
 	MeshManager& meshManager = MeshManager::GetSingleton();
 	MeshPtr meshPtr = meshManager.CreatePlane("plane",plane,200,200,1,1,false,1,1,Vector3f(0,0,-1));
 	Texture *pTexture = new Texture(GL_TEXTURE_2D, "./textures/BeachStones.jpg");
