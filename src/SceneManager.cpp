@@ -3,6 +3,7 @@
 #include "Shader.h"
 #include "Mesh.h"
 #include "Timer.h"
+#include "ParticleSystem.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <queue>
@@ -312,8 +313,10 @@ void* SceneManager::_RenderThreadFunc(void *p)
 	pthread_cond_signal(&(pManager->m_sdlCond));
 	pthread_mutex_unlock(&(pManager->m_sdlMutex));
 
+	//create a global shader
 	CreateShaders();
 
+	//create 6 textures for displaying fixed pipeline skybox
 	for(int i=0; i<6; ++i)
 	{
 		Texture *pTexture = new Texture(GL_TEXTURE_2D, texture_name[i]);
@@ -321,7 +324,11 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		texture_obj[i] = pTexture->GetTextureObj();
 		delete pTexture;
 	}
-	
+
+	//init particle system
+	initPointSprites();
+
+	//rendering loop
 	while(1)
 	{
 		Matrix4f projViewMatrix = pManager->mp_cameraInUse->GetProjViewMatrix();
@@ -331,7 +338,9 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		
 		//render skybox
 		UseFixedPipeline();
-		DrawSkyBox(texture_obj, pManager->mp_cameraInUse->m_angleHorizontal, pManager->mp_cameraInUse->m_angleVertical);
+		renderPointSprites();
+		//DrawSkyBox(texture_obj, pManager->mp_cameraInUse->m_angleHorizontal, pManager->mp_cameraInUse->m_angleVertical);
+		
 
 		pthread_mutex_lock(&(pManager->m_renderingQueueMutex));
 		while(pManager->mp_renderingQueue == NULL)

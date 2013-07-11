@@ -38,5 +38,6 @@ COMPILE_FILES:=	util/Timer.c\
 				OctreeNode.cpp \
 				OctreeSceneManager.cpp \
 				OctreeRaySceneQuery.cpp \
+				ParticleSystem.cpp \
 				FreeType.cpp
 include ../Makefile-so

@@ -1,4 +1,5 @@
 #include "Engine.h"
+#include "ParticleSystem.h"
 #include <SDL/SDL.h>
 #include <pthread.h>
 #include <map>
@@ -91,6 +92,7 @@ bool DemoApp::FrameQueued(long timeSinceLastFrame)
 	if(mp_skeletonAnimationState){
 		mp_skeletonAnimationState->AddTime(timeSinceLastFrame/(float)1000);
 	}
+	updatePointSprites(timeSinceLastFrame);
 	return FrameListener::FrameQueued(timeSinceLastFrame);
 }
 void DemoApp::CreateScene(void)
