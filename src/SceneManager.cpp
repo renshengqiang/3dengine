@@ -3,6 +3,7 @@
 #include "Shader.h"
 #include "Mesh.h"
 #include "Timer.h"
+#include "SimpleMeshEffect.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <queue>
@@ -314,6 +315,13 @@ void* SceneManager::_RenderThreadFunc(void *p)
 
 	CreateShaders();
 
+	SimpleMeshEffect effect("./effects/SimpleMeshEffect.vs", "./effects/SimpleMeshEffect.fs");
+	if(effect.Init() == false)
+	{
+		fprintf(stderr, "SceneManager::_RenderThreadFunc: create shader failure\n");
+		exit(0);
+	}
+
 	for(int i=0; i<6; ++i)
 	{
 		Texture *pTexture = new Texture(GL_TEXTURE_2D, texture_name[i]);
@@ -330,8 +338,8 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		ClearBuffer();
 		
 		//render skybox
-		UseFixedPipeline();
-		DrawSkyBox(texture_obj, pManager->mp_cameraInUse->m_angleHorizontal, pManager->mp_cameraInUse->m_angleVertical);
+		//UseFixedPipeline();
+		//DrawSkyBox(texture_obj, pManager->mp_cameraInUse->m_angleHorizontal, pManager->mp_cameraInUse->m_angleVertical);
 
 		pthread_mutex_lock(&(pManager->m_renderingQueueMutex));
 		while(pManager->mp_renderingQueue == NULL)
@@ -342,7 +350,8 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		pthread_mutex_unlock(&(pManager->m_renderingQueueMutex));
 
 		//render scene
-		UseShaderToRender();
+		//UseShaderToRender();
+		effect.Enable();
 		for(RenderQueueIterator iter = pQueue->begin(); iter != pQueue->end(); ++iter)
 		{
 			Entity *pEntity = (iter->pNode)->GetAttachedEntity();
@@ -350,17 +359,18 @@ void* SceneManager::_RenderThreadFunc(void *p)
 			{
 				perspectViewModelMatrix = projViewMatrix * iter->transMatrix;
 				//set matrix
-				SetTranslateMatrix(g_PVMMatrixLocation,&perspectViewModelMatrix);
+				//SetTranslateMatrix(g_PVMMatrixLocation,&perspectViewModelMatrix);
+				effect.SetWVP(perspectViewModelMatrix);
 				//render entity
-				pEntity->Render();
+				pEntity->Render(effect);
 			}
 			//DrawAABB(iter->pNode->GetWorldBoundingBox());
 		}
 		delete pQueue;
 		
 		//render overlay
-		UseFixedPipeline();
-		DrawOverlay(sceneFps);
+		//UseFixedPipeline();
+		//DrawOverlay(sceneFps);
 
 		//swap buffer
 		pManager->mp_renderWindow->SwapBuffer();

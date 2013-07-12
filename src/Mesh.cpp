@@ -313,7 +313,7 @@ void Mesh::_InitSkeletonAnimation(void)
 	}
 }
 //--------------------------------------------------------------------------------------
-void Mesh::RenderUseShader()
+void Mesh::RenderUseShader(SimpleMeshEffect& effect)
 {
 	if(m_finalized == false)
 	{
@@ -326,7 +326,7 @@ void Mesh::RenderUseShader()
 	{
 		if(m_finalized == false)
 			m_subMeshes[i]->Finalize();
-		m_subMeshes[i]->RenderUseShader();
+		m_subMeshes[i]->RenderUseShader(effect);
 	}
 	if(m_finalized == false)
 	{

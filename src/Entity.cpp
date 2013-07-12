@@ -63,14 +63,23 @@ void Entity::_updateAnimation(void)
 	return ;
 }
 //--------------------------------------------------------------------------------------
-void Entity::Render(void)
+void Entity::Render(SimpleMeshEffect& effect)
 {
 	_updateAnimation();
+	/*
 	if(m_numBoneMatrices > 0) SetIntValue(g_hasBonesLocation,1);
 	else SetIntValue(g_hasBonesLocation,0);
 	for(unsigned i=0; i<m_numBoneMatrices;++i){
 		SetTranslateMatrix(g_boneTransformLocation[i],&(m_boneOffsetMatrixVec[i]));
 	}
+	*/
+	if(m_numBoneMatrices > 0) effect.SetHasBones(1);
+	else effect.SetHasBones(0);
+
+	for(unsigned i=0; i<m_numBoneMatrices; ++i)
+	{
+		effect.SetBoneTransMatrix(m_boneOffsetMatrixVec[i], i);
+	}
 	//if(mp_mesh) mp_mesh->RenderUseShader();
-	if(m_mesh.get()) m_mesh->RenderUseShader();
+	if(m_mesh.get()) m_mesh->RenderUseShader(effect);
 }

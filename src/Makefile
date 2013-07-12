@@ -38,5 +38,7 @@ COMPILE_FILES:=	util/Timer.c\
 				OctreeNode.cpp \
 				OctreeSceneManager.cpp \
 				OctreeRaySceneQuery.cpp \
+				effect/Effect.cpp \
+				effect/SimpleMeshEffect.cpp \
 				FreeType.cpp
 include ../Makefile-so

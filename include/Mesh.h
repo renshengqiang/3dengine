@@ -7,6 +7,7 @@
 #include <Texture.h>
 #include <Skeleton.h>
 #include <AxisAlignedBox.h>
+#include <SimpleMeshEffect.h>
 
 #include <Importer.hpp>      // C++ importer interface
 #include <scene.h>       // Output data structure
@@ -29,7 +30,7 @@ public:
 	unsigned GetRelatedBoneNum(void);
 	void AddSubMesh(SubMesh *pSubMesh);
 	void AddTexture(Texture *pTexture);
-	void RenderUseShader(void);
+	void RenderUseShader(SimpleMeshEffect& effect);
 	
 private:
 	bool _LoadMesh(const std::string& filename);

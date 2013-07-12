@@ -8,7 +8,7 @@
 #include <map>
 #include <vector>
 #include <string>
-
+#include <SimpleMeshEffect.h>
 class Entity{
 typedef std::vector<Matrix4f> BoneOffsetMatrixVector;
 typedef std::map<std::string, SkeletonAnimation *> SkeletonAnimationMap;
@@ -22,7 +22,7 @@ public:
 	AnimationState *GetAnimationState(const std::string &name);
 	const AxisAlignedBox& GetBoundingBox() const;
 	void SetMeshPtr(MeshPtr mesh);
-	void Render(void);//use shader to render
+	void Render(SimpleMeshEffect& effect);//use shader to render
 private:
 	void _updateAnimation(void);
 		

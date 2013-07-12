@@ -2,6 +2,7 @@
 #define _RENDER_H
 #include <math_3d.h>
 #include <AxisAlignedBox.h>
+#include <SimpleMeshEffect.h>
 #include <GL/glew.h>
 
 typedef struct IndexObj INDEX_OBJ;
@@ -90,7 +91,7 @@ void DrawSkyBox(GLuint *textures, float horizon_angle, float verticle_angle);
 void DrawOverlay(int fps);
 void DrawAABB(AxisAlignedBox aabb);
 //void DrawObject(int type,const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj, struct context *contx);
-void DrawOjectUseShader(const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj);
+void DrawOjectUseShader(const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj, SimpleMeshEffect& effect);
 void SetModelViewMatrix(const Matrix4f *modelviewMatrix);
 void SetProjectMatrix(const Matrix4f *projectMatrix);
 //for shader use

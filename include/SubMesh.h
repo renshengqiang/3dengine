@@ -3,6 +3,7 @@
 #include "math_3d.h"
 #include "Render.h"
 #include "Texture.h"
+#include <SimpleMeshEffect.h>
 #include <vector>
 
 
@@ -29,7 +30,7 @@ public:
 	void AddBoneData(int index, unsigned short boneId, float weight);
 	void Finalize();
 	//void Render();
-	void RenderUseShader();
+	void RenderUseShader(SimpleMeshEffect& effect);
 	unsigned GetVertexNum();
 	unsigned GetVertexAttachedBoneNum(unsigned vertexIndex);
 	struct AttachedBone * GetVertexAttachedBones(unsigned vertexIndex);

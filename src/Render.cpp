@@ -520,32 +520,49 @@ void DrawObject(int type, const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj
 }
 */
 //-----------------------------------------------------------------------
-void DrawOjectUseShader(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, const PIXEL_OBJ *pixelObj)
+void DrawOjectUseShader(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, const PIXEL_OBJ *pixelObj, SimpleMeshEffect& effect)
 {
+	/*
 	glEnableVertexAttribArray(g_vertexPostionLocation);
 	glEnableVertexAttribArray(g_vertexTexCoordLocation);
 	glEnableVertexAttribArray(g_vertexBoneIdLocation);
 	glEnableVertexAttribArray(g_vertexBoneWeightLocation);
+	*/
+	effect.EnableVertexArray();
+	
 	glBindBuffer(GL_ARRAY_BUFFER, vertexObj->object);
+
+	/*
 	glVertexAttribPointer(g_vertexPostionLocation, vertexObj->elementInfo.coordNum, 
 		vertexObj->dataType, GL_FALSE, vertexObj->stride, (const GLvoid *)vertexObj->elementInfo.coordOffset);
 	glVertexAttribPointer(g_vertexTexCoordLocation, vertexObj->elementInfo.textureCoordNum, 
 		vertexObj->dataType, GL_FALSE, vertexObj->stride, (const GLvoid *)vertexObj->elementInfo.textureCoordOffset);
-	//glVertexAttribIPointer(g_vertexBoneIdLocation, 4, GL_INT, vertexObj->stride, (const GLvoid *)vertexObj->elementInfo.boneOffset);
 	glVertexAttribPointer(g_vertexBoneIdLocation, 4, GL_FLOAT, GL_FALSE, vertexObj->stride, (const GLvoid *)(vertexObj->elementInfo.boneOffset));
 	glVertexAttribPointer(g_vertexBoneWeightLocation, 4, GL_FLOAT, GL_FALSE, vertexObj->stride, (const GLvoid *)(vertexObj->elementInfo.boneOffset + 4*sizeof(float)));
+	*/
+	
+	effect.SetPositionAttribPointer(vertexObj->elementInfo.coordNum, vertexObj->stride, vertexObj->elementInfo.coordOffset);
+	effect.SetTextureCoordAttribPointer(vertexObj->elementInfo.textureCoordNum, vertexObj->stride, vertexObj->elementInfo.textureCoordOffset);
+	effect.SetBoneIdAttribPointer(4, vertexObj->stride, vertexObj->elementInfo.boneOffset);
+	effect.SetBoneWeightAttribPointer(4, vertexObj->stride, vertexObj->elementInfo.boneOffset + 4*sizeof(float));
 
-	glUniform1i(g_samplerLocation, 0);
+	/*
+	glUniform1i(g_samplerLocation, pixelObj->textureUnit - GL_TEXTURE0);
+	*/
+	effect.SetTextureUnit(pixelObj->textureUnit - GL_TEXTURE0);
+	
 	glActiveTexture(pixelObj->textureUnit);
 	glBindTexture(pixelObj->textureTarget, pixelObj->object);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexObj->object);
 	glDrawElements(GL_TRIANGLES, indexObj->n,indexObj->dataType,0);
-
+/*
 	glDisableVertexAttribArray(g_vertexPostionLocation);
 	glDisableVertexAttribArray(g_vertexTexCoordLocation);
 	glDisableVertexAttribArray(g_vertexBoneIdLocation);
 	glDisableVertexAttribArray(g_vertexBoneWeightLocation);
+*/
+	effect.DisableVertexArray();
 }
 //-----------------------------------------------------------------------
 void SetModelViewMatrix(const Matrix4f * modelviewMatrix)

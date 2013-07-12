@@ -96,7 +96,7 @@ void SubMesh::Render()
 }
 */
 //--------------------------------------------------------------------------------------
-void SubMesh::RenderUseShader()
+void SubMesh::RenderUseShader(SimpleMeshEffect& effect)
 {
-	DrawOjectUseShader(indexObject,  vertexObject, pixelObject);
+	DrawOjectUseShader(indexObject,  vertexObject, pixelObject, effect);
 }
