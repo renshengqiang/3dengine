@@ -1,54 +1,63 @@
 #include "SceneNode.h"
 
-//-------------------------------------------------------------
+//-----------------------------------------------------------------------------
 SceneNode:: SceneNode(const std::string &name) :
 	Node(name),
-	mp_attachedEntity(NULL)
+	mp_attachedMoveableObject(NULL)
 {
 }
-//-------------------------------------------------------------
+//-----------------------------------------------------------------------------
 SceneNode *SceneNode::CreateChildSceneNode(const std::string &name)
 {
 	return  static_cast<SceneNode*>(this->CreateChild(name));
 }
-//-------------------------------------------------------------
+//-----------------------------------------------------------------------------
 SceneNode* SceneNode::CreateChildImpl(const std::string &name)
 {
 	return new SceneNode(name);
 }
-//-------------------------------------------------------------
-void SceneNode::AttachEntity(Entity * pEntity)
+//-----------------------------------------------------------------------------
+void SceneNode::AttachObject(MoveableObject *pObject)
 {
-	mp_attachedEntity = pEntity;
+	mp_attachedMoveableObject = pObject;
+	pObject->SetParent(this);
 }
-//-------------------------------------------------------------
-void SceneNode::DetachEntity(void)
+//-----------------------------------------------------------------------------
+void SceneNode::DetachObject(void)
 {
-	mp_attachedEntity = NULL;
+	mp_attachedMoveableObject = NULL;
 }
-//-------------------------------------------------------------
-Entity *SceneNode::GetAttachedEntity(void)
+//-----------------------------------------------------------------------------
+MoveableObject* SceneNode::GetAttachedMoveableObject(void)
 {
-	return mp_attachedEntity;
-}       
-//-----------------------------------------------------------------------
+	return mp_attachedMoveableObject;
+}
+//-----------------------------------------------------------------------------
 void SceneNode::_Update(bool updateChildren, bool parentHasChanged)
 {
 	Node::_Update(updateChildren, parentHasChanged);
 	_UpdateBounds();
 }
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void SceneNode::_NeedUpdate(bool forceParentUpdate)
+{
+	Node::_NeedUpdate(forceParentUpdate);
+	if(mp_attachedMoveableObject)
+	{
+		mp_attachedMoveableObject->UpdateMoved();
+	}
+}
+//-----------------------------------------------------------------------------
 void SceneNode::_UpdateBounds(void)
 {
 	// Reset bounds first
 	m_worldAABB.setNull();
 
 	// Update bounds from own attached objects
-	if(mp_attachedEntity)
+	if(mp_attachedMoveableObject)
 	{
-		m_worldAABB = mp_attachedEntity->GetBoundingBox();
+		m_worldAABB = mp_attachedMoveableObject->GetBoundingBox();
 		m_worldAABB.transformAffine(_GetFullTransform());
-		//printf("update bounds\n");
 	}
 /*
 	// Merge with children

@@ -29,9 +29,9 @@ void OctreeNode::_UpdateBounds( void )
 	m_worldAABB.setNull();
 
 	// Update bounds from own attached objects
-	if(mp_attachedEntity)
+	if(mp_attachedMoveableObject)
 	{
-		m_worldAABB = mp_attachedEntity->GetBoundingBox();
+		m_worldAABB = mp_attachedMoveableObject->GetBoundingBox();
 		m_worldAABB.transformAffine(_GetFullTransform());
 	}
 

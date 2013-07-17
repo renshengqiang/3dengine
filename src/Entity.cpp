@@ -6,6 +6,7 @@
 Entity::Entity():
 	m_numBoneMatrices(0)
 {
+	m_visible = true;//default visible
 }
 //--------------------------------------------------------------------------------------
 Entity::Entity(const std::string& name):
@@ -26,6 +27,7 @@ Entity::Entity(const std::string& name):
 			m_animationMap.insert(SkeletonAnimationMapValueType(name, pSkeletonAnim));
 		}
 	}
+	m_visible = true;
 }
 //--------------------------------------------------------------------------------------
 Entity::~Entity()
@@ -63,8 +65,10 @@ void Entity::_updateAnimation(void)
 	return ;
 }
 //--------------------------------------------------------------------------------------
-void Entity::Render(SimpleMeshEffect& effect)
+void Entity::Render(Effect *pEffect)
 {
+	SimpleMeshEffect *pSimpleMeshEffect = dynamic_cast<SimpleMeshEffect *>(pEffect);
+	
 	_updateAnimation();
 	/*
 	if(m_numBoneMatrices > 0) SetIntValue(g_hasBonesLocation,1);
@@ -73,13 +77,13 @@ void Entity::Render(SimpleMeshEffect& effect)
 		SetTranslateMatrix(g_boneTransformLocation[i],&(m_boneOffsetMatrixVec[i]));
 	}
 	*/
-	if(m_numBoneMatrices > 0) effect.SetHasBones(1);
-	else effect.SetHasBones(0);
+	if(m_numBoneMatrices > 0) pSimpleMeshEffect->SetHasBones(1);
+	else pSimpleMeshEffect->SetHasBones(0);
 
 	for(unsigned i=0; i<m_numBoneMatrices; ++i)
 	{
-		effect.SetBoneTransMatrix(m_boneOffsetMatrixVec[i], i);
+		pSimpleMeshEffect->SetBoneTransMatrix(m_boneOffsetMatrixVec[i], i);
 	}
 	//if(mp_mesh) mp_mesh->RenderUseShader();
-	if(m_mesh.get()) m_mesh->RenderUseShader(effect);
+	if(m_mesh.get()) m_mesh->RenderUseShader(*pSimpleMeshEffect);
 }

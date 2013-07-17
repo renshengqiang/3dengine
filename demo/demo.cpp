@@ -47,9 +47,10 @@ class DemoApp:public FrameListener, public EventListener
 		SceneManager *mp_sceneManager;
 		Camera	*mp_camera;
 		RenderWindow *mp_renderWindow;
-		AnimationState *mp_animationState1,*mp_animationState2, *mp_animationState3;
+		AnimationState *mp_cameraNodeAnimState, *mp_animationState1,*mp_animationState2, *mp_animationState3;
 		AnimationState *mp_skeletonAnimationState;
-		Entity *pEntity1, *pEntity2, *pEntity3;
+		Entity *mp_entity1, *mp_entity2, *mp_entity3;
+		SceneNode *mp_cameraNode;
 		RaySceneQuery *mp_raySceneQuery;
 		std::map<SceneNode*, AnimationState*> m_nodeAnimStateMap;
 };
@@ -61,24 +62,32 @@ DemoApp::DemoApp()
 	mp_camera = mp_sceneManager->CreateCamera(Vector3f(0.0f,0.0f,0.0f),Vector3f(0, 0, -1.0f));
 	mp_sceneManager->AddFrameListener(this);
 	mp_sceneManager->AddEventListener(this);
-	pEntity1=pEntity2=NULL;
+	mp_entity1 = mp_entity2 = mp_entity3 = NULL;
+	mp_cameraNode = NULL;
+	mp_cameraNodeAnimState = NULL;
 	mp_animationState1 = NULL;
 	mp_animationState2 = NULL;
+	mp_animationState3 = NULL;
 	mp_raySceneQuery = mp_sceneManager->CreateRayQuery(Ray());
 	mp_raySceneQuery->setSortByDistance(true);
 }
 DemoApp::~DemoApp()
 {
 	delete mp_sceneManager;
-	delete pEntity1;
-	delete pEntity2;
-	delete pEntity3;
+	delete mp_entity1;
+	delete mp_entity2;
+	delete mp_entity3;
+	delete mp_cameraNode;
 }
 bool DemoApp::FrameQueued(long timeSinceLastFrame)
 {	
 	static float time = 0;
 	time+=timeSinceLastFrame/(float)1000;
 	fps++;
+	if(mp_cameraNodeAnimState)
+	{
+		mp_cameraNodeAnimState->AddTime(timeSinceLastFrame/(float)1000);
+	}
 	if(mp_animationState1){
 		mp_animationState1->AddTime(timeSinceLastFrame/(float)1000);
 	}
@@ -95,11 +104,19 @@ bool DemoApp::FrameQueued(long timeSinceLastFrame)
 }
 void DemoApp::CreateScene(void)
 {
-	pEntity1 = new Entity("./models/phoenix_ugv.md2");
-	pEntity2 = new Entity("./models/boblampclean.md5mesh");
-	pEntity3 = new Entity("./models/boblampclean.md5mesh");
-
+	////Get root scenenode
 	SceneNode *rootNode = mp_sceneManager->GetRootNode();
+
+	////create three entities
+	mp_entity1 = new Entity("./models/phoenix_ugv.md2");
+	mp_entity2 = new Entity("./models/boblampclean.md5mesh");
+	mp_entity3 = new Entity("./models/boblampclean.md5mesh");
+
+	////create camera node and attach camera on it
+	mp_cameraNode = rootNode->CreateChildSceneNode("CameraNode");
+	mp_cameraNode->AttachObject(mp_camera);
+
+	////create three scenenode and attach entity on it
 	SceneNode *node1 = rootNode->CreateChildSceneNode("childnode1");
 	node1->Translate(0,0,-500, SceneNode::TS_LOCAL);
 	SceneNode *node2 = rootNode->CreateChildSceneNode("childnode2");
@@ -109,16 +126,27 @@ void DemoApp::CreateScene(void)
 	node3->Translate(Vector3f(100, -100, -250), SceneNode::TS_LOCAL);
 	node3->Rotate(Vector3f(1,0,0), -90, SceneNode::TS_LOCAL);
 		
-	node1->AttachEntity(pEntity1);
-	node2->AttachEntity(pEntity2);
-	node3->AttachEntity(pEntity3);
+	node1->AttachObject(mp_entity1);
+	node2->AttachObject(mp_entity2);
+	node3->AttachObject(mp_entity3);
 
-	//create one scenenode animation(左后回)
-	Animation *animation = mp_sceneManager->CreateAnimation("transAnim1-1",5.792);
+	////create a camera animation
+	mp_cameraNode->Translate(Vector3f(0, 0, 5000));
+	Animation * animation = mp_sceneManager->CreateAnimation("CameraAnim", 10);
+	NodeAnimationTrack * track  = animation->CreateNodeTrack(0, mp_cameraNode);
+	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(10);
+	keyFrame->SetTranslate(Vector3f(0,0,-5000));
+	mp_cameraNode->SetInitialState();
+	mp_cameraNodeAnimState = mp_sceneManager->CreateAnimationState("CameraAnim");
+	mp_cameraNodeAnimState->SetEnabled(true);
+	mp_cameraNodeAnimState->SetLoop(false);
+	
+	////create one scenenode animation(左后回)
+	animation = mp_sceneManager->CreateAnimation("transAnim1-1",5.792);
 	//animation->SetInterpolationMode(Animation::IM_SPLINE);
 	animation->SetRotationInterpolationMode(Animation::RIM_SPHERICAL);
-	NodeAnimationTrack *track = animation->CreateNodeTrack(0, node1);
-	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(1.448);
+	track = animation->CreateNodeTrack(0, node1);
+	keyFrame = track->CreateNodeKeyFrame(1.448);
 	keyFrame->SetTranslate(Vector3f(-100, 0,0));
 	keyFrame = track->CreateNodeKeyFrame(5.792);
 	keyFrame->SetTranslate(Vector3f(0,0,0));
@@ -126,32 +154,16 @@ void DemoApp::CreateScene(void)
 	keyFrame->SetTranslate(Vector3f(-100, 0, -100));
 	keyFrame->SetRotation(Quaternion(Vector3f(0,1,0),-90));
 	keyFrame->SetScale(Vector3f(2,2,2));
-/*
-	//同一个节点上的另一个动画(后左回)
-	animation = mp_sceneManager->CreateAnimation("transAnim1-2", 9);
-	track = animation->CreateNodeTrack(0, node1);
-	keyFrame = track->CreateNodeKeyFrame(3);
-	keyFrame->SetTranslate(Vector3f(0, 0, -100));
-	keyFrame->SetRotation(Quaternion(Vector3f(0,1,0), 90));
-	keyFrame->SetScale(Vector3f(2,2,2));
-	keyFrame = track->CreateNodeKeyFrame(6);
-	keyFrame->SetTranslate(Vector3f(-100, 0, 0));
-	keyFrame = track->CreateNodeKeyFrame(9);
-	keyFrame->SetTranslate(Vector3f(0,0,0));
-*/
-	//根据节点当前位置做节点动画，否则是根据节点创建时的位置进行动画
+
+	////根据节点当前位置做节点动画，否则是根据节点创建时的位置进行动画
 	node1->SetInitialState();
 	mp_animationState1= mp_sceneManager->CreateAnimationState("transAnim1-1");
 	mp_animationState1->SetEnabled(true);
 	mp_animationState1->SetLoop(true);
 
 	m_nodeAnimStateMap.insert(make_pair(node1, mp_animationState1));
-/*
-	mp_animationState2 = mp_sceneManager->CreateAnimationState("transAnim1-2");
-	mp_animationState2->SetEnabled(true);
-	mp_animationState2->SetLoop(true);
-*/	
-	//another scenenode animation
+	
+	////another scenenode animation
 	animation = mp_sceneManager->CreateAnimation("transAnim2",5.792);
 	track = animation->CreateNodeTrack(0, node2);
 	keyFrame = track->CreateNodeKeyFrame(1.448);
@@ -170,12 +182,13 @@ void DemoApp::CreateScene(void)
 	mp_animationState3->SetLoop(true);
 	
 	m_nodeAnimStateMap.insert(make_pair(node2, mp_animationState3));
-	
-	mp_skeletonAnimationState = pEntity2->GetAnimationState("");
+
+	////skeleton animation
+	mp_skeletonAnimationState = mp_entity2->GetAnimationState("");
 	mp_skeletonAnimationState->SetEnabled(true);
 	mp_skeletonAnimationState->SetLoop(true);
 
-	//create Plane
+	////create Plane
 	Plane plane(Vector3f(0,-1,0), 10);
 	MeshManager& meshManager = MeshManager::GetSingleton();
 	MeshPtr meshPtr = meshManager.CreatePlane("plane",plane,200,200,1,1,false,1,1,Vector3f(0,0,-1));
@@ -187,7 +200,7 @@ void DemoApp::CreateScene(void)
 	planeEntity->SetMeshPtr(meshPtr);
 
 	SceneNode *node4 = rootNode->CreateChildSceneNode("planeNode");
-	node4->AttachEntity(planeEntity);
+	node4->AttachObject(planeEntity);
 }
 void DemoApp::Run()
 {
@@ -268,20 +281,24 @@ void DemoApp::HandleKeyDown( SDL_keysym* keysym )
 				break; 
 			case SDLK_DOWN:
 			case SDLK_s:
-				mp_camera->Translate(Vector3f(0,0,STEPSIZE));
+				//mp_camera->Translate(Vector3f(0,0,STEPSIZE));
+				mp_cameraNode->Translate(Vector3f(0,0,STEPSIZE));
 				break;
 			case SDLK_UP:
 			case SDLK_w:
-				mp_camera->Translate(Vector3f(0,0,-STEPSIZE));
+				//mp_camera->Translate(Vector3f(0,0,-STEPSIZE));
+				mp_cameraNode->Translate(Vector3f(0,0,-STEPSIZE));
 				break;
 			case SDLK_LEFT:
-				mp_camera->Translate(Vector3f(-STEPSIZE, 0,0));
+				//mp_camera->Translate(Vector3f(-STEPSIZE, 0,0));
+				mp_cameraNode->Translate(Vector3f(-STEPSIZE,0,0));
 				break;
 			case SDLK_RIGHT:
-				mp_camera->Translate(Vector3f(STEPSIZE, 0, 0));
+				//mp_camera->Translate(Vector3f(STEPSIZE, 0, 0));
+				mp_cameraNode->Translate(Vector3f(STEPSIZE,0,0));
 				break;
-			  default:       
-			  	break;    
+			  default:
+			  	break;
 			}
 	}
 }

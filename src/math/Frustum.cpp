@@ -195,7 +195,7 @@ void Frustum::_UpdateFrustumPlanesImpl(void)
 	m_frustumPlanes[FRUSTUM_PLANE_FAR].d = combo[3][3] - combo[2][3];
 
 	// Renormalise any normals which were not unit length
-	for(int i=0; i<6; i++ ) 
+	for(int i=0; i<6; i++ )
 	{
 		float length = m_frustumPlanes[i].normal.Normalize();
 		m_frustumPlanes[i].d /= length;

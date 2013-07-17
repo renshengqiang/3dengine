@@ -35,7 +35,7 @@ protected:
 	void _UpdateView(void);
 	void _UpdateProj(void);
 	void _UpdateFrustumPlanes(void);
-	void _UpdateViewImpl(void);
+	virtual void _UpdateViewImpl(void);
 	void _UpdateProjImpl(void);
 	void _UpdateFrustumPlanesImpl(void);
 	

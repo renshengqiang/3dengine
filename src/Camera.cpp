@@ -1,20 +1,51 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "Render.h"
-#include <stdio.h>
-
 
 //-----------------------------------------------------------------------
 Camera::Camera(Vector3f pos,Vector3f target,Vector3f up) : Frustum(pos, target, up)
 {
+	m_boundingBox.setExtents(Vector3f(0,0,0), Vector3f(0,0,0));
 }
 //-----------------------------------------------------------------------
 Matrix4f Camera::GetProjViewMatrix(void)
 {
+	if(MoveableObject::IsMovded())
+	{
+		m_viewChanged = true;
+	}
 	_UpdateProj();
 	_UpdateView();
+	
 	return m_projMatrix * m_viewMatrix;
 }
+//-----------------------------------------------------------------------
+void Camera::_UpdateViewImpl(void)
+{
+	const Vector3f Vaxis(0.0f, 1.0f, 0.0f);
+	Vector3f View(1.0f, 0.0f, 0.0f);
+	View.Rotate(m_angleHorizontal, Vaxis);
+	View.Normalize();
+
+	Vector3f Haxis = View.Cross(Vaxis);
+	Haxis.Normalize();
+	View.Rotate(m_angleVertical, Haxis);
+
+	m_targetVector= View;
+	m_targetVector.Normalize();
+
+	m_upVector = Haxis.Cross(m_targetVector);
+	m_upVector.Normalize();
+
+	Vector3f pos = m_positionVector;
+	if(mp_parentNode)
+	{
+		pos += mp_parentNode->_GetDerivedPosition();
+	}
+	
+	m_viewMatrix.InitCameraTransform(pos, m_targetVector, m_upVector);
+}
+
 //-----------------------------------------------------------------------
 void Camera::Translate(Vector3f movement)
 {

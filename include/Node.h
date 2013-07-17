@@ -50,7 +50,7 @@ public:
         */
 	const Matrix4f &_GetFullTransform(void);
 	virtual void _Update(bool updateChildren, bool parentHasChanged);
-	void _NeedUpdate(bool forceParentUpdate = false);
+	virtual void _NeedUpdate(bool forceParentUpdate = false);
 	void _RequestUpdate(Node* child, bool forceParentUpdate = false);
 	
 	void AddChild(Node *child);

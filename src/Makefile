@@ -11,6 +11,7 @@ COMPILE_FILES:=	util/Timer.c\
 				math/Frustum.cpp \
 				math/Ray.cpp \
 				RenderWindow.cpp \
+				MoveableObject.cpp \
 				Node.cpp \
 				SceneManager.cpp \
 				Camera.cpp \

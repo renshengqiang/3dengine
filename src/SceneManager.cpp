@@ -337,9 +337,9 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		
 		ClearBuffer();
 		
-		//render skybox
-		//UseFixedPipeline();
-		//DrawSkyBox(texture_obj, pManager->mp_cameraInUse->m_angleHorizontal, pManager->mp_cameraInUse->m_angleVertical);
+		/// render skybox
+		UseFixedPipeline();
+		DrawSkyBox(texture_obj, pManager->mp_cameraInUse->m_angleHorizontal, pManager->mp_cameraInUse->m_angleVertical);
 
 		pthread_mutex_lock(&(pManager->m_renderingQueueMutex));
 		while(pManager->mp_renderingQueue == NULL)
@@ -349,30 +349,32 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		pthread_cond_signal(&(pManager->m_renderingQueueEmptyCond));
 		pthread_mutex_unlock(&(pManager->m_renderingQueueMutex));
 
-		//render scene
+		/// render scene
 		//UseShaderToRender();
 		effect.Enable();
 		for(RenderQueueIterator iter = pQueue->begin(); iter != pQueue->end(); ++iter)
 		{
-			Entity *pEntity = (iter->pNode)->GetAttachedEntity();
-			if(pEntity!= NULL)
+			MoveableObject *pObject = (iter->pNode)->GetAttachedMoveableObject();
+
+			Entity *pEntity = dynamic_cast<Entity*>(pObject);
+			if(pEntity!= NULL && pEntity->Visible())
 			{
 				perspectViewModelMatrix = projViewMatrix * iter->transMatrix;
 				//set matrix
 				//SetTranslateMatrix(g_PVMMatrixLocation,&perspectViewModelMatrix);
 				effect.SetWVP(perspectViewModelMatrix);
 				//render entity
-				pEntity->Render(effect);
+				pEntity->Render(&effect);
 			}
 			//DrawAABB(iter->pNode->GetWorldBoundingBox());
 		}
 		delete pQueue;
 		
-		//render overlay
-		//UseFixedPipeline();
-		//DrawOverlay(sceneFps);
+		/// render overlay
+		UseFixedPipeline();
+		DrawOverlay(sceneFps);
 
-		//swap buffer
+		/// swap buffer
 		pManager->mp_renderWindow->SwapBuffer();
 	}
 	return NULL;
