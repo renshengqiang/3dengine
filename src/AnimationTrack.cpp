@@ -83,11 +83,14 @@ void AnimationTrack::RemoveAllKeyFrames(void)
 }
 //-----------------------------------------------------------------------
 /*
+	timePos:当前动画时间
+	keyFrame1:插入的第一帧的情况
+	keyFrame2:插入的第二帧的情况
+	index:第一帧的index
+	
 	按两种情况进行分别处理:
-	case 1. 当前的时间在最后一帧的后面，表示用户创建的动画的时间长度较长，但是关键帧没有完全赋值
+	case 1. 当前的时间在最后一帧的后面或者就是最后一帧，简单使用最后一帧作为输出
 	case 2. 正常情况，在正常的两帧之间
-	第一种情况，需要在首尾两帧之间进行插值；比例系数为(timePos - lastFrame.time)/(animation.time - firstFrame.time)
-	一般而言，第一帧的时间是0，因此上述比例即为(timePos - lastFrame.time)/animation.time
 */
 float AnimationTrack::GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, KeyFrame **keyFrame2, int *index)
 {
@@ -97,7 +100,7 @@ float AnimationTrack::GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, Key
 	
 	assert(totalAnimationLength > 0.0f && "Invalid animation length!");
 
-	if(timePos >= totalAnimationLength)
+	if(timePos > totalAnimationLength)
 		timePos = fmodf(timePos, totalAnimationLength);
 	
 	for(i=0; i<m_keyFrameList.size(); ++i)
@@ -110,9 +113,12 @@ float AnimationTrack::GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, Key
 		{
 			*keyFrame1 = m_keyFrameList[m_keyFrameList.size() - 1];
 			*keyFrame2 = m_keyFrameList[0];
+			*index = m_keyFrameList.size() - 1;
+			return 0;
+			/*
 			t1 = (*keyFrame1)->GetTime();
 			t2 = mp_parent->GetLength() + (*keyFrame2)->GetTime();
-			*index = m_keyFrameList.size() - 1;
+			*/
 		}
 		else
 		{
@@ -129,9 +135,10 @@ float AnimationTrack::GetKeyFrameAtTime(float timePos, KeyFrame **keyFrame1, Key
 		*keyFrame1 = m_keyFrameList[i];
 		t1=(*keyFrame1)->GetTime();
 		*index = i;
+
+		if(t1==t2) return timePos/t2;
+		else return (timePos-t1)/(t2-t1);
 	}
-	if(t1==t2) return timePos/t2;
-	else return (timePos-t1)/(t2-t1);
 }
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

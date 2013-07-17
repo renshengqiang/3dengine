@@ -132,9 +132,9 @@ void DemoApp::CreateScene(void)
 
 	////create a camera animation
 	mp_cameraNode->Translate(Vector3f(0, 0, 5000));
-	Animation * animation = mp_sceneManager->CreateAnimation("CameraAnim", 10);
+	Animation * animation = mp_sceneManager->CreateAnimation("CameraAnim", 5);
 	NodeAnimationTrack * track  = animation->CreateNodeTrack(0, mp_cameraNode);
-	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(10);
+	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(5);
 	keyFrame->SetTranslate(Vector3f(0,0,-5000));
 	mp_cameraNode->SetInitialState();
 	mp_cameraNodeAnimState = mp_sceneManager->CreateAnimationState("CameraAnim");

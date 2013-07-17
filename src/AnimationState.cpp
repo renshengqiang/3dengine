@@ -45,7 +45,11 @@ void AnimationState::SetTimePosition(float timePos)
 			if(m_timePos < 0)
 				m_timePos = 0;
 			else if (m_timePos > m_length)
+			{
 				m_timePos = m_length;
+				mp_parent->_NotifyAnimationStateEnabled(this, false);			
+				m_enabled = false;
+			}
 		}
     }
 	return;
