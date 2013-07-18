@@ -3,6 +3,7 @@
 #include <math_3d.h>
 #include <AxisAlignedBox.h>
 #include <SimpleMeshEffect.h>
+#include <ParticleEffect.h>
 #include <GL/glew.h>
 
 typedef struct IndexObj INDEX_OBJ;
@@ -92,6 +93,7 @@ void DrawOverlay(int fps);
 void DrawAABB(AxisAlignedBox aabb);
 //void DrawObject(int type,const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj, struct context *contx);
 void DrawOjectUseShader(const INDEX_OBJ *indexObj,const VERTEX_OBJ *vertexObj,const PIXEL_OBJ *pixelObj, SimpleMeshEffect& effect);
+void DrawParticle(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, const PIXEL_OBJ *pixelObj, ParticleEffect& effect);
 void SetModelViewMatrix(const Matrix4f *modelviewMatrix);
 void SetProjectMatrix(const Matrix4f *projectMatrix);
 //for shader use

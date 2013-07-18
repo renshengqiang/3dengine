@@ -4,6 +4,7 @@
 #include "Mesh.h"
 #include "Timer.h"
 #include "SimpleMeshEffect.h"
+#include "ParticleEffect.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <queue>
@@ -243,7 +244,11 @@ void SceneManager::_FindVisibleObjects(Camera * cam, SceneManager::RenderQueue& 
 			IterQueue.push((SceneNode*)(pNode->GetChild(i)));		
 	}	
 }
-
+ParticleSystem* SceneManager::CreateParticleSystem(void)
+{
+	pParticleSystem = new ParticleSystem();
+	return pParticleSystem;
+}
 //------------------------------Rendering Operation----------------------------
 void SceneManager::StartRendering()
 {
@@ -316,7 +321,9 @@ void* SceneManager::_RenderThreadFunc(void *p)
 	CreateShaders();
 
 	SimpleMeshEffect effect("./effects/SimpleMeshEffect.vs", "./effects/SimpleMeshEffect.fs");
-	if(effect.Init() == false)
+	ParticleEffect particleEffect("./effects/ParticleEffect.vs", "./effects/ParticleEffect.fs");
+	
+	if(effect.Init() == false || particleEffect.Init() == false)
 	{
 		fprintf(stderr, "SceneManager::_RenderThreadFunc: create shader failure\n");
 		exit(0);
@@ -329,7 +336,8 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		texture_obj[i] = pTexture->GetTextureObj();
 		delete pTexture;
 	}
-	
+
+	if(pManager->pParticleSystem) pManager->pParticleSystem->SetTexture("./textures/particle.bmp");
 	while(1)
 	{
 		Matrix4f projViewMatrix = pManager->mp_cameraInUse->GetProjViewMatrix();
@@ -338,8 +346,8 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		ClearBuffer();
 		
 		/// render skybox
-		UseFixedPipeline();
-		DrawSkyBox(texture_obj, pManager->mp_cameraInUse->m_angleHorizontal, pManager->mp_cameraInUse->m_angleVertical);
+		//UseFixedPipeline(void)();
+		//DrawSkyBox(texture_obj, pManager->mp_cameraInUse->m_angleHorizontal, pManager->mp_cameraInUse->m_angleVertical);
 
 		pthread_mutex_lock(&(pManager->m_renderingQueueMutex));
 		while(pManager->mp_renderingQueue == NULL)
@@ -351,6 +359,7 @@ void* SceneManager::_RenderThreadFunc(void *p)
 
 		/// render scene
 		//UseShaderToRender();
+		
 		effect.Enable();
 		for(RenderQueueIterator iter = pQueue->begin(); iter != pQueue->end(); ++iter)
 		{
@@ -369,6 +378,13 @@ void* SceneManager::_RenderThreadFunc(void *p)
 			//DrawAABB(iter->pNode->GetWorldBoundingBox());
 		}
 		delete pQueue;
+
+		if(pManager->pParticleSystem)
+		{
+			particleEffect.Enable();
+			particleEffect.SetWVP(projViewMatrix);
+			pManager->pParticleSystem->Render(&particleEffect);
+		}
 		
 		/// render overlay
 		UseFixedPipeline();

@@ -11,7 +11,7 @@
 #include "MeshManager.h"
 #include "Ray.h"
 #include "RaySceneQuery.h"
-#include "math_3d.h"
+#include "ParticleSystem.h"
 #include <string>
 #include <map>
 #include <vector>
@@ -123,6 +123,8 @@ public:
 	virtual void _UpdateSceneGraph( Camera * cam );
 	/** Recurses through the octree determining which nodes are visible. */
 	virtual void _FindVisibleObjects(Camera * cam, SceneManager::RenderQueue& renderQueue);
+
+	ParticleSystem* CreateParticleSystem(void);
 protected:
 	void _ApplySceneAnimations();
 	static void* _RenderThreadFunc(void *);
@@ -147,6 +149,7 @@ protected:
 	pthread_cond_t	m_sdlCond;
 	
 	MeshManager *mMeshManager;
+	ParticleSystem *pParticleSystem;
 };
 
 #endif

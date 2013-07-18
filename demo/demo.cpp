@@ -53,6 +53,7 @@ class DemoApp:public FrameListener, public EventListener
 		SceneNode *mp_cameraNode;
 		RaySceneQuery *mp_raySceneQuery;
 		std::map<SceneNode*, AnimationState*> m_nodeAnimStateMap;
+		ParticleSystem *mp_particleSystem;
 };
 DemoApp::DemoApp()
 {
@@ -70,6 +71,7 @@ DemoApp::DemoApp()
 	mp_animationState3 = NULL;
 	mp_raySceneQuery = mp_sceneManager->CreateRayQuery(Ray());
 	mp_raySceneQuery->setSortByDistance(true);
+	mp_particleSystem = NULL;
 }
 DemoApp::~DemoApp()
 {
@@ -100,6 +102,11 @@ bool DemoApp::FrameQueued(long timeSinceLastFrame)
 	if(mp_skeletonAnimationState){
 		mp_skeletonAnimationState->AddTime(timeSinceLastFrame/(float)1000);
 	}
+	if(mp_particleSystem)
+	{
+		mp_particleSystem->AddTime(timeSinceLastFrame/(float)1000);
+	}
+		
 	return FrameListener::FrameQueued(timeSinceLastFrame);
 }
 void DemoApp::CreateScene(void)
@@ -131,11 +138,11 @@ void DemoApp::CreateScene(void)
 	node3->AttachObject(mp_entity3);
 
 	////create a camera animation
-	mp_cameraNode->Translate(Vector3f(0, 0, 5000));
-	Animation * animation = mp_sceneManager->CreateAnimation("CameraAnim", 5);
+	mp_cameraNode->Translate(Vector3f(0, 0, 200));
+	Animation * animation = mp_sceneManager->CreateAnimation("CameraAnim", 2);
 	NodeAnimationTrack * track  = animation->CreateNodeTrack(0, mp_cameraNode);
-	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(5);
-	keyFrame->SetTranslate(Vector3f(0,0,-5000));
+	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(2);
+	keyFrame->SetTranslate(Vector3f(0,0,-200));
 	mp_cameraNode->SetInitialState();
 	mp_cameraNodeAnimState = mp_sceneManager->CreateAnimationState("CameraAnim");
 	mp_cameraNodeAnimState->SetEnabled(true);
@@ -201,6 +208,8 @@ void DemoApp::CreateScene(void)
 
 	SceneNode *node4 = rootNode->CreateChildSceneNode("planeNode");
 	node4->AttachObject(planeEntity);
+
+	mp_particleSystem = mp_sceneManager->CreateParticleSystem();
 }
 void DemoApp::Run()
 {

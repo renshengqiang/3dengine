@@ -320,6 +320,7 @@ void Mesh::RenderUseShader(SimpleMeshEffect& effect)
 		for(unsigned i=0; i < m_textures.size(); ++i)
 		{
 			m_textures[i]->Load();
+			delete m_textures[i];			
 		}
 	}
 	for(unsigned int i=0;i < m_subMeshes.size();++i)
@@ -327,13 +328,6 @@ void Mesh::RenderUseShader(SimpleMeshEffect& effect)
 		if(m_finalized == false)
 			m_subMeshes[i]->Finalize();
 		m_subMeshes[i]->RenderUseShader(effect);
-	}
-	if(m_finalized == false)
-	{
-		for(unsigned i=0; i < m_textures.size(); ++i)
-		{
-			delete m_textures[i];
-		}
 	}
 	m_finalized = true;
 }

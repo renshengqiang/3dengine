@@ -41,5 +41,7 @@ COMPILE_FILES:=	util/Timer.c\
 				OctreeRaySceneQuery.cpp \
 				effect/Effect.cpp \
 				effect/SimpleMeshEffect.cpp \
+				effect/ParticleEffect.cpp \
+				particle/ParticleSystem.cpp \
 				FreeType.cpp
 include ../Makefile-so

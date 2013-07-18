@@ -565,6 +565,27 @@ void DrawOjectUseShader(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, 
 	effect.DisableVertexArray();
 }
 //-----------------------------------------------------------------------
+void DrawParticle(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, const PIXEL_OBJ *pixelObj, ParticleEffect& effect)
+{
+	effect.EnableVertexArray();
+	
+	glBindBuffer(GL_ARRAY_BUFFER, vertexObj->object);
+
+	effect.SetPositionAttribPointer(vertexObj->elementInfo.coordNum, vertexObj->stride, vertexObj->elementInfo.coordOffset);
+	effect.SetTextureCoordAttribPointer(vertexObj->elementInfo.textureCoordNum, vertexObj->stride, vertexObj->elementInfo.textureCoordOffset);
+	effect.SetVelocityAttribPointer(vertexObj->elementInfo.colorNum, vertexObj->stride, vertexObj->elementInfo.colorOffset);
+
+	effect.SetTextureUnit(pixelObj->textureUnit - GL_TEXTURE0);	
+	glActiveTexture(pixelObj->textureUnit);
+	glBindTexture(pixelObj->textureTarget, pixelObj->object);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexObj->object);
+	glDrawElements(GL_TRIANGLES, indexObj->n, indexObj->dataType, 0);
+
+	effect.DisableVertexArray();
+}
+
+//-----------------------------------------------------------------------
 void SetModelViewMatrix(const Matrix4f * modelviewMatrix)
 {
 	glMatrixMode(GL_MODELVIEW);
