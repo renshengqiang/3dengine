@@ -30,12 +30,14 @@ Vector3f _GetRandomVector(void)
 	return velcity;
 }
 
-
 ParticleSystem::ParticleSystem():
 	m_time(0),
 	m_maxParticles(PARTICLE_SIZE),
 	m_finalized(false)
 {
+	m_visible = true;
+	m_alignedBox = AxisAlignedBox(AxisAlignedBox::EXTENT_INFINITE);
+	
 	m_posVec.resize(4*m_maxParticles);
 	m_velocityVec.resize(4*m_maxParticles);
 	m_texCoordVec.resize(4*m_maxParticles);
@@ -58,8 +60,7 @@ ParticleSystem::ParticleSystem():
 		{
 			m_velocityVec[4*i+j] = velocity;
 		}
-
-		printf("velocity (%f %f %f)\n", velocity.x, velocity.y, velocity.z);
+		
 		m_indexVec[6*i +0] = 4*i +0;
 		m_indexVec[6*i +1] = 4*i +1;
 		m_indexVec[6*i +2] = 4*i +2;

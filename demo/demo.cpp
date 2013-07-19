@@ -114,14 +114,31 @@ void DemoApp::CreateScene(void)
 	////Get root scenenode
 	SceneNode *rootNode = mp_sceneManager->GetRootNode();
 
+	////create camera node and attach camera on it
+	mp_cameraNode = rootNode->CreateChildSceneNode("CameraNode");
+	mp_cameraNode->AttachObject(mp_camera);
+	
+	////create a camera animation
+	mp_cameraNode->Translate(Vector3f(0, 0, 200));
+	Animation * animation = mp_sceneManager->CreateAnimation("CameraAnim", 2);
+	NodeAnimationTrack * track  = animation->CreateNodeTrack(0, mp_cameraNode);
+	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(2);
+	keyFrame->SetTranslate(Vector3f(0,0,-200));
+	mp_cameraNode->SetInitialState();
+	mp_cameraNodeAnimState = mp_sceneManager->CreateAnimationState("CameraAnim");
+	mp_cameraNodeAnimState->SetEnabled(false);
+	mp_cameraNodeAnimState->SetLoop(false);
+
+	////create a particle system
+	mp_particleSystem = mp_sceneManager->CreateParticleSystem();
+	mp_particleSystem->SetTexture("./textures/particle.bmp");
+	SceneNode *particleNode = rootNode->CreateChildSceneNode("particleNode");
+	particleNode->AttachObject(mp_particleSystem);
+	
 	////create three entities
 	mp_entity1 = new Entity("./models/phoenix_ugv.md2");
 	mp_entity2 = new Entity("./models/boblampclean.md5mesh");
 	mp_entity3 = new Entity("./models/boblampclean.md5mesh");
-
-	////create camera node and attach camera on it
-	mp_cameraNode = rootNode->CreateChildSceneNode("CameraNode");
-	mp_cameraNode->AttachObject(mp_camera);
 
 	////create three scenenode and attach entity on it
 	SceneNode *node1 = rootNode->CreateChildSceneNode("childnode1");
@@ -136,17 +153,6 @@ void DemoApp::CreateScene(void)
 	node1->AttachObject(mp_entity1);
 	node2->AttachObject(mp_entity2);
 	node3->AttachObject(mp_entity3);
-
-	////create a camera animation
-	mp_cameraNode->Translate(Vector3f(0, 0, 200));
-	Animation * animation = mp_sceneManager->CreateAnimation("CameraAnim", 2);
-	NodeAnimationTrack * track  = animation->CreateNodeTrack(0, mp_cameraNode);
-	TransformKeyFrame *keyFrame = track->CreateNodeKeyFrame(2);
-	keyFrame->SetTranslate(Vector3f(0,0,-200));
-	mp_cameraNode->SetInitialState();
-	mp_cameraNodeAnimState = mp_sceneManager->CreateAnimationState("CameraAnim");
-	mp_cameraNodeAnimState->SetEnabled(true);
-	mp_cameraNodeAnimState->SetLoop(false);
 	
 	////create one scenenode animation(×óºó»Ø)
 	animation = mp_sceneManager->CreateAnimation("transAnim1-1",5.792);
@@ -208,8 +214,6 @@ void DemoApp::CreateScene(void)
 
 	SceneNode *node4 = rootNode->CreateChildSceneNode("planeNode");
 	node4->AttachObject(planeEntity);
-
-	mp_particleSystem = mp_sceneManager->CreateParticleSystem();
 }
 void DemoApp::Run()
 {

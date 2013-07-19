@@ -149,7 +149,6 @@ protected:
 	pthread_cond_t	m_sdlCond;
 	
 	MeshManager *mMeshManager;
-	ParticleSystem *pParticleSystem;
 };
 
 #endif

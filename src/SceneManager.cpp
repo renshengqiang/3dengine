@@ -246,8 +246,7 @@ void SceneManager::_FindVisibleObjects(Camera * cam, SceneManager::RenderQueue& 
 }
 ParticleSystem* SceneManager::CreateParticleSystem(void)
 {
-	pParticleSystem = new ParticleSystem();
-	return pParticleSystem;
+	return new ParticleSystem();
 }
 //------------------------------Rendering Operation----------------------------
 void SceneManager::StartRendering()
@@ -320,10 +319,10 @@ void* SceneManager::_RenderThreadFunc(void *p)
 
 	CreateShaders();
 
-	SimpleMeshEffect effect("./effects/SimpleMeshEffect.vs", "./effects/SimpleMeshEffect.fs");
+	SimpleMeshEffect meshEffect("./effects/SimpleMeshEffect.vs", "./effects/SimpleMeshEffect.fs");
 	ParticleEffect particleEffect("./effects/ParticleEffect.vs", "./effects/ParticleEffect.fs");
 	
-	if(effect.Init() == false || particleEffect.Init() == false)
+	if(meshEffect.Init() == false || particleEffect.Init() == false)
 	{
 		fprintf(stderr, "SceneManager::_RenderThreadFunc: create shader failure\n");
 		exit(0);
@@ -337,7 +336,6 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		delete pTexture;
 	}
 
-	if(pManager->pParticleSystem) pManager->pParticleSystem->SetTexture("./textures/particle.bmp");
 	while(1)
 	{
 		Matrix4f projViewMatrix = pManager->mp_cameraInUse->GetProjViewMatrix();
@@ -359,8 +357,6 @@ void* SceneManager::_RenderThreadFunc(void *p)
 
 		/// render scene
 		//UseShaderToRender();
-		
-		effect.Enable();
 		for(RenderQueueIterator iter = pQueue->begin(); iter != pQueue->end(); ++iter)
 		{
 			MoveableObject *pObject = (iter->pNode)->GetAttachedMoveableObject();
@@ -368,24 +364,25 @@ void* SceneManager::_RenderThreadFunc(void *p)
 			Entity *pEntity = dynamic_cast<Entity*>(pObject);
 			if(pEntity!= NULL && pEntity->Visible())
 			{
+				meshEffect.Enable();
 				perspectViewModelMatrix = projViewMatrix * iter->transMatrix;
-				///set matrix
-				//SetTranslateMatrix(g_PVMMatrixLocation,&perspectViewModelMatrix);
-				effect.SetWVP(perspectViewModelMatrix);
-				///render entity
-				pEntity->Render(&effect);
+				meshEffect.SetWVP(perspectViewModelMatrix);
+				pEntity->Render(&meshEffect);
+			}
+			else
+			{
+				ParticleSystem *pParticleSystem = dynamic_cast<ParticleSystem *>(pObject);
+				if(pParticleSystem != NULL && pParticleSystem->Visible())
+				{
+					particleEffect.Enable();
+					particleEffect.SetWVP(projViewMatrix);
+					pParticleSystem->Render(&particleEffect);
+				}
 			}
 			//DrawAABB(iter->pNode->GetWorldBoundingBox());
 		}
 		delete pQueue;
 
-		if(pManager->pParticleSystem)
-		{
-			particleEffect.Enable();
-			particleEffect.SetWVP(projViewMatrix);
-			pManager->pParticleSystem->Render(&particleEffect);
-		}
-		
 		/// render overlay
 		UseFixedPipeline();
 		DrawOverlay(sceneFps);
