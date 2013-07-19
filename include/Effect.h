@@ -14,7 +14,7 @@ public:
 	~Effect();
 	virtual bool Init(void);
 	void Enable(void);
-	void Disable(void);
+	static void Disable(void);
 protected:
 	bool AddShader(SHADER_TYPE shaderType, const char *fileName);
 	bool Finalize(void);

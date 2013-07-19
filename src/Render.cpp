@@ -1,6 +1,5 @@
 #include "Render.h"
 #include "Texture.h"
-#include "Shader.h"
 #include "math_3d.h"
 #include "util.h"
 #include "FreeType.h"

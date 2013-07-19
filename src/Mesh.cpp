@@ -1,6 +1,5 @@
 #include "Mesh.h"
 #include "Render.h"
-#include "Shader.h"
 #include "util.h"
 #include "SkeletonBone.h"
 #include "Animation.h"

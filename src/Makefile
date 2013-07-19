@@ -19,7 +19,6 @@ COMPILE_FILES:=	util/Timer.c\
 				RaySceneQuery.cpp \
 				SimpleSpline.cpp \
 				RotationalSpline.cpp \
-				Shader.cpp \
 				Texture.cpp \
 				Render.cpp \
 				SubMesh.cpp \
@@ -42,6 +41,7 @@ COMPILE_FILES:=	util/Timer.c\
 				effect/Effect.cpp \
 				effect/SimpleMeshEffect.cpp \
 				effect/ParticleEffect.cpp \
+				effect/EffectManager.cpp \
 				particle/ParticleSystem.cpp \
 				FreeType.cpp
 include ../Makefile-so

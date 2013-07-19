@@ -12,6 +12,7 @@
 #include "Ray.h"
 #include "RaySceneQuery.h"
 #include "ParticleSystem.h"
+#include "EffectManager.h"
 #include <string>
 #include <map>
 #include <vector>
@@ -149,6 +150,7 @@ protected:
 	pthread_cond_t	m_sdlCond;
 	
 	MeshManager *mMeshManager;
+	EffectManager *mp_effectManager;
 };
 
 #endif

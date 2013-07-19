@@ -1,6 +1,5 @@
 #include "SceneManager.h"
 #include "Render.h"
-#include "Shader.h"
 #include "Mesh.h"
 #include "Timer.h"
 #include "SimpleMeshEffect.h"
@@ -24,8 +23,15 @@ SceneManager::SceneManager(enum ManagerType type):
 {
 	//所有node都是在该node下面进行创建
 	mp_rootNode = new SceneNode("rootNode");
+	
 	//create a singleton MeshManager
 	mMeshManager = new MeshManager();
+
+	//create a EffectManager
+	mp_effectManager = new EffectManager();
+	mp_effectManager->AddEffect(EffectManager::MESH_EFFECT, "./effects/SimpleMeshEffect.vs", "./effects/SimpleMeshEffect.fs");
+	mp_effectManager->AddEffect(EffectManager::PARTICAL_EFFECT, "./effects/ParticleEffect.vs", "./effects/ParticleEffect.fs");
+	
 	pthread_mutex_init(&m_renderingQueueMutex, NULL);
 	pthread_cond_init(&m_renderingQueueFullCond, NULL);
 	pthread_cond_init(&m_renderingQueueEmptyCond, NULL);
@@ -317,17 +323,7 @@ void* SceneManager::_RenderThreadFunc(void *p)
 	pthread_cond_signal(&(pManager->m_sdlCond));
 	pthread_mutex_unlock(&(pManager->m_sdlMutex));
 
-	CreateShaders();
-
-	SimpleMeshEffect meshEffect("./effects/SimpleMeshEffect.vs", "./effects/SimpleMeshEffect.fs");
-	ParticleEffect particleEffect("./effects/ParticleEffect.vs", "./effects/ParticleEffect.fs");
-	
-	if(meshEffect.Init() == false || particleEffect.Init() == false)
-	{
-		fprintf(stderr, "SceneManager::_RenderThreadFunc: create shader failure\n");
-		exit(0);
-	}
-
+	//// textures for skybox
 	for(int i=0; i<6; ++i)
 	{
 		Texture *pTexture = new Texture(GL_TEXTURE_2D, texture_name[i]);
@@ -335,7 +331,11 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		texture_obj[i] = pTexture->GetTextureObj();
 		delete pTexture;
 	}
+	
+	//// finalize shader system
+	pManager->mp_effectManager->Finalize();
 
+	//// rendering loop
 	while(1)
 	{
 		Matrix4f projViewMatrix = pManager->mp_cameraInUse->GetProjViewMatrix();
@@ -344,7 +344,7 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		ClearBuffer();
 		
 		/// render skybox
-		//UseFixedPipeline(void)();
+		//EffectManager::FFPRendering();
 		//DrawSkyBox(texture_obj, pManager->mp_cameraInUse->m_angleHorizontal, pManager->mp_cameraInUse->m_angleVertical);
 
 		pthread_mutex_lock(&(pManager->m_renderingQueueMutex));
@@ -356,7 +356,6 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		pthread_mutex_unlock(&(pManager->m_renderingQueueMutex));
 
 		/// render scene
-		//UseShaderToRender();
 		for(RenderQueueIterator iter = pQueue->begin(); iter != pQueue->end(); ++iter)
 		{
 			MoveableObject *pObject = (iter->pNode)->GetAttachedMoveableObject();
@@ -364,19 +363,21 @@ void* SceneManager::_RenderThreadFunc(void *p)
 			Entity *pEntity = dynamic_cast<Entity*>(pObject);
 			if(pEntity!= NULL && pEntity->Visible())
 			{
-				meshEffect.Enable();
+				SimpleMeshEffect *pEffect = static_cast<SimpleMeshEffect*>(pManager->mp_effectManager->GetEffect(EffectManager::MESH_EFFECT));
+				pEffect->Enable();
 				perspectViewModelMatrix = projViewMatrix * iter->transMatrix;
-				meshEffect.SetWVP(perspectViewModelMatrix);
-				pEntity->Render(&meshEffect);
+				pEffect->SetWVP(perspectViewModelMatrix);
+				pEntity->Render(pEffect);
 			}
 			else
 			{
 				ParticleSystem *pParticleSystem = dynamic_cast<ParticleSystem *>(pObject);
 				if(pParticleSystem != NULL && pParticleSystem->Visible())
 				{
-					particleEffect.Enable();
-					particleEffect.SetWVP(projViewMatrix);
-					pParticleSystem->Render(&particleEffect);
+					ParticleEffect *pEffect = static_cast<ParticleEffect*>(pManager->mp_effectManager->GetEffect(EffectManager::PARTICAL_EFFECT));
+					pEffect->Enable();
+					pEffect->SetWVP(projViewMatrix);
+					pParticleSystem->Render(pEffect);
 				}
 			}
 			//DrawAABB(iter->pNode->GetWorldBoundingBox());
@@ -384,7 +385,7 @@ void* SceneManager::_RenderThreadFunc(void *p)
 		delete pQueue;
 
 		/// render overlay
-		UseFixedPipeline();
+		EffectManager::FFPRendering();
 		DrawOverlay(sceneFps);
 
 		/// swap buffer
