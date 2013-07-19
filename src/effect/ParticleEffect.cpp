@@ -69,7 +69,7 @@ void ParticleEffect::SetTextureUnit(int textureUnit)
 }
 void ParticleEffect::SetTime(float time)
 {
-	glUniform1i(m_timeLocation, time);
+	glUniform1f(m_timeLocation, time);
 }
 void ParticleEffect::SetPositionAttribPointer(int coordNum, int stride, int offset)
 {

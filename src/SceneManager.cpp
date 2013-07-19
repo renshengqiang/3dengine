@@ -369,10 +369,10 @@ void* SceneManager::_RenderThreadFunc(void *p)
 			if(pEntity!= NULL && pEntity->Visible())
 			{
 				perspectViewModelMatrix = projViewMatrix * iter->transMatrix;
-				//set matrix
+				///set matrix
 				//SetTranslateMatrix(g_PVMMatrixLocation,&perspectViewModelMatrix);
 				effect.SetWVP(perspectViewModelMatrix);
-				//render entity
+				///render entity
 				pEntity->Render(&effect);
 			}
 			//DrawAABB(iter->pNode->GetWorldBoundingBox());

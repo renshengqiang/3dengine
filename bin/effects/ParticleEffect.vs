@@ -15,4 +15,3 @@ void main()
 	gl_Position = wvpMatrix * vec4(newPos, 1.0f);
 	_texCoord = texCoord;
 }
-

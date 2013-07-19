@@ -23,8 +23,8 @@ Vector3f _GetRandomVector(void)
 	float t = _GetRandomMinMax(-M_PI, M_PI);
 
 	//// compute matching X and Y
-	velcity.x = (float)cosf(t) * radius;
-	velcity.y = (float)sinf(t)* radius;
+	velcity.x = 10*(float)cosf(t) * radius;
+	velcity.y = 10*(float)sinf(t)* radius;
 	velcity.z = 100.0f;
 
 	return velcity;
@@ -59,10 +59,11 @@ ParticleSystem::ParticleSystem():
 			m_velocityVec[4*i+j] = velocity;
 		}
 
+		printf("velocity (%f %f %f)\n", velocity.x, velocity.y, velocity.z);
 		m_indexVec[6*i +0] = 4*i +0;
 		m_indexVec[6*i +1] = 4*i +1;
 		m_indexVec[6*i +2] = 4*i +2;
-		m_indexVec[6*i +3] = 4*i +1;
+		m_indexVec[6*i +3] = 4*i +0;
 		m_indexVec[6*i +4] = 4*i +2;
 		m_indexVec[6*i +5] = 4*i +3;
 	}

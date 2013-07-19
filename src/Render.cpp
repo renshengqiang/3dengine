@@ -575,7 +575,7 @@ void DrawParticle(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, const 
 	effect.SetTextureCoordAttribPointer(vertexObj->elementInfo.textureCoordNum, vertexObj->stride, vertexObj->elementInfo.textureCoordOffset);
 	effect.SetVelocityAttribPointer(vertexObj->elementInfo.colorNum, vertexObj->stride, vertexObj->elementInfo.colorOffset);
 
-	effect.SetTextureUnit(pixelObj->textureUnit - GL_TEXTURE0);	
+	effect.SetTextureUnit(pixelObj->textureUnit - GL_TEXTURE0);
 	glActiveTexture(pixelObj->textureUnit);
 	glBindTexture(pixelObj->textureTarget, pixelObj->object);
 
@@ -584,7 +584,6 @@ void DrawParticle(const INDEX_OBJ *indexObj, const VERTEX_OBJ *vertexObj, const 
 
 	effect.DisableVertexArray();
 }
-
 //-----------------------------------------------------------------------
 void SetModelViewMatrix(const Matrix4f * modelviewMatrix)
 {
