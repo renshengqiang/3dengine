@@ -5,9 +5,10 @@
 #include <map>
 #include <string>
 
-class MeshManager : public Singleton<MeshManager>{
+class MeshManager : public Singleton<MeshManager>
+{
 public:
-	typedef std::map<std::string, MeshPtr> MeshPtrMap;
+	typedef std::map<std::string, MeshWeakPtr> MeshPtrMap;
 	typedef MeshPtrMap::iterator MeshPtrMapIterator;
 	typedef MeshPtrMap::value_type MeshPtrMapValueType;
 
@@ -67,6 +68,7 @@ public:
 						bool normals=false, float xTile=1, float yTile=1, 
 						const Vector3f& upVector=Vector3f::UNIT_Z);
 protected:
+	void removeMesh(Mesh *pMesh);
 	void loadManualPlane(Mesh *pMesh, MeshBuildParams& params);
 	/** Utility method for tessellating 2D meshes.
         */

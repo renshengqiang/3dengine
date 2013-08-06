@@ -16,7 +16,7 @@ long GetElapsedTime(void)
 		timeElapsed = (timeNow.tv_sec - timePre.tv_sec)*1000 + (timeNow.tv_nsec - timePre.tv_nsec)/1000000;
 	}
 	else{
-		isNotFirstCall = 1;		
+		isNotFirstCall = 1;
 		timeElapsed = 0;
 	}
 	timePre = timeNow;

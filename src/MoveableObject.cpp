@@ -23,19 +23,12 @@ void MoveableObject::DetachFromParent(void)
 {
 	if(mp_parentNode)
 	{
-		//SceneNode *pParentNode = static_cast<SceneNode *>(mp_parentNode);
-
-		//SceneNode需要加入detachObject
-		//pParentNode->DetachObject(void);
+		SceneNode *pParentNode = static_cast<SceneNode *>(mp_parentNode);
+		pParentNode->DetachObject();
 	}
 }
 void MoveableObject::SetParent(Node *pParentNode)
 {
-	if(pParentNode)
-	{
-		//SceneNode *pParentNode = static_cast<SceneNode *>(mp_parentNode);
-		 //pParentNode->AttachEntity(this);
-	}
 	mp_parentNode = pParentNode;
 }
 void MoveableObject::UpdateMoved(void)

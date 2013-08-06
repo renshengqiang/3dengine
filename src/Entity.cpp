@@ -31,6 +31,7 @@ Entity::Entity(const std::string& name):
 //--------------------------------------------------------------------------------------
 Entity::~Entity()
 {
+	DetachFromParent();
 }
 //--------------------------------------------------------------------------------------
 AnimationState *Entity::GetAnimationState(const std::string &name)

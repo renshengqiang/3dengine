@@ -17,6 +17,7 @@ Mesh::Mesh():
 }
 //--------------------------------------------------------------------------------------
 Mesh::Mesh(const std::string &fileName):
+	m_name(fileName),
 	mp_scene(NULL),
 	mp_skeleton(NULL),
 	m_finalized(false)
@@ -30,6 +31,16 @@ Mesh::Mesh(const std::string &fileName):
 Mesh::~Mesh()
 {
 	_Clear();
+}
+//--------------------------------------------------------------------------------------
+void Mesh::SetName(const std::string& name)
+{
+	m_name = name;
+}
+//--------------------------------------------------------------------------------------
+std::string Mesh::GetName(void)
+{
+	return m_name;
 }
 //--------------------------------------------------------------------------------------
 SubMesh *Mesh::GetSubMesh(unsigned index)
@@ -77,10 +88,11 @@ void Mesh::AddTexture(Texture *pTexture)
 void Mesh::_Clear()
 {
 	for (unsigned int i = 0 ; i < m_textures.size() ; i++) {
-		SAFE_DELETE(m_textures[i]);
+		// FIXME: 总是莫名奇怪的发生段错误，原因不明
+		//delete m_textures[i];
 	}
 	for(unsigned int i = 0; i < m_subMeshes.size(); ++i){
-		SAFE_DELETE(m_subMeshes[i]);
+		delete m_subMeshes[i];
 	}
 	if(mp_skeleton) delete mp_skeleton;
 }
@@ -168,7 +180,7 @@ bool Mesh::_InitMaterials(const std::string& filename)
 
 	        if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &Path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 	            std::string FullPath = Dir + "/" + Path.data;
-	            m_textures[i] = new Texture(GL_TEXTURE_2D, FullPath.c_str());
+	            m_textures[i] = new Texture(GL_TEXTURE_2D, FullPath);
 		printf("%s\n", FullPath.c_str());
 		/*
 	            if (!m_textures[i]->Load()) {

@@ -36,6 +36,8 @@ class DemoApp:public FrameListener, public EventListener
 	public:
 		DemoApp();
 		~DemoApp();
+
+		void ClearResource(void);
 		bool FrameQueued(long timeSinceLastFrame);
 		void ProcessEvents();
 		void CreateScene(void);
@@ -75,11 +77,15 @@ DemoApp::DemoApp()
 }
 DemoApp::~DemoApp()
 {
-	delete mp_sceneManager;
-	delete mp_entity1;
-	delete mp_entity2;
-	delete mp_entity3;
-	delete mp_cameraNode;
+	ClearResource();
+}
+void DemoApp::ClearResource(void)
+{
+	if(mp_entity1) delete mp_entity1;
+	if(mp_entity2) delete mp_entity2;
+	if(mp_entity3) delete mp_entity3;
+	//....
+	if(mp_sceneManager) delete mp_sceneManager;
 }
 bool DemoApp::FrameQueued(long timeSinceLastFrame)
 {	
@@ -289,8 +295,10 @@ void DemoApp::HandleKeyDown( SDL_keysym* keysym )
 	if(mp_camera){
 		switch( keysym->sym ) {    
 			case SDLK_ESCAPE:
-				//mp_sceneManager->QuitFromRendering();	
-				exit(0);		
+				//mp_sceneManager->QuitFromRendering();
+				pthread_cancel(fpsThreadId);
+				ClearResource();
+				exit(0);
 				break; 
 			case SDLK_DOWN:
 			case SDLK_s:

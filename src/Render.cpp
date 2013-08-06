@@ -129,8 +129,13 @@ INDEX_OBJ* CreateIndexObject2(int n,const unsigned short *p)
 //--------------------------------------------------------------------------
 void DestroyIndexObject(INDEX_OBJ *indexObject)
 {
-	if(indexObject && indexObject->object!=INVALID_OBJECT_VALUE){
+	if(indexObject && indexObject->object!=INVALID_OBJECT_VALUE)
+	{
 		glDeleteBuffers(1, &(indexObject->object));
+	}
+	else
+	{
+		fprintf(stderr, "DestroyIndexObject : Not a valid INDEX_OBJ\n");
 	}
 }
 //--------------------------------------------------------------------------
@@ -421,14 +426,17 @@ void VertexObjectReset(VERTEX_OBJ *vobj)
 //-----------------------------------------------------------------------------
 void DestroyVertexObject(VERTEX_OBJ *vertexObject)
 {
-	if(vertexObject ){
+	if(vertexObject )
+	{
 		if(vertexObject->object != INVALID_OBJECT_VALUE)
 			glDeleteBuffers(1, &(vertexObject->object));
 		if(vertexObject->object != INVALID_OBJECT_VALUE)
 			glDeleteBuffers(1, &(vertexObject->replaceObject));
 		if(vertexObject->meshData.meshData != NULL)
 			free(vertexObject->meshData.meshData);
-	}else{
+	}
+	else
+	{
 		fprintf(stderr, "DestroyVertexObject : Not a valid VERTEX_OBJ\n");
 	}
 	return;

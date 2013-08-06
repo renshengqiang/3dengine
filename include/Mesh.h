@@ -15,7 +15,7 @@
 
 #include <vector>
 #include <string>
-#include <memory>
+#include <tr1/memory>
 
 class ENGINE_EXPORT Mesh
 {
@@ -23,6 +23,8 @@ public:
 	Mesh();
 	Mesh(const std::string& Filename);
 	~Mesh();
+	void SetName(const std::string& name);
+	std::string GetName(void);
 	SubMesh *GetSubMesh(unsigned index);
 	Skeleton *GetSkeleton(void);
 	const AxisAlignedBox& GetBoundingBox(void) const;
@@ -43,6 +45,8 @@ private:
 	void _Clear();
 
 private:
+	/// name of the mesh
+	std::string m_name;
 	/// Local bounding box volume
 	AxisAlignedBox m_AABB;
 	//assimp class info, used to parse the model file
@@ -61,6 +65,7 @@ private:
 	
 };
 
-typedef std::shared_ptr<Mesh>  MeshPtr;
+typedef std::tr1::shared_ptr<Mesh>  MeshPtr;
+typedef std::tr1::weak_ptr<Mesh> MeshWeakPtr;
 #endif	/* MESH_H */
 

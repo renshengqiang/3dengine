@@ -1,5 +1,9 @@
 #include "MeshManager.h"
 
+#include <iostream>
+#include <tr1/functional>
+using namespace std::tr1::placeholders;
+
 //-----------------------------------------------------------------------
 template<> MeshManager* Singleton<MeshManager>::msSingleton = 0;
 MeshManager& MeshManager::GetSingleton(void)
@@ -19,20 +23,28 @@ MeshManager::~MeshManager()
 //-----------------------------------------------------------------------
 MeshPtr MeshManager::CreateMesh(const std::string& name)
 {
-	MeshPtrMapIterator it = mMeshPtrMap.find(name);
-	if(it != mMeshPtrMap.end()) return it->second;
-	Mesh *pMesh = new Mesh(name);
-	MeshPtr ptr(pMesh);
-	mMeshPtrMap.insert(MeshPtrMapValueType(name, ptr));
-	return ptr;
+	MeshPtr meshPtr;
+	MeshWeakPtr& wkPtr = mMeshPtrMap[name];
+	meshPtr = wkPtr.lock();
+	if(!meshPtr)
+	{
+		meshPtr.reset(new Mesh(name), std::tr1::bind(&MeshManager::removeMesh, this, _1));
+		wkPtr = meshPtr;
+	}
+	return meshPtr;
 }
 //-----------------------------------------------------------------------
 MeshPtr MeshManager::CreatePlane(const std::string& name, const Plane& plane, float width, float height, 
 								int xsegments, int ysegments, bool normals, 
 								float xTile, float yTile, const Vector3f& upVector)
 {
-	MeshPtrMapIterator it = mMeshPtrMap.find(name);
-	if(it != mMeshPtrMap.end()) return it->second;
+	MeshPtr meshPtr;
+	MeshWeakPtr& wkPtr = mMeshPtrMap[name];
+	meshPtr = wkPtr.lock();
+	if(meshPtr)
+	{
+		return meshPtr;
+	}
 	
 	// store parameters
         MeshBuildParams params;
@@ -53,11 +65,21 @@ MeshPtr MeshManager::CreatePlane(const std::string& name, const Plane& plane, fl
         //params.indexShadowBuffer = indexShadowBuffer;
 		
 	Mesh *pMesh = new Mesh();
+	pMesh->SetName(name);
 	loadManualPlane(pMesh, params);
-	
-	MeshPtr ptr(pMesh);
-	mMeshPtrMap.insert(MeshPtrMapValueType(name, ptr));
-	return ptr;
+
+	meshPtr.reset(pMesh);
+	wkPtr = meshPtr;
+	return meshPtr;
+}
+//-----------------------------------------------------------------------
+void MeshManager::removeMesh(Mesh *pMesh)
+{
+	if(pMesh)
+	{
+		mMeshPtrMap.erase(pMesh->GetName());
+		delete pMesh;
+	}
 }
 //-----------------------------------------------------------------------
 void MeshManager::loadManualPlane(Mesh *pMesh, MeshBuildParams& params)
