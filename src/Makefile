@@ -1,7 +1,7 @@
 PROJNAME:=engine
 LIBDIR:=../lib
 LINK_FLAGS:=-L/usr/local/lib -L/usr/lib/i386-linux-gnu/ -lSDL -lGL -lGLU -lGLEW -lstdc++ -lm -lMagick++ -lassimp -lfreetype -lpthread -lX11
-COMPILE_FLAGS:=-I/usr/include/SDL -I/usr/include/freetype2 -I/usr/include/ImageMagick -I/usr/local/include/assimp -I../include -D_GNU_SOURCE=1 -D_REENTRANT -DARCH_X86=1 -Wno-int-to-pointer-cast
+COMPILE_FLAGS:=-I/usr/include/SDL -I/usr/include/freetype2 -I/usr/include/ImageMagick -I/usr/local/include/assimp -I../include #-D_GNU_SOURCE=1 -D_REENTRANT -DARCH_X86=1 -Wno-int-to-pointer-cast
 COMPILE_FILES:=	util/Timer.c\
 				math/Vector.cpp \
 				math/Quaternion.cpp \

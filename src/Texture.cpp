@@ -1,4 +1,5 @@
 #include "Texture.h"
+#include <ImageMagick/Magick++.h>
 #include <iostream>
 
 //-----------------------------------------------------------------------

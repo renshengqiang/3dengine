@@ -1,5 +1,6 @@
 #include "ParticleSystem.h"
 #include "ParticleEffect.h"
+#include <stdlib.h> //rand
 
 #define PARTICLE_SIZE 100
 #define MAX_LIVE_TIME 10

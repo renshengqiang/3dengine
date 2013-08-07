@@ -3,8 +3,12 @@
 #include "Export.h"
 #include <string>
 #include <GL/glew.h>
-#include <ImageMagick/Magick++.h>
 
+namespace Magick
+{
+	class Image;
+	class Blob;
+};
 class ENGINE_EXPORT Texture
 {
 public:
